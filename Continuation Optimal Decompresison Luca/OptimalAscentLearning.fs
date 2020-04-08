@@ -1,7 +1,6 @@
 ﻿[<AutoOpen>]
 module OptimalAscentLearning
 
-open Gas
 open ReinforcementLearning
 open LEModel
 open InitDescent
@@ -31,9 +30,6 @@ module GetStateAfterFixedLegImmersion =
         let sequenceOfDepthNTime = discretizeConstantDescentPath fixedLegParams legDiscretizationTime
         sequenceOfDepthNTime
         |> Seq.fold (fun   leStatus  (TemporalValue seqDepthTime )  ->  getNextState  leStatus   seqDepthTime.Value  )  initState
-
-    
-    
 
 module EnvironmentDefinition = 
     let nullLogger = InfoLogger (fun (_,_,_,_,_) -> None ) 

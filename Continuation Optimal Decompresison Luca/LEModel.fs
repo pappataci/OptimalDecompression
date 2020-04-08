@@ -86,10 +86,7 @@ module LEModel  =
         let actualDepth = actualDepthInTime.Value
         actualDepth + depthRate * integrationTime
 
-    let updateLEStatus (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (depthRate:float)  =
-        
-        let nextDepth = depthRate
-                        |> getNextDepth  modelConstants.IntegrationTime actualLEStatus
+    let updateLEStatus (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (nextDepth:float)  =
 
         let nextStepAmbientConditions = depth2AmbientCondition modelConstants nextDepth
         
@@ -101,7 +98,7 @@ module LEModel  =
         
         let integratedRisks = updatedTissueTensions 
                                |> Array.map2 getIntegratedRiskForThisTissue modelConstants.LEParams
-
+                               
         let updateAccruedRisk = 
             integratedRisks
             |> Seq.sum
