@@ -70,7 +70,7 @@ module LEModel  =
         
         let ambientPressure = depthAmbientPressure depth
         let nitrogenPressure = ambientPressure 
-                               |> externalN2Pressure modelConstants.ThalmanErrorHypothesis  modelConstants.FractionO2 
+                               |> externalN2Pressure modelConstants.ThalmanErrorHypothesis modelConstants.FractionO2 
         {Pressures = {Ambient = ambientPressure 
                       Nitrogen = nitrogenPressure} 
          Depth = depth }
@@ -86,7 +86,7 @@ module LEModel  =
         let actualDepth = actualDepthInTime.Value
         actualDepth + depthRate * integrationTime
 
-    let updateLEStatus (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (nextDepth:float)  =
+    let modelTransitionFunction (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (nextDepth:float)  =
 
         let nextStepAmbientConditions = depth2AmbientCondition modelConstants nextDepth
         
@@ -110,6 +110,9 @@ module LEModel  =
          Risk     = { AccruedRisk     = updateAccruedRisk
                       IntegratedRisks =  integratedRisks  }  }
 
+    //let modelTransitionFunctionEveryXStep (Model originalModel: Model<'S,'A>) (xstep:int)=
+        
+
 module USN93_EXP = 
     open InitDescent
     let crossover               = [|     9.9999999999E+09   ;     2.9589519286E-02    ;      9.9999999999E+09    |]
@@ -117,10 +120,10 @@ module USN93_EXP =
     let thalmanErrorHypothesis  = false                           
     let gains                   = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |]
     let threshold               = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]
-    let defaultDeltaT      = 0.1
     let fractionO2  = 0.21
     
-    let fromConstants2ModelParamsWithThisDeltaT deltaT  = 
+    let fromConstants2ModelParamsWithThisDeltaT (crossover:float[]) (rates:float[]) 
+                                                (threshold:float[]) (gains:float[]) thalmanErrorHypothesis deltaT  = 
         let actualLEParams = [| 0 .. (gains |> Array.length) - 1 |]
                              |> Array.mapi (fun i _ ->  {Crossover = crossover.[i] 
                                                          Rate      = rates.[i]
@@ -131,8 +134,8 @@ module USN93_EXP =
          ThalmanErrorHypothesis     = thalmanErrorHypothesis
          IntegrationTime            = deltaT 
          FractionO2                 = fractionO2}
-    
-    let fromConstants2ModelParams = fromConstants2ModelParamsWithThisDeltaT defaultDeltaT
+
+    let getLEOptimalModelParamsSettingDeltaT = fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis
 
     let initStateFromInitDepth modelConstants initDepth = 
         let ambientCondition = depth2AmbientCondition modelConstants initDepth
@@ -144,3 +147,4 @@ module USN93_EXP =
 
     let setThalmanHypothesis thalmanHyp modelParams  = 
         {modelParams with ThalmanErrorHypothesis = thalmanHyp} 
+

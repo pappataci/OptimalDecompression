@@ -1,9 +1,8 @@
 ﻿[<AutoOpen>]
 module ReinforcementLearning
 
-type State<'T>       =         | State of 'T
-type Action<'A>      =         |  Control of  'A
-type ModelParams<'P> =         |  ModelParams  of 'P                           
+type State<'S>       =         | State of 'S
+type Action<'A>      =         |  Control of  'A                       
 type Model<'S, 'A>   =         |  Model of (State<'S> -> Action<'A> -> State<'S>) 
 
 type EnvironmentResponse<'S ,'I > = { NextState         : State<'S> 
@@ -53,6 +52,11 @@ let fromValueFuncToStateFunc (f: 'S -> 'A -> 'S) =
     let stateComputation (State x:State<'S>) (Control y: Action<'A>) =
         State (f x y) 
     Model stateComputation
+
+let defineModel (modelParams:'P ) (transitionFunction: 'P -> 'S -> 'A -> 'S) = 
+    modelParams
+    |> transitionFunction
+    |> fromValueFuncToStateFunc
  
 let fromModelToValueFunc(model:Model<'S,'A>) =
     let (Model getNextState) = model
@@ -61,21 +65,16 @@ let fromModelToValueFunc(model:Model<'S,'A>) =
         simpleOutput
     actualComputation
 
-// internal function is define in terms of basic types
-let defineModel ( internalComputation : 'P -> 'S -> 'A -> 'S) (  x : 'P )  = 
-    x
-    |> internalComputation
-    |> fromValueFuncToStateFunc
+let getNextStateFromActualStateModelNAction (Model modelEvaluator:Model<'S,'A>) (actualState: State<'S>) (action:Action<'A>)   = 
+    modelEvaluator actualState action
 
 // this function consumes an initial value, passed to a computation, where iterations are counted
-let getMarchingCountedLazyComputation getNextState (initialState:'S) (sequenceOfActions : seq<'A> )=
-    let initialState' = State initialState
-    let (Model getNextState') =  getNextState
-    let applyFcnAndIncreaseCounter (actualState, counter) newEnvironmentCondition =  
-        (getNextState' actualState newEnvironmentCondition , counter + 1 ) 
-    sequenceOfActions  
-    |> Seq.map Control  
-    |> Seq.scan applyFcnAndIncreaseCounter ( initialState' , 1 ) 
+let getMarchingCountedLazyComputation (model: Model<'S,'A>) (initialState :State<'S>) (sequenceOfActions : seq<'A> )= 
+    let getNextStateNIncreaseCounter (actualState, counter) action =  
+        (getNextStateFromActualStateModelNAction model actualState (Control action) , counter + 1 ) 
+    sequenceOfActions
+    |> Seq.scan getNextStateNIncreaseCounter (initialState , 1)
+
     
 let whileEagerComputation maxIterations statePredicate (initialValue:'T)  (f:'T->'T) =
     let rec loop (acc, i) =

@@ -16,8 +16,6 @@ module PredefinedDescent =
                       BottomTime : float  // (min)
                      }  
 
-    
-
     let defineFixedImmersion descentRate maximumDepth bottomTime =
         { DescentLegParams =  { DescentRate = descentRate
                                 MaximumDepth = maximumDepth } 
@@ -26,12 +24,6 @@ module PredefinedDescent =
     [<AutoOpen>]
     module DescentConstant = 
         let tolerance = 1.0e-10
-
-        let defaultDescentRate = 60.0
-        let defaultMaximumDepth = 120.0
-        let defaultBottomTime = 30.0
-
-        let defaultImmersionLeg = defineFixedImmersion defaultDescentRate defaultMaximumDepth defaultBottomTime
 
     let discretizeConstantDescentPath anImmersionLeg deltaTime = 
 
