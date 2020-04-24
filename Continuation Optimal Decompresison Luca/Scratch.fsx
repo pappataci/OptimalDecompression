@@ -3,36 +3,40 @@
 #load "Gas.fs"
 #load "PredefinedDescent.fs"
 #load "LEModel.fs"
+#load "OptimalAscentLearning.fs"
  
 open ReinforcementLearning
 open Gas
 open InitDescent
 open LEModel
+open OptimalAscentLearning
 
-//type LETest = { TissueTension : float[] }
+let initDepth = 0.0
+let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
 
-//let multiplyTissueTensionBy  x  multiplier = 
-//    x.TissueTension
-//    |> Array.map (fun tension -> tension * multiplier)
-//    |> (fun x -> {TissueTension = x})
-    
-//let testComputation2 = getMarchingCountedLazyComputation (fromValueFuncToStateFunc multiplyTissueTensionBy)
-//                        {TissueTension = Array.create 3 1.2 } {1.0..infinity} 
+let discretizationTimeForLegs = 0.1 
 
-//let testSeq = testComputation2
-//              |> whileStatePredicateAndMaxIterations 100 ( fun x -> x.TissueTension
-//                                                                    |> Array.min
-//                                                                    |> (>) 200.0 ) 
+let seqOfStates, seqOfNodes = ModelDefinition.model
+                            |> getInitialStateWithTheseParams descentParameters
+                               discretizationTimeForLegs initDepth
 
+seqOfNodes |> Seq.last
+seqOfStates |>Seq.last 
 
-let (|Odd|Even|) (num , aParam) = 
-    if ((num+aParam) % 2 = 0 ) then 
-        Even
-    else  Odd
+let externalPressures = 
+    seqOfNodes 
+    |>  Seq.map (fun (TemporalValue x) -> 
+                        let ambPressure = x.Value  
+                                          |> depthAmbientPressure 
+                        let externalN2Pressure = externalN2Pressure true 0.21 ambPressure 
+                        {|Ambient = ambPressure ; N2 =  externalN2Pressure|}  )
 
-let testActivePattern aNum aParam= 
-    match (aNum,  aParam) with
-    | Odd -> printfn "Odd"
-    | Even -> printfn "Even"
+//let (|Odd|Even|) (num , aParam) = 
+//    if ((num+aParam) % 2 = 0 ) then 
+//        Even
+//    else  Odd
 
-Array.create 1014748364  0.0
+//let testActivePattern aNum aParam= 
+//    match (aNum,  aParam) with
+//    | Odd -> printfn "Odd"
+//    | Even -> printfn "Even"

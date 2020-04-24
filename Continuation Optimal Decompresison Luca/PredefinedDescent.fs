@@ -23,12 +23,12 @@ module PredefinedDescent =
 
     [<AutoOpen>]
     module DescentConstant = 
-        let tolerance = 1.0e-10
+        let tolerance = 1.0e-6
 
-    let discretizeConstantDescentPath anImmersionLeg deltaTime = 
+    let discretizeConstantDescentPath anImmersionLeg deltaTime   = 
 
         let hasNotReachedTheBottom (TemporalValue aDepthInTime) =
-            aDepthInTime.Value < (anImmersionLeg.DescentLegParams.MaximumDepth - tolerance)
+            aDepthInTime.Value <= (anImmersionLeg.DescentLegParams.MaximumDepth + tolerance)
             
         let sequenceOfDescendingDepthsAtConstantRate descentRate initialTimeDepth =
             let updateDepthWithThisRate descentRate initDepth = initDepth + descentRate * deltaTime
@@ -60,3 +60,10 @@ module PredefinedDescent =
     
         seq { yield! descendingSequenceOfTemporalDepths 
               yield! constantDepthAtMaxDepth } // concatenate the two sequences
+
+    let seqDepthInTimeToSeqDepths seqDepthInTime = 
+        seqDepthInTime
+        |> Seq.map ( fun (TemporalValue x ) -> x.Value )
+
+    let getSeqOfDepthsFromDescentParams deltaTime =
+        discretizeConstantDescentPath deltaTime >> seqDepthInTimeToSeqDepths

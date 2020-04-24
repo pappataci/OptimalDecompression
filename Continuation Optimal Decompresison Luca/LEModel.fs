@@ -44,7 +44,7 @@ module LEModel  =
         ( tissueIncForcingTerm * ( pressures.Nitrogen - tissueTension) ) / ( 1.0 + tissueIncForcingTerm)
 
     let private chooseAppropriateModelDependingOnTissueTensionNForcingTerm (Tension tissueTension ) modelConsts 
-        {Ambient = ambientPressure}  = 
+        ({Ambient = ambientPressure}:ExternalPressureConditions)  = 
             if (tissueTension > ambientPressure + modelConsts.Crossover - dPFVG) then linearKineticsIncrement
             else exponentialKineticsIncrement
     
@@ -109,9 +109,7 @@ module LEModel  =
                                                |> updateDepthAndTime modelConstants.IntegrationTime nextDepth}  
          Risk     = { AccruedRisk     = updateAccruedRisk
                       IntegratedRisks =  integratedRisks  }  }
-
-    //let modelTransitionFunctionEveryXStep (Model originalModel: Model<'S,'A>) (xstep:int)=
-        
+             
 
 module USN93_EXP = 
     open InitDescent
@@ -145,6 +143,6 @@ module USN93_EXP =
         let initialRiskInfo      =  { AccruedRisk = 0.0 ; IntegratedRisks =   Array.create rates.Length 0.0   }
         {LEPhysics = tissueState ; Risk = initialRiskInfo }
 
-    let setThalmanHypothesis thalmanHyp modelParams  = 
+    let setThalmanHypothesis thalmanHyp (modelParams:LEModelParams)  = 
         {modelParams with ThalmanErrorHypothesis = thalmanHyp} 
 

@@ -66,10 +66,6 @@ namespace Continuation_Optimal_Deco
 
             this.ReadInformationFromGUI();
             
-            //var n = new float[100000000];
-            //MessageBox.Show(n.Length.ToString());
-            //n[100000000 - 1] = 1.2f; 
-
             model = new USN93_EXP(fractionO2);
             model.Pressure.MaximumAscentRate = ascentRate;
 
@@ -79,6 +75,8 @@ namespace Continuation_Optimal_Deco
             // Profile bottom portion
             time = bottomTime - time;
             model.IntegrateToTime(time, maxDepth, maxDepth);
+            
+            
             // Profile linear ascent portion
             time = ArrivalTime(breakFraction * maxDepth, ascentRate);
             model.IntegrateToTime(time, maxDepth, (1.0 - breakFraction) * maxDepth);
@@ -394,7 +392,7 @@ namespace Continuation_Optimal_Deco
         {
 
             // Initialize calculated quantities
-            GAS.ThalmannError = false;
+            //GAS.ThalmannError = false;
             var n2Pressure               = GAS.N2PressureAir ( 1.0 );
             GAS.ThalmannError = true;
             TissueTension                = new double [ ] { n2Pressure , n2Pressure , n2Pressure };

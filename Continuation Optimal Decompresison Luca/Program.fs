@@ -22,19 +22,17 @@ let main _ =
     
     // init leg definition
     let initDepth = 0.0
-    let (descentRate, maxDepth, bottomTime)  = (60.0 ,   120.0,   30.0)
+
+    let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
+
     let discretizationTimeForLegs = 0.1 
 
-    // modelParams Definition
-    let thalmanHyp = true
+    let initialState = ModelDefinition.model
+                       |> getInitialStateWithTheseParams descentParameters 
+                          discretizationTimeForLegs initDepth
+                           
     
+    Console.WriteLine (initialState)
 
-
-    //let defaultLEModelParams = integrationTime
-    //                           |> USN93_EXP.fromConstants2ModelParamsWithThisDeltaT
-    //                           |> USN93_EXP.setThalmanHypothesis thalmanHyp
-
-    //let LEModel = defineModelTransitionFunction
-    //              |>  ModelDefinition.createModel (USN93_EXP.fromConstants2ModelParamsWithThisDeltaT  integrationTime)  
     pressAnyKey()
     0 // return an integer exit code

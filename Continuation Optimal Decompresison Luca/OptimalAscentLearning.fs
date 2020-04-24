@@ -5,6 +5,10 @@ open ReinforcementLearning
 open LEModel
 open InitDescent
 
+type DescentParams = { DescentRate  : float
+                       MaximumDepth : float
+                       BottomTime   : float }
+
 let pDCSToRisk pDCS = 
     -log(1.0-pDCS)
 
@@ -17,35 +21,57 @@ module ModelDefinition =
      
     let getNextState = modelTransitionFunction leParamsWithIntegrationTime
     let model = fromValueFuncToStateFunc getNextState
-    //let model' = defineModel leParamsWithIntegrationTime  defineModelTransitionFunction
 
-    // let model 
 
-module InitProfilSequence = 
-     
-    let defaultDescentRate = 60.0
-    let defaultMaximumDepth = 120.0
-    let defaultBottomTime = 30.0
-
+[<AutoOpen>]
 module GetStateAfterFixedLegImmersion = 
-    open InitProfilSequence
 
-    let initDepth = 0.0
+    let giveNextStateForThisModelNDepthNTimeNode  model (actualState: State<LEStatus>) (TemporalValue depthNTimeNode) =
+        let nextDepth = depthNTimeNode.Value |> Control 
+        getNextStateFromActualStateModelNAction model actualState nextDepth 
 
-    //let initState = initDepth
-    //                |>  (USN93_EXP.initStateFromInitDepth USN93_EXP.fromConstants2ModelParams ) // default model Params )
-    //                |>  State
+    let runModelAcrossSequenceOfNodesNGetFinalState (initState: State<LEStatus> )  model  sequenceOfDepthNTimeNodes   = 
+        sequenceOfDepthNTimeNodes
+        |> Seq.fold (giveNextStateForThisModelNDepthNTimeNode model)
+           initState
 
-    let fixedDescentPart = defineFixedImmersion defaultDescentRate defaultMaximumDepth defaultBottomTime
-    
-    let descentSequence = discretizeConstantDescentPath fixedDescentPart ModelDefinition.integrationTime
+    let runModelThroughNodesNGetAllStates  (initState: State<LEStatus> )  model  sequenceOfDepthNTimeNodes  =
+        sequenceOfDepthNTimeNodes
+        |> Seq.scan (giveNextStateForThisModelNDepthNTimeNode model)
+           initState
 
-    let getStateAfterFixedImmersion sequenceOfDepthNTime initState = 
-        sequenceOfDepthNTime
-        |> Seq.fold (fun   leStatus  (TemporalValue seqDepthTime )  ->  
-                    ModelDefinition.getNextState  leStatus   seqDepthTime.Value  )  initState
+    let getInitialStateWithTheseParams  ({DescentRate = descentRate; MaximumDepth = maxDepth; BottomTime = bottomTime} :DescentParams)
+           fixedLegDiscretizationTime  initDepth (model:Model<LEStatus, float>) = 
+        
+        let skipFirstIfEqualsToInitState (State aState) (aSeqOfNodes:seq<DepthInTime>) = 
+            
+            let temporalValueToDepth (TemporalValue x) = 
+                x.Value
 
-    //let getInitialState (descRate:float) (maxDepth:float) (bottomTime:float) initDepth (transitionModel) = 
+            let getDepthOfThisState (state:LEStatus)   =
+                (state.LEPhysics.CurrentDepthAndTime)
+                |> temporalValueToDepth
+            
+            let getDepthOfFirstNode (mySeqOfNodes:seq<DepthInTime>) : float = 
+                mySeqOfNodes
+                |> Seq.head
+                |> temporalValueToDepth
+
+            match (getDepthOfThisState aState = getDepthOfFirstNode aSeqOfNodes) with 
+            | true   ->  aSeqOfNodes |> Seq.skip 1 
+            | false  ->  aSeqOfNodes
+     
+        let initState =  initDepth
+                        |> USN93_EXP.initStateFromInitDepth ( USN93_EXP.getLEOptimalModelParamsSettingDeltaT  fixedLegDiscretizationTime ) 
+                        |> State
+        let immersionLeg = bottomTime
+                           |> defineFixedImmersion descentRate  maxDepth
+        let seqOfNodes =  discretizeConstantDescentPath immersionLeg fixedLegDiscretizationTime 
+                          |> skipFirstIfEqualsToInitState initState 
+
+        seqOfNodes
+        |> runModelThroughNodesNGetAllStates initState model
+        , seqOfNodes
 
 
 module EnvironmentDefinition = 
@@ -57,9 +83,6 @@ module EnvironmentDefinition =
 //    let test = model initState
 //    test
 
-
-// PSEUDO CODE:
-// Get First State (run model until given mission point)
 
 // PYTHON PART
 // Initialize Knowledge (Q Factor approximator)
