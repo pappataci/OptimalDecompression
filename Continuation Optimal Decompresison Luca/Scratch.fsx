@@ -4,12 +4,16 @@
 #load "PredefinedDescent.fs"
 #load "LEModel.fs"
 #load "OptimalAscentLearning.fs"
+#load "IOUtilities.fs"
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
+
  
 open ReinforcementLearning
 open Gas
 open InitDescent
 open LEModel
 open OptimalAscentLearning
+open FSharp.Data
 
 let initDepth = 0.0
 let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
@@ -30,6 +34,14 @@ let externalPressures =
                                           |> depthAmbientPressure 
                         let externalN2Pressure = externalN2Pressure true 0.21 ambPressure 
                         {|Ambient = ambPressure ; N2 =  externalN2Pressure|}  )
+
+let larsExternalPressFile = CsvProvider<  @"C:\Users\glddm\Desktop\ExternalPressures.csv" >.GetSample()
+
+let (larsN2 , larsAmbient)  = larsExternalPressFile.Rows
+                              |> Seq.map (fun x-> (x.N2 , x.Ambient) )
+                              |> Seq.toArray
+                              |> Array.unzip
+
 
 //let (|Odd|Even|) (num , aParam) = 
 //    if ((num+aParam) % 2 = 0 ) then 

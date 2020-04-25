@@ -3,15 +3,19 @@
 #load "Gas.fs"
 #load "PredefinedDescent.fs"
 #load "LEModel.fs"
-#load "IOUtilities.fs"
+#load "IOUtilities.fs"let larsTensions = CsvProvider< @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\outputFromOptimalAscent\Tissue_tension.csv" >.GetSample()
+
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
 
 open Gas
 open InitDescent
 open LEModel
 open IOUtilities
+open FSharp.Data
 
-let larsTensions = fileToMatrix @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\outputFromOptimalAscent\Tissue_tension.csv" 
-let larsArray2dTension  = larsTensions |> Seq.ofArray |> jaggedArray2Array2D
+//let larsTensions = CsvProvider< @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\outputFromOptimalAscent\Tissue_tension.csv" >.GetSample()
+
+
 
 
 // TO BE REWRITTEN IN TERMS OF DEPTHRATE

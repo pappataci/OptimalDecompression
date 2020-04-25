@@ -75,8 +75,8 @@ namespace Continuation_Optimal_Deco
             // Profile bottom portion
             time = bottomTime - time;
             model.IntegrateToTime(time, maxDepth, maxDepth);
-            
-            
+            model.SaveN2Pressure();
+
             // Profile linear ascent portion
             time = ArrivalTime(breakFraction * maxDepth, ascentRate);
             model.IntegrateToTime(time, maxDepth, (1.0 - breakFraction) * maxDepth);
@@ -358,6 +358,9 @@ namespace Continuation_Optimal_Deco
         private List < double [ ] > ListClearTime         = new List < double [ ] > ( );
         private List < double > ListPressure              = new List < double > ( );
         private List < double > ListTime                  = new List < double > ( );
+
+        // Luca added
+        public List < double > ListN2Pressure            = new List < double > ( ); 
         
         public PressureFunction Pressure = null;
         public double FinalProbability;
@@ -416,6 +419,27 @@ namespace Continuation_Optimal_Deco
             
 
         }
+
+        public void SaveN2Pressure ( )
+        {
+            FolderBrowserDialog fbd = new FolderBrowserDialog();
+            if (fbd.ShowDialog() != DialogResult.OK)
+                return;
+            string dir = fbd.SelectedPath;
+            string fileName = dir + "\\ExternalPressures.csv";
+
+            FileStream fs = new FileStream(fileName, FileMode.Create);
+            StreamWriter sw = new StreamWriter(fs);
+            for (int i = 0; i < ListN2Pressure.Count; i++)
+            {
+                
+                string s = ListN2Pressure[i].ToString("F6") + ", " + ListPressure[i].ToString("F6");
+                sw.WriteLine(s);
+            }
+            sw.Close();
+            fs.Close();
+        }
+
 
         public void SaveAccumulatedData ( )
         {
@@ -637,6 +661,9 @@ namespace Continuation_Optimal_Deco
                 ListClearTime.Add ( clear );
 
                 ListPressure.Add ( pressureAmbient );
+
+                // Luca added
+                ListN2Pressure.Add(pressureNitrogen );
 
                 ListTime.Add ( ProfileTime );
                 

@@ -87,11 +87,11 @@
     <None Include="Scratch.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Extreme.Numerics.FSharp.Net40, Version=6.0.16073.0, Culture=neutral, PublicKeyToken=9e513770f58567b2" />
-    <Reference Include="Extreme.Numerics.Generic.Net40, Version=6.0.16073.0, Culture=neutral, PublicKeyToken=9e513770f58567b2" />
-    <Reference Include="Extreme.Numerics.Net40, Version=6.0.16073.0, Culture=neutral, PublicKeyToken=9e513770f58567b2" />
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.7.0\lib\net45\FSharp.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="FSharp.Data">
+      <HintPath>..\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
@@ -100,6 +100,7 @@
     <Reference Include="System.ValueTuple">
       <Private>True</Private>
     </Reference>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
