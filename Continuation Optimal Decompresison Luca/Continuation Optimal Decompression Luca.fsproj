@@ -83,8 +83,8 @@
     <None Include="App.config" />
     <Content Include="packages.config" />
     <None Include="OptimAscentScript.fsx" />
-    <None Include="ResultsComparison.fsx" />
     <None Include="Scratch.fsx" />
+    <None Include="ActivePatternExample.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

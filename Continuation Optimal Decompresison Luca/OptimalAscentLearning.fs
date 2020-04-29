@@ -26,17 +26,18 @@ module ModelDefinition =
 [<AutoOpen>]
 module GetStateAfterFixedLegImmersion = 
 
-    let giveNextStateForThisModelNDepthNTimeNode  model (actualState: State<LEStatus>) (TemporalValue depthNTimeNode) =
-        let nextDepth = depthNTimeNode.Value |> Control 
-        getNextStateFromActualStateModelNAction model actualState nextDepth 
+    let giveNextStateForThisModelNDepthNTimeNode  model (actualState: State<LEStatus>) nextDepth =
+        nextDepth 
+        |> Control 
+        |> getNextStateFromActualStateModelNAction model actualState 
 
-    let runModelAcrossSequenceOfNodesNGetFinalState (initState: State<LEStatus> )  model  sequenceOfDepthNTimeNodes   = 
-        sequenceOfDepthNTimeNodes
+    let runModelAcrossSequenceOfNodesNGetFinalState (initState: State<LEStatus> )  model  (sequenceOfDepths:seq<float>)= 
+        sequenceOfDepths
         |> Seq.fold (giveNextStateForThisModelNDepthNTimeNode model)
            initState
 
-    let runModelThroughNodesNGetAllStates  (initState: State<LEStatus> )  model  sequenceOfDepthNTimeNodes  =
-        sequenceOfDepthNTimeNodes
+    let runModelThroughNodesNGetAllStates  (initState: State<LEStatus> )  model  (sequenceOfDepths:seq<float>)  =
+        sequenceOfDepths
         |> Seq.scan (giveNextStateForThisModelNDepthNTimeNode model)
            initState
 
@@ -64,12 +65,14 @@ module GetStateAfterFixedLegImmersion =
         let initState =  initDepth
                         |> USN93_EXP.initStateFromInitDepth ( USN93_EXP.getLEOptimalModelParamsSettingDeltaT  fixedLegDiscretizationTime ) 
                         |> State
+
         let immersionLeg = bottomTime
                            |> defineFixedImmersion descentRate  maxDepth
         let seqOfNodes =  discretizeConstantDescentPath immersionLeg fixedLegDiscretizationTime 
                           |> skipFirstIfEqualsToInitState initState 
 
         seqOfNodes
+        |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelThroughNodesNGetAllStates initState model
         , seqOfNodes
 

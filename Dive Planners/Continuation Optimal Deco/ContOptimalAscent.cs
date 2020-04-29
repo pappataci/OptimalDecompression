@@ -67,6 +67,7 @@ namespace Continuation_Optimal_Deco
             this.ReadInformationFromGUI();
             
             model = new USN93_EXP(fractionO2);
+
             model.Pressure.MaximumAscentRate = ascentRate;
 
             // Profile descent portion
@@ -75,11 +76,13 @@ namespace Continuation_Optimal_Deco
             // Profile bottom portion
             time = bottomTime - time;
             model.IntegrateToTime(time, maxDepth, maxDepth);
+
             model.SaveN2Pressure();
 
             // Profile linear ascent portion
             time = ArrivalTime(breakFraction * maxDepth, ascentRate);
             model.IntegrateToTime(time, maxDepth, (1.0 - breakFraction) * maxDepth);
+
             // Profile power law ascent portion
             time = surfaceTime - (bottomTime + time);
             model.IntegrateToTime(time, (1.0 - breakFraction) * maxDepth, 0.0, exponent);
@@ -422,24 +425,36 @@ namespace Continuation_Optimal_Deco
 
         public void SaveN2Pressure ( )
         {
-            FolderBrowserDialog fbd = new FolderBrowserDialog();
-            if (fbd.ShowDialog() != DialogResult.OK)
-                return;
-            string dir = fbd.SelectedPath;
-            string fileName = dir + "\\ExternalPressures.csv";
+            //FolderBrowserDialog fbd = new FolderBrowserDialog();
+            //if (fbd.ShowDialog() != DialogResult.OK)
+            //    return;
+            string dir = "C:\\Users\\glddm\\Desktop" ;
+            string fileName = dir + "\\LarsResults.csv";
 
             FileStream fs = new FileStream(fileName, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);
             for (int i = 0; i < ListN2Pressure.Count; i++)
             {
-                
-                string s = ListN2Pressure[i].ToString("F6") + ", " + ListPressure[i].ToString("F6");
+
+                string s = ListPressure[i].ToString("F6") + ", " +  ListN2Pressure[i].ToString("F6") + ", " 
+                     + TissueTensionToString(ListTissueTension[i]); 
                 sw.WriteLine(s);
             }
             sw.Close();
             fs.Close();
         }
 
+        public static string TissueTensionToString(double[] tissueTension)
+        {
+            var returnString = "";
+
+            for (int item = 0; item < tissueTension.Length - 1 ; item++)
+                returnString += tissueTension[item].ToString("F6") + ", ";
+
+            returnString += tissueTension[tissueTension.Length - 1].ToString("F6");
+            
+            return returnString;
+        }
 
         public void SaveAccumulatedData ( )
         {

@@ -68,7 +68,7 @@ module LEModel  =
 
     let depth2AmbientCondition modelConstants depth =
         
-        let ambientPressure = depthAmbientPressure depth
+        let ambientPressure = depth2AmbientPressure depth
         let nitrogenPressure = ambientPressure 
                                |> externalN2Pressure modelConstants.ThalmanErrorHypothesis modelConstants.FractionO2 
         {Pressures = {Ambient = ambientPressure 
@@ -110,12 +110,11 @@ module LEModel  =
          Risk     = { AccruedRisk     = updateAccruedRisk
                       IntegratedRisks =  integratedRisks  }  }
              
-
 module USN93_EXP = 
     open InitDescent
     let crossover               = [|     9.9999999999E+09   ;     2.9589519286E-02    ;      9.9999999999E+09    |]
     let rates                   = [| 1.0 / 1.7727676636E+00 ; 1.0 / 6.0111598753E+01  ;  1.0 / 5.1128788835E+02  |]
-    let thalmanErrorHypothesis  = false                           
+    let thalmanErrorHypothesis  = true                           
     let gains                   = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |]
     let threshold               = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]
     let fractionO2  = 0.21
@@ -137,12 +136,10 @@ module USN93_EXP =
 
     let initStateFromInitDepth modelConstants initDepth = 
         let ambientCondition = depth2AmbientCondition modelConstants initDepth
-        let tissueState          =  { TissueTensions       =  Array.init rates.Length (fun _ -> 
-                                                                            Tension (ambientCondition.Pressures.Nitrogen) )
-                                      CurrentDepthAndTime  = TemporalValue { Time = 0.0 ; Value = initDepth }                 } 
+        let tissueState          =  { TissueTensions       =  Array.create rates.Length ( Tension ambientCondition.Pressures.Nitrogen )
+                                      CurrentDepthAndTime  =  TemporalValue { Time = 0.0 ; Value = initDepth }                 } 
         let initialRiskInfo      =  { AccruedRisk = 0.0 ; IntegratedRisks =   Array.create rates.Length 0.0   }
         {LEPhysics = tissueState ; Risk = initialRiskInfo }
 
     let setThalmanHypothesis thalmanHyp (modelParams:LEModelParams)  = 
         {modelParams with ThalmanErrorHypothesis = thalmanHyp} 
-

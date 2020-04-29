@@ -14,6 +14,7 @@ open InitDescent
 open LEModel
 open OptimalAscentLearning
 open FSharp.Data
+open System
 
 let initDepth = 0.0
 let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
@@ -24,31 +25,50 @@ let seqOfStates, seqOfNodes = ModelDefinition.model
                             |> getInitialStateWithTheseParams descentParameters
                                discretizationTimeForLegs initDepth
 
-seqOfNodes |> Seq.last
-seqOfStates |>Seq.last 
+//seqOfNodes |> Seq.last
+//seqOfStates |>Seq.last 
 
-let externalPressures = 
-    seqOfNodes 
-    |>  Seq.map (fun (TemporalValue x) -> 
-                        let ambPressure = x.Value  
-                                          |> depthAmbientPressure 
-                        let externalN2Pressure = externalN2Pressure true 0.21 ambPressure 
-                        {|Ambient = ambPressure ; N2 =  externalN2Pressure|}  )
+let myAmbient , myN2 = 
+    let (myAmbient' , myN2' ) = 
+        seqOfNodes 
+        |>  Seq.map (fun (TemporalValue x) -> 
+                            let ambPressure = x.Value  
+                                              |> depth2AmbientPressure 
+                            let externalN2Pressure = externalN2Pressure true 0.21 ambPressure 
+                            (ambPressure , externalN2Pressure ) )
+        |> Seq.toArray
+        |> Array.unzip
+    (myAmbient' |> Array.toSeq ,  myN2'  |> Array.toSeq)
 
-let larsExternalPressFile = CsvProvider<  @"C:\Users\glddm\Desktop\ExternalPressures.csv" >.GetSample()
+let larsExternalPressFile = CsvProvider<  @"C:\Users\glddm\Desktop\ExternalPressures.csv" , HasHeaders = false>.GetSample()
 
-let (larsN2 , larsAmbient)  = larsExternalPressFile.Rows
-                              |> Seq.map (fun x-> (x.N2 , x.Ambient) )
-                              |> Seq.toArray
-                              |> Array.unzip
+let larsData  = larsExternalPressFile.Rows
+let larsN2 = larsData |>    Seq.map (fun x -> x.Column1 |> float )
+let larsAmbient = larsData |>  Seq.map (fun x -> x.Column2 |> float )   
+
+let absValueDiff  (x:seq<float>) y = Seq.map2 (-) x y 
+                                     |> Seq.map abs
+
+let ambientDiff = absValueDiff larsAmbient myAmbient  
+                  |> Seq.max
+
+let n2Diff      = absValueDiff  larsN2 myN2
+                  |> Seq.max
+
+let printScreen message (variable:float) = 
+    message + " " + variable.ToString("E10")
+
+ambientDiff 
+|> printScreen "Maximum Error on Ambient "
+
+n2Diff 
+|> printScreen "Maxim Error on N2 Ambient"
 
 
-//let (|Odd|Even|) (num , aParam) = 
-//    if ((num+aParam) % 2 = 0 ) then 
-//        Even
-//    else  Odd
+let myLEModelParams = USN93_EXP.getLEOptimalModelParamsSettingDeltaT 0.1
+let ambientPressure = depth2AmbientPressure 0.0
+let ambientCondition = depth2AmbientCondition myLEModelParams 0.0
 
-//let testActivePattern aNum aParam= 
-//    match (aNum,  aParam) with
-//    | Odd -> printfn "Odd"
-//    | Even -> printfn "Even"
+let initState = USN93_EXP.initStateFromInitDepth  myLEModelParams 0.0
+
+let getNewState actualState nextDepth =  giveNextStateForThisModelNDepthNTimeNode   ModelDefinition.model
