@@ -32,6 +32,8 @@ let main _ =
                           discretizationTimeForLegs initDepth
                            
     let stateSeq , nodeSeq = initialState
+    Console.WriteLine(stateSeq |> Seq.length)
+    Console.WriteLine(nodeSeq |> Seq.length)
     Console.WriteLine (stateSeq |> Seq.last)
     Console.WriteLine (nodeSeq |> Seq.last)
 

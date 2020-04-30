@@ -40,11 +40,14 @@ let myAmbient , myN2 =
         |> Array.unzip
     (myAmbient' |> Array.toSeq ,  myN2'  |> Array.toSeq)
 
-let larsExternalPressFile = CsvProvider<  @"C:\Users\glddm\Desktop\ExternalPressures.csv" , HasHeaders = false>.GetSample()
+let larsExternalPressFile = CsvProvider<  @"C:\Users\glddm\Desktop\LarsResults.csv" , HasHeaders = false>.GetSample()
 
 let larsData  = larsExternalPressFile.Rows
 let larsN2 = larsData |>    Seq.map (fun x -> x.Column1 |> float )
 let larsAmbient = larsData |>  Seq.map (fun x -> x.Column2 |> float )   
+let larsTissues = larsData |> Seq.map (fun x -> [| x.Column3 |> float  ; x.Column4 |> float ; x.Column5 |> float |] )
+
+let seqOfTissueTensions = seqOfStates |> Seq.map leStatus2TissueTension |> Seq.skip 1  // skip initial state to confront with Lars'results
 
 let absValueDiff  (x:seq<float>) y = Seq.map2 (-) x y 
                                      |> Seq.map abs
@@ -72,3 +75,10 @@ let ambientCondition = depth2AmbientCondition myLEModelParams 0.0
 let initState = USN93_EXP.initStateFromInitDepth  myLEModelParams 0.0
 
 let getNewState actualState nextDepth =  giveNextStateForThisModelNDepthNTimeNode   ModelDefinition.model
+
+let tissueTensionDiff = Seq.map2 (fun x y ->  x|>
+                                              Array.map2 (-) y 
+                                              |> Array.map ( fun x -> x**2.0) 
+                                              |> Array.sum ) larsTissues seqOfTissueTensions
+                        |> Seq.map2 (fun y x  -> (x/ (y |> Seq.min)  ) * 100.0) larsTissues  
+                        
