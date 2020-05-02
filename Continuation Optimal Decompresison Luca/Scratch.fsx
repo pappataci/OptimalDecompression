@@ -81,4 +81,8 @@ let tissueTensionDiff = Seq.map2 (fun x y ->  x|>
                                               |> Array.map ( fun x -> x**2.0) 
                                               |> Array.sum ) larsTissues seqOfTissueTensions
                         |> Seq.map2 (fun y x  -> (x/ (y |> Seq.min)  ) * 100.0) larsTissues  
-                        
+                        |> Seq.max
+
+tissueTensionDiff
+|>  printScreen "Max norm error on Tissue Tensions"
+  

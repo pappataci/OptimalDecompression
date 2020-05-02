@@ -21,12 +21,17 @@ type ShortTermRewardEstimator<'S,'A> = { InstantaneousReward : InstantaneousRewa
 
 type ExtraInfoLogger<'S,'A,'I> = | InfoLogger of (State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
 
-let defineEnvironment<'S,'A ,'I> (Model model:Model<'S,'A>) 
+type ModelEvalutionParameters<'P> = | Parameters of 'P
+
+type ModelEvaluator<'S,'A,'P> = | ModelDefiner of (ModelEvalutionParameters<'P> ->  Model<'S, 'A> )
+
+let defineEnvironment<'S, 'P ,'I , 'A> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  modelCreationParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward;  TerminalReward = finalReward} 
     (isTerminalState: TerminalStatePredicate<'S>) 
     (InfoLogger extraInfoCreator : ExtraInfoLogger<'S,'A,'I> ) = 
 
     let innerEnvinromentComputation ( actualState: State<'S> ) ( action:Action<'A> )  = 
+        let (Model model) = modelCreator modelCreationParams      
         let nextState = model actualState action
         let transitionReward = instantaneousReward actualState action nextState
         let isTerminalState = isTerminalState nextState

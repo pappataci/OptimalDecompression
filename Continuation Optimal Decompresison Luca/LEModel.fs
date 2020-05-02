@@ -114,7 +114,6 @@ module LEModel  =
         leState.TissueTensions
         |> Array.map (fun (Tension x ) -> x)
         
-
 module USN93_EXP = 
     open InitDescent
     let crossover               = [|     9.9999999999E+09   ;     2.9589519286E-02    ;      9.9999999999E+09    |]

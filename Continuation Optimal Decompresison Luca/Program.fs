@@ -25,18 +25,14 @@ let main _ =
 
     let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
 
-    let discretizationTimeForLegs = 0.1 
+    let discretizationTimeForLegs = ModelParams.integrationTime
 
     let initialState = ModelDefinition.model
                        |> getInitialStateWithTheseParams descentParameters 
                           discretizationTimeForLegs initDepth
-                           
-    let stateSeq , nodeSeq = initialState
-    Console.WriteLine(stateSeq |> Seq.length)
-    Console.WriteLine(nodeSeq |> Seq.length)
-    Console.WriteLine (stateSeq |> Seq.last)
-    Console.WriteLine (nodeSeq |> Seq.last)
+    Console.WriteLine(initialState)                     
 
+    
 
     pressAnyKey()
     0 // return an integer exit code

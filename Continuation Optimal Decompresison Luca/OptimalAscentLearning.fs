@@ -74,7 +74,8 @@ module GetStateAfterFixedLegImmersion =
         seqOfNodes
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelThroughNodesNGetAllStates initState model
-        , seqOfNodes
+        |> Seq.last
+        //, seqOfNodes
 
 
 module EnvironmentDefinition = 
