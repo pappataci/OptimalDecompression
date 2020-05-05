@@ -27,9 +27,25 @@ let main _ =
 
     let discretizationTimeForLegs = ModelParams.integrationTime
 
-    let initialState = ModelDefinition.model
+    let initialState = ModelDefinition.integrationModel
                        |> getInitialStateWithTheseParams descentParameters 
                           discretizationTimeForLegs initDepth
+
+
+    // annotation for actual implementation
+
+    
+    
+
+    let terminalRewardParameters  = 1.0e3
+
+    let defineTerminalRewardFunction (penalty: float ) (State finalState:State<LEStatus>)  = 
+        
+        
+        0.0
+
+    //let terminalRewardFunction = defineTerminalRewardFunction terminalRewardPenalty
+
     Console.WriteLine(initialState)                     
 
     

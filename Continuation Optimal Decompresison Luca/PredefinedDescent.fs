@@ -61,7 +61,7 @@ module PredefinedDescent =
         seq { yield! descendingSequenceOfTemporalDepths 
               yield! constantDepthAtMaxDepth } // concatenate the two sequences
 
-    let seqDepthInTimeToSeqDepths seqDepthInTime = 
+    let private seqDepthInTimeToSeqDepths seqDepthInTime = 
         seqDepthInTime
         |> Seq.map ( fun (TemporalValue x ) -> x.Value )
 

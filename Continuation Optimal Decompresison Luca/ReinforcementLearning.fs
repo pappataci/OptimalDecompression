@@ -14,20 +14,20 @@ type Environment<'S, 'A ,'I> =    |Environment of (State<'S> -> Action<'A> -> En
 
 type InstantaneousReward<'S,'A> = |InstantaneousReward of ( State<'S> -> Action<'A> -> State<'S> -> float )
 
-type TerminalStatePredicate<'S> = State<'S> -> bool
+type TerminalStatePredicate<'S> = | StatePredicate of (State<'S> -> bool)
 
 type ShortTermRewardEstimator<'S,'A> = { InstantaneousReward : InstantaneousReward<'S,'A>
                                          TerminalReward      : (State<'S> -> float)     }
 
 type ExtraInfoLogger<'S,'A,'I> = | InfoLogger of (State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
 
-type ModelEvalutionParameters<'P> = | Parameters of 'P
+type ModelEvalutionParameters<'P> = | Parameters of 'P 
 
 type ModelEvaluator<'S,'A,'P> = | ModelDefiner of (ModelEvalutionParameters<'P> ->  Model<'S, 'A> )
 
-let defineEnvironment<'S, 'P ,'I , 'A> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  modelCreationParams ) 
+let defineEnvironment<'S, 'P , 'I , 'A> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  modelCreationParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward;  TerminalReward = finalReward} 
-    (isTerminalState: TerminalStatePredicate<'S>) 
+    (StatePredicate isTerminalState: TerminalStatePredicate<'S>) 
     (InfoLogger extraInfoCreator : ExtraInfoLogger<'S,'A,'I> ) = 
 
     let innerEnvinromentComputation ( actualState: State<'S> ) ( action:Action<'A> )  = 

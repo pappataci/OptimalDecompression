@@ -80,10 +80,27 @@ module LEModel  =
         {Time = actualDepthAndTimeValue.Time + deltaTime ; Value = nextDepth}
         |> TemporalValue
 
-    let getNextDepth  (integrationTime:float) (actualLEStatus:LEStatus) (depthRate:float) = 
+    // We assume the model is always expressed in terms of depth. So that next action is expressing the final depth.
+    // For example suppose actual depth is 300 ft and we want to go to 100 ft with multiple 10; then target will be 100
+    // and this function will create subtargets of 30 ft (300/10) since every substep is a tenth of the original target.
+    // The function also takes care of providing non negative targets (we cannot go aboe the sea level).
+    
+    let defineModelOnSlowerDecisionTime (subDividedNextActionIntoSubActions: State<'S> -> Action<'A> -> seq<Action<'A>>) 
+        (Model initialModel:Model<'S,'A>) = 
+        
+        let nextStepFunction (initState: State<'S>) ( elementaryAction: Action<'A>) = 
 
+            subDividedNextActionIntoSubActions initState elementaryAction 
+            |> Seq.fold initialModel initState
+
+        nextStepFunction |> Model
+
+    let leState2Depth (actualLEStatus:LEStatus) = 
         let (TemporalValue actualDepthInTime) = actualLEStatus.LEPhysics.CurrentDepthAndTime
-        let actualDepth = actualDepthInTime.Value
+        actualDepthInTime.Value
+
+    let getNextDepth  (integrationTime:float) (actualLEStatus:LEStatus) (depthRate:float) = 
+        let actualDepth = actualLEStatus |>  leState2Depth
         actualDepth + depthRate * integrationTime
 
     let modelTransitionFunction (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (nextDepth:float)  =
@@ -113,6 +130,13 @@ module LEModel  =
     let leStatus2TissueTension (State {LEPhysics = leState} )  : float[] = 
         leState.TissueTensions
         |> Array.map (fun (Tension x ) -> x)
+
+    let leStatus2ModelTime ( State { LEPhysics = leState }) : float = 
+        let (TemporalValue temporalValueInfo) =  leState.CurrentDepthAndTime
+        temporalValueInfo.Time
+
+    let leStatus2Risk ( State { Risk = leRiskInfo}) : float = 
+        leRiskInfo.AccruedRisk
         
 module USN93_EXP = 
     open InitDescent

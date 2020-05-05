@@ -12,16 +12,83 @@ type DescentParams = { DescentRate  : float
 let pDCSToRisk pDCS = 
     -log(1.0-pDCS)
 
+[<AutoOpen>]
 module ModelDefinition =
     
+    type TemporalParams = { IntegrationTime                   : float  
+                            ControlToIntegrationTimeRatio     : int }
+
     let integrationTime = 0.1 // minute
 
     let leParamsWithIntegrationTime = integrationTime
                                       |> USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
      
     let getNextState = modelTransitionFunction leParamsWithIntegrationTime
-    let model = fromValueFuncToStateFunc getNextState
+    let integrationModel = fromValueFuncToStateFunc getNextState
 
+    let targetNodesPartitionFcnDefinition (numberOfActions: int) (State initialState:State<LEStatus> ) 
+        (Control targetDepth: Action<float>)  =
+
+        let initDepth = initialState |>  leState2Depth
+        let depthIncrement = targetDepth 
+                             |> max 0.0
+                             |> (*) (   1./(float numberOfActions) ) 
+                             
+        Seq.init numberOfActions (fun idx ->  
+                                        let actualIncrement = float (idx + 1 ) * depthIncrement 
+                                        initDepth + actualIncrement
+                                        |> Control)
+    
+    let actionToIntegrationTimeRation = 10
+    
+    let decisionalModel = integrationModel 
+                         |> defineModelOnSlowerDecisionTime (targetNodesPartitionFcnDefinition actionToIntegrationTimeRation)  
+    
+    type LEModelEnvParams =  { TimeParams                            : TemporalParams 
+                               LEParamsGeneratorFcn                  : float -> LEModelParams 
+                               StateTransitionGeneratorFcn           : LEModelParams -> LEStatus -> float -> LEStatus 
+                               ModelIntegration2ModelActionConverter : int -> State<LEStatus> -> Action<float> -> seq<Action<float>> }
+
+    let getModelBuilderForEnvironment(modelParams : LEModelEnvParams) = 
+
+        let defineDecisionalModel ( Parameters ( {TimeParams  =  timeParams
+                                                  LEParamsGeneratorFcn = leModelParamsGenerator
+                                                  StateTransitionGeneratorFcn = stateTransitionGeneratorFcn
+                                                  ModelIntegration2ModelActionConverter = integration2ActionModelConverter} ) ) = 
+            timeParams.IntegrationTime
+            |> leModelParamsGenerator
+            |> stateTransitionGeneratorFcn 
+            |> fromValueFuncToStateFunc
+            |> defineModelOnSlowerDecisionTime ( integration2ActionModelConverter timeParams.ControlToIntegrationTimeRatio)
+    
+        ( defineDecisionalModel |> ModelDefiner , 
+          modelParams |> Parameters ) 
+
+[<AutoOpen>]
+module RewardDefinition = 
+    
+    type TerminalRewardParameters = { MaximumRiskBound        : float 
+                                      PenaltyForExceedingRisk : float   }
+
+    let shortTermNonTerminalReward initState (_ :Action<float>) nextState = 
+        let initTime = leStatus2ModelTime initState
+        let finalTime = leStatus2ModelTime nextState
+        initTime - finalTime // it is minus duration: time length is a cost 
+
+    let defineTerminalRewardFunction (penaltyParams:TerminalRewardParameters) ( finalState:State<LEStatus>)  = 
+         match   ( leStatus2Risk finalState >= penaltyParams.MaximumRiskBound ) with 
+         | true -> -abs(penaltyParams.PenaltyForExceedingRisk) // penalty is strictly non positive
+         | _ -> 0.0
+
+    let defineShortTermRewardEstimator (shortTermNonTerminalRewardFcn:State<LEStatus> -> Action<float> -> State<LEStatus> -> float) 
+                                       (penaltyParams:TerminalRewardParameters) =
+
+        {InstantaneousReward = InstantaneousReward shortTermNonTerminalRewardFcn
+         TerminalReward      =  defineTerminalRewardFunction penaltyParams}
+     
+//type TerminalStatePredicate<'S> = | StatePredicate of (State<'S> -> bool)    
+
+    //let isTerminalState 
 
 [<AutoOpen>]
 module GetStateAfterFixedLegImmersion = 
@@ -75,17 +142,22 @@ module GetStateAfterFixedLegImmersion =
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelThroughNodesNGetAllStates initState model
         |> Seq.last
-        //, seqOfNodes
-
 
 module EnvironmentDefinition = 
+    
     let nullLogger = InfoLogger (fun (_,_,_,_,_) -> None ) 
+    let model = ModelDefinition.integrationModel
+    
+    // to be refined with only interesting parameters ( e.g.: TimeParams ) 
+    let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
+                                              ControlToIntegrationTimeRatio    = 10  } 
+                               LEParamsGeneratorFcn = USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
+                               StateTransitionGeneratorFcn = modelTransitionFunction 
+                               ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition }
 
+    
 
-
-//let testModel (Model model:Model<LEStatus, float> ) (  initState: State<LEStatus>) = 
-//    let test = model initState
-//    test
+        
 
 
 // PYTHON PART
