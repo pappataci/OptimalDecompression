@@ -12,26 +12,31 @@ type EnvironmentResponse<'S ,'I > = { NextState         : State<'S>
 
 type Environment<'S, 'A ,'I> =    |Environment of (State<'S> -> Action<'A> -> EnvironmentResponse<'S ,'I>)
 
-type InstantaneousReward<'S,'A> = |InstantaneousReward of ( State<'S> -> Action<'A> -> State<'S> -> float )
+type EnvironmentParameters<'P> = | Parameters of 'P 
 
-type TerminalStatePredicate<'S> = | StatePredicate of (State<'S> -> bool)
+type ExtraInfoLogger<'S,'A,'I ,'P> = | InfoLogger of (EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
 
-type ShortTermRewardEstimator<'S,'A> = { InstantaneousReward : InstantaneousReward<'S,'A>
-                                         TerminalReward      : (State<'S> -> float)     }
+type TerminalStatePredicate<'S , 'P> = |   StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
 
-type ExtraInfoLogger<'S,'A,'I> = | InfoLogger of (State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
+type InstantaneousReward<'S,'A ,'P > = |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
 
-type ModelEvalutionParameters<'P> = | Parameters of 'P 
+type ShortTermRewardEstimator<'S,'A ,'P> = { InstantaneousReward : InstantaneousReward<'S,'A,'P>
+                                             TerminalReward      : EnvironmentParameters<'P> -> State<'S> -> float      }
 
-type ModelEvaluator<'S,'A,'P> = | ModelDefiner of (ModelEvalutionParameters<'P> ->  Model<'S, 'A> )
+type ModelEvaluator<'S,'A,'P> = | ModelDefiner of (EnvironmentParameters<'P> ->  Model<'S, 'A> )
 
-let defineEnvironment<'S, 'P , 'I , 'A> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  modelCreationParams ) 
-    {InstantaneousReward   =  InstantaneousReward instantaneousReward;  TerminalReward = finalReward} 
-    (StatePredicate isTerminalState: TerminalStatePredicate<'S>) 
-    (InfoLogger extraInfoCreator : ExtraInfoLogger<'S,'A,'I> ) = 
+let defineEnvironment<'S, 'P , 'I , 'A> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
+    {InstantaneousReward   =  InstantaneousReward instantaneousReward';  TerminalReward = finalReward'} 
+    (StatePredicate isTerminalState': TerminalStatePredicate<'S ,'P>) 
+    (InfoLogger extraInfoCreator'  : ExtraInfoLogger<'S,'A,'I ,'P> ) = 
+
+    let instantaneousReward = instantaneousReward'  environmentParams
+    let isTerminalState = isTerminalState' environmentParams
+    let finalReward     = finalReward' environmentParams
+    let extraInfoCreator = extraInfoCreator' environmentParams
 
     let innerEnvinromentComputation ( actualState: State<'S> ) ( action:Action<'A> )  = 
-        let (Model model) = modelCreator modelCreationParams      
+        let (Model model) = modelCreator environmentParams      
         let nextState = model actualState action
         let transitionReward = instantaneousReward actualState action nextState
         let isTerminalState = isTerminalState nextState
@@ -80,7 +85,6 @@ let getMarchingCountedLazyComputation (model: Model<'S,'A>) (initialState :State
     sequenceOfActions
     |> Seq.scan getNextStateNIncreaseCounter (initialState , 1)
 
-    
 let whileEagerComputation maxIterations statePredicate (initialValue:'T)  (f:'T->'T) =
     let rec loop (acc, i) =
         if (i < maxIterations) && (statePredicate acc) then   

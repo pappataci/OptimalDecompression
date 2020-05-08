@@ -23,3 +23,8 @@ module Gas
     let externalN2Pressure (bThalmannError:bool) fractionO2 ambientPressure  = 
          // deduct also dPACO2 from ambient pressure if Thalmann error is set to true
         (ambientPressure - dPH2O - dPACO2 * (System.Convert.ToDouble  bThalmannError) ) * (1.0 - fractionO2)
+
+    let depth2N2Pressure bThalmanError fractionO2 depth =
+        depth 
+        |> depth2AmbientPressure
+        |> externalN2Pressure bThalmanError fractionO2

@@ -16,17 +16,27 @@ let pDCSToRisk pDCS =
 module ModelDefinition =
     
     type TemporalParams = { IntegrationTime                   : float  
-                            ControlToIntegrationTimeRatio     : int }
+                            ControlToIntegrationTimeRatio     : int 
+                            MaximumFinalTime                  : float }
 
-    let integrationTime = 0.1 // minute
+    type TerminalRewardParameters = { MaximumRiskBound        : float 
+                                      PenaltyForExceedingRisk : float   }
 
-    let leParamsWithIntegrationTime = integrationTime
-                                      |> USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
+    type LEModelEnvParams =  { TimeParams                            : TemporalParams 
+                               LEParamsGeneratorFcn                  : float -> LEModelParams 
+                               StateTransitionGeneratorFcn           : LEModelParams -> LEStatus -> float -> LEStatus 
+                               ModelIntegration2ModelActionConverter : int -> State<LEStatus> -> Action<float> -> seq<Action<float>> 
+                               RewardParameters                      : TerminalRewardParameters }
+
+    //let integrationTime = 0.1 // minute
+
+    //let leParamsWithIntegrationTime = integrationTime
+    //                                  |> USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
      
-    let getNextState = modelTransitionFunction leParamsWithIntegrationTime
-    let integrationModel = fromValueFuncToStateFunc getNextState
+    //let getNextState = modelTransitionFunction leParamsWithIntegrationTime
+    //let integrationModel = fromValueFuncToStateFunc getNextState
 
-    let targetNodesPartitionFcnDefinition (numberOfActions: int) (State initialState:State<LEStatus> ) 
+    let targetNodesPartitionFcnDefinition (numberOfActions: int) (  initialState:State<LEStatus> ) 
         (Control targetDepth: Action<float>)  =
 
         let initDepth = initialState |>  leState2Depth
@@ -41,13 +51,10 @@ module ModelDefinition =
     
     let actionToIntegrationTimeRation = 10
     
-    let decisionalModel = integrationModel 
-                         |> defineModelOnSlowerDecisionTime (targetNodesPartitionFcnDefinition actionToIntegrationTimeRation)  
+    //let decisionalModel = integrationModel 
+    //                     |> defineModelOnSlowerDecisionTime (targetNodesPartitionFcnDefinition actionToIntegrationTimeRation)  
     
-    type LEModelEnvParams =  { TimeParams                            : TemporalParams 
-                               LEParamsGeneratorFcn                  : float -> LEModelParams 
-                               StateTransitionGeneratorFcn           : LEModelParams -> LEStatus -> float -> LEStatus 
-                               ModelIntegration2ModelActionConverter : int -> State<LEStatus> -> Action<float> -> seq<Action<float>> }
+
 
     let getModelBuilderForEnvironment(modelParams : LEModelEnvParams) = 
 
@@ -64,31 +71,48 @@ module ModelDefinition =
         ( defineDecisionalModel |> ModelDefiner , 
           modelParams |> Parameters ) 
 
+
 [<AutoOpen>]
 module RewardDefinition = 
     
-    type TerminalRewardParameters = { MaximumRiskBound        : float 
-                                      PenaltyForExceedingRisk : float   }
-
-    let shortTermNonTerminalReward initState (_ :Action<float>) nextState = 
+    let shortTermRewardOnTimeDifference (_:EnvironmentParameters<LEModelEnvParams>) initState (_ :Action<float>) nextState = 
         let initTime = leStatus2ModelTime initState
         let finalTime = leStatus2ModelTime nextState
         initTime - finalTime // it is minus duration: time length is a cost 
 
-    let defineTerminalRewardFunction (penaltyParams:TerminalRewardParameters) ( finalState:State<LEStatus>)  = 
+    let penaltyIfMaximumRiskIsExceeded (Parameters penaltyParams':EnvironmentParameters<LEModelEnvParams>) ( finalState:State<LEStatus>)  = 
+         let penaltyParams = penaltyParams'.RewardParameters
          match   ( leStatus2Risk finalState >= penaltyParams.MaximumRiskBound ) with 
          | true -> -abs(penaltyParams.PenaltyForExceedingRisk) // penalty is strictly non positive
          | _ -> 0.0
 
-    let defineShortTermRewardEstimator (shortTermNonTerminalRewardFcn:State<LEStatus> -> Action<float> -> State<LEStatus> -> float) 
-                                       (penaltyParams:TerminalRewardParameters) =
+    let defineShortTermRewardEstimator ( shortTermNonTerminalRewardFcn: 
+                                            EnvironmentParameters<LEModelEnvParams> -> State<LEStatus> -> Action<float> -> State<LEStatus> -> float ) 
+                                        terminalRewardFcn   =
 
         {InstantaneousReward = InstantaneousReward shortTermNonTerminalRewardFcn
-         TerminalReward      =  defineTerminalRewardFunction penaltyParams}
+         TerminalReward      =  terminalRewardFcn  }
      
-//type TerminalStatePredicate<'S> = | StatePredicate of (State<'S> -> bool)    
+[<AutoOpen>]
+module FinalStateIdentification = 
+    
 
-    //let isTerminalState 
+    let defineFinalStatePredicate (Parameters envParams : EnvironmentParameters<LEModelEnvParams>)  =
+        
+        let modelParams  = envParams.TimeParams.IntegrationTime |> envParams.LEParamsGeneratorFcn
+        let surfaceDepth = 0.0
+        let surfaceN2Pressure = surfaceDepth 
+                                |> depth2N2Pressure modelParams.ThalmanErrorHypothesis modelParams.FractionO2 
+        let maximumTolerableRisk = envParams.RewardParameters.MaximumRiskBound
+        let maximumSimulationTime = envParams.TimeParams.MaximumFinalTime
+
+        let isFinalStatePredicate (    actualState: State<LEStatus> ) : bool = 
+            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure
+            let simulationTime = leStatus2ModelTime actualState 
+            let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
+            let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
+            ( isEmergedAndNotAccruingRisk ||  hasExceededMaximumTime || hasExceededMaximumRisk ) 
+        isFinalStatePredicate
 
 [<AutoOpen>]
 module GetStateAfterFixedLegImmersion = 
@@ -142,22 +166,6 @@ module GetStateAfterFixedLegImmersion =
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelThroughNodesNGetAllStates initState model
         |> Seq.last
-
-module EnvironmentDefinition = 
-    
-    let nullLogger = InfoLogger (fun (_,_,_,_,_) -> None ) 
-    let model = ModelDefinition.integrationModel
-    
-    // to be refined with only interesting parameters ( e.g.: TimeParams ) 
-    let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
-                                              ControlToIntegrationTimeRatio    = 10  } 
-                               LEParamsGeneratorFcn = USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
-                               StateTransitionGeneratorFcn = modelTransitionFunction 
-                               ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition }
-
-    
-
-        
 
 
 // PYTHON PART

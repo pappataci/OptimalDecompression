@@ -95,11 +95,11 @@ module LEModel  =
 
         nextStepFunction |> Model
 
-    let leState2Depth (actualLEStatus:LEStatus) = 
+    let leState2Depth (State actualLEStatus: State<LEStatus>) = 
         let (TemporalValue actualDepthInTime) = actualLEStatus.LEPhysics.CurrentDepthAndTime
         actualDepthInTime.Value
 
-    let getNextDepth  (integrationTime:float) (actualLEStatus:LEStatus) (depthRate:float) = 
+    let getNextDepth  (integrationTime:float) (  actualLEStatus:State<LEStatus>) (depthRate:float) = 
         let actualDepth = actualLEStatus |>  leState2Depth
         actualDepth + depthRate * integrationTime
 
@@ -127,16 +127,31 @@ module LEModel  =
          Risk     = { AccruedRisk     = updateAccruedRisk
                       IntegratedRisks =  integratedRisks  }  }
        
-    let leStatus2TissueTension (State {LEPhysics = leState} )  : float[] = 
+    let leStatus2TissueTension (State {LEPhysics = leState} )  = 
         leState.TissueTensions
         |> Array.map (fun (Tension x ) -> x)
 
-    let leStatus2ModelTime ( State { LEPhysics = leState }) : float = 
+    let leStatus2ModelTime ( State { LEPhysics = leState })  = 
         let (TemporalValue temporalValueInfo) =  leState.CurrentDepthAndTime
         temporalValueInfo.Time
 
-    let leStatus2Risk ( State { Risk = leRiskInfo}) : float = 
+    let leStatus2Risk ( State { Risk = leRiskInfo}) = 
         leRiskInfo.AccruedRisk
+
+    let areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualTissueTensions  = 
+        actualTissueTensions
+        |> Array.map (fun tissueTension ->  (tissueTension - surfaceN2Tension) <= 1.0e-3 )
+        |> Array.reduce (&&)
+
+    let leStatus2IsEmergedAndNotAccruingRisk ( actualState: State<LEStatus> ) surfaceN2Tension = 
+        let actualDepth = actualState |>  leState2Depth
+        let tissueTensionsAreNotRiskSource = actualState 
+                                             |> leStatus2TissueTension 
+                                             |> areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension
+        
+        let weAreAtSurfaceLevel = abs(actualDepth) < 1.e-3
+
+        tissueTensionsAreNotRiskSource && weAreAtSurfaceLevel
         
 module USN93_EXP = 
     open InitDescent

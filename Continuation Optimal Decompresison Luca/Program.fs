@@ -19,7 +19,21 @@ module ModelParams =
 
 [<EntryPoint>]
 let main _ = 
-    
+        
+    let maximumRiskBound = pDCSToRisk 3.0e-2
+
+    let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
+                                              ControlToIntegrationTimeRatio    = 10  
+                                              MaximumFinalTime                 = 5000.0 }  // minute 
+                               LEParamsGeneratorFcn = USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
+                               StateTransitionGeneratorFcn = modelTransitionFunction 
+                               ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
+                               RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
+                                                                         PenaltyForExceedingRisk =  5000.0 }  }
+
+    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  penaltyIfMaximumRiskIsExceeded
+    let statePredicate = StatePredicate defineFinalStatePredicate
+
     // init leg definition
     let initDepth = 0.0
 
@@ -27,9 +41,9 @@ let main _ =
 
     let discretizationTimeForLegs = ModelParams.integrationTime
 
-    let initialState = ModelDefinition.integrationModel
-                       |> getInitialStateWithTheseParams descentParameters 
-                          discretizationTimeForLegs initDepth
+    //let initialState = ModelDefinition.integrationModel
+    //                   |> getInitialStateWithTheseParams descentParameters 
+    //                      discretizationTimeForLegs initDepth
 
 
     // annotation for actual implementation
@@ -39,14 +53,11 @@ let main _ =
 
     let terminalRewardParameters  = 1.0e3
 
-    let defineTerminalRewardFunction (penalty: float ) (State finalState:State<LEStatus>)  = 
-        
-        
-        0.0
+  
 
     //let terminalRewardFunction = defineTerminalRewardFunction terminalRewardPenalty
 
-    Console.WriteLine(initialState)                     
+    //Console.WriteLine(initialState)                     
 
     
 
