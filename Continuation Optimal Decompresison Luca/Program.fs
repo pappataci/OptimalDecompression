@@ -25,41 +25,37 @@ let main _ =
     let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
                                               ControlToIntegrationTimeRatio    = 10  
                                               MaximumFinalTime                 = 5000.0 }  // minute 
-                               LEParamsGeneratorFcn = USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
+                               LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
                                StateTransitionGeneratorFcn = modelTransitionFunction 
                                ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
                                RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
                                                                          PenaltyForExceedingRisk =  5000.0 }  }
-
+    
+    let modelsDefinition = defEnvironmentModels |> ModelDefiner
     let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  penaltyIfMaximumRiskIsExceeded
-    let statePredicate = StatePredicate defineFinalStatePredicate
+    let terminalStatePredicate = StatePredicate defineFinalStatePredicate
+    let infoLogger = nullLogger 
 
-    // init leg definition
-    let initDepth = 0.0
+    let missionParameters = { DescentRate       = 60.0     // ft/min
+                              MaximumDepth      = 120.0    // ft 
+                              BottomTime        = 30.0     // min
+                              LegDiscreteTime   = 0.1      // min 
+                              InitialDepth      = 0.0 }    // ft
+                            |> System2InitStateParams
 
-    let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
-
-    let discretizationTimeForLegs = ModelParams.integrationTime
-
-    //let initialState = ModelDefinition.integrationModel
-    //                   |> getInitialStateWithTheseParams descentParameters 
-    //                      discretizationTimeForLegs initDepth
-
-
-    // annotation for actual implementation
-
+    let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
+    let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+                                                                                 shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
     
+    Console.WriteLine(initState)
+    let envResponse = environment initState ( Control  90.0 ) 
+    Console.WriteLine(envResponse)
+
+    let integrationModel  action (s:State<LEStatus> )  = 
+        integrationModel' s action
     
-
-    let terminalRewardParameters  = 1.0e3
-
-  
-
-    //let terminalRewardFunction = defineTerminalRewardFunction terminalRewardPenalty
-
-    //Console.WriteLine(initialState)                     
-
-    
-
+    let seqOfDepths = [| 117.0 .. -3.0 .. 72.0 |] |> Seq.ofArray |> Seq.map Control
+    let finalState = Seq.fold integrationModel' initState seqOfDepths
+    finalState |> Console.WriteLine
     pressAnyKey()
     0 // return an integer exit code

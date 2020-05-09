@@ -155,6 +155,7 @@ module LEModel  =
         
 module USN93_EXP = 
     open InitDescent
+
     let crossover               = [|     9.9999999999E+09   ;     2.9589519286E-02    ;      9.9999999999E+09    |]
     let rates                   = [| 1.0 / 1.7727676636E+00 ; 1.0 / 6.0111598753E+01  ;  1.0 / 5.1128788835E+02  |]
     let thalmanErrorHypothesis  = true                           

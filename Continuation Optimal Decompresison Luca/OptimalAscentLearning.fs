@@ -5,16 +5,18 @@ open ReinforcementLearning
 open LEModel
 open InitDescent
 
-type DescentParams = { DescentRate  : float
-                       MaximumDepth : float
-                       BottomTime   : float }
+type DescentParams = { DescentRate      : float
+                       MaximumDepth     : float
+                       BottomTime       : float
+                       LegDiscreteTime  : float
+                       InitialDepth     : float  }
 
 let pDCSToRisk pDCS = 
     -log(1.0-pDCS)
 
 [<AutoOpen>]
 module ModelDefinition =
-    
+
     type TemporalParams = { IntegrationTime                   : float  
                             ControlToIntegrationTimeRatio     : int 
                             MaximumFinalTime                  : float }
@@ -28,49 +30,36 @@ module ModelDefinition =
                                ModelIntegration2ModelActionConverter : int -> State<LEStatus> -> Action<float> -> seq<Action<float>> 
                                RewardParameters                      : TerminalRewardParameters }
 
-    //let integrationTime = 0.1 // minute
-
-    //let leParamsWithIntegrationTime = integrationTime
-    //                                  |> USN93_EXP.getLEOptimalModelParamsSettingDeltaT 
-     
-    //let getNextState = modelTransitionFunction leParamsWithIntegrationTime
-    //let integrationModel = fromValueFuncToStateFunc getNextState
-
     let targetNodesPartitionFcnDefinition (numberOfActions: int) (  initialState:State<LEStatus> ) 
         (Control targetDepth: Action<float>)  =
 
         let initDepth = initialState |>  leState2Depth
         let depthIncrement = targetDepth 
                              |> max 0.0
+                             |> (+) -initDepth
                              |> (*) (   1./(float numberOfActions) ) 
                              
         Seq.init numberOfActions (fun idx ->  
                                         let actualIncrement = float (idx + 1 ) * depthIncrement 
                                         initDepth + actualIncrement
                                         |> Control)
-    
-    let actionToIntegrationTimeRation = 10
-    
-    //let decisionalModel = integrationModel 
-    //                     |> defineModelOnSlowerDecisionTime (targetNodesPartitionFcnDefinition actionToIntegrationTimeRation)  
-    
 
+    let defEnvironmentModels ( Parameters ( { TimeParams  =  timeParams
+                                              LEParamsGeneratorFcn = leModelParamsGenerator
+                                              StateTransitionGeneratorFcn = stateTransitionGeneratorFcn
+                                              ModelIntegration2ModelActionConverter = integration2ActionModelConverter} ) ) = 
+        let integrationModel = timeParams.IntegrationTime
+                                |> leModelParamsGenerator
+                                |> stateTransitionGeneratorFcn
+                                |> fromValueFuncToStateFunc
 
-    let getModelBuilderForEnvironment(modelParams : LEModelEnvParams) = 
+        let actionModel     = integrationModel
+                              |> defineModelOnSlowerDecisionTime ( integration2ActionModelConverter timeParams.ControlToIntegrationTimeRatio)
+        
+        {   IntegrationModel = integrationModel 
+            ActionModel      = actionModel }
 
-        let defineDecisionalModel ( Parameters ( {TimeParams  =  timeParams
-                                                  LEParamsGeneratorFcn = leModelParamsGenerator
-                                                  StateTransitionGeneratorFcn = stateTransitionGeneratorFcn
-                                                  ModelIntegration2ModelActionConverter = integration2ActionModelConverter} ) ) = 
-            timeParams.IntegrationTime
-            |> leModelParamsGenerator
-            |> stateTransitionGeneratorFcn 
-            |> fromValueFuncToStateFunc
-            |> defineModelOnSlowerDecisionTime ( integration2ActionModelConverter timeParams.ControlToIntegrationTimeRatio)
-    
-        ( defineDecisionalModel |> ModelDefiner , 
-          modelParams |> Parameters ) 
-
+  
 
 [<AutoOpen>]
 module RewardDefinition = 
@@ -95,7 +84,6 @@ module RewardDefinition =
      
 [<AutoOpen>]
 module FinalStateIdentification = 
-    
 
     let defineFinalStatePredicate (Parameters envParams : EnvironmentParameters<LEModelEnvParams>)  =
         
@@ -132,8 +120,9 @@ module GetStateAfterFixedLegImmersion =
         |> Seq.scan (giveNextStateForThisModelNDepthNTimeNode model)
            initState
 
-    let getInitialStateWithTheseParams  ({DescentRate = descentRate; MaximumDepth = maxDepth; BottomTime = bottomTime} :DescentParams)
-           fixedLegDiscretizationTime  initDepth (model:Model<LEStatus, float>) = 
+    let getInitialStateWithTheseParams  ({DescentRate = descentRate; MaximumDepth = maxDepth; BottomTime = bottomTime
+                                          LegDiscreteTime =  fixedLegDiscretizationTime ; InitialDepth = initDepth }   )
+                                        (model:Model<LEStatus, float>) = 
         
         let skipFirstIfEqualsToInitState (State aState) (aSeqOfNodes:seq<DepthInTime>) = 
             
@@ -164,9 +153,17 @@ module GetStateAfterFixedLegImmersion =
 
         seqOfNodes
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
-        |> runModelThroughNodesNGetAllStates initState model
-        |> Seq.last
+        |> runModelAcrossSequenceOfNodesNGetFinalState initState model
 
+    
+
+    
+[<AutoOpen>]
+module InfoLoggerDefinition = 
+
+    let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) 
+                               (_:  State<LEStatus> * State<LEStatus> *Action<float> *float*bool) -> None ) 
+                            |> InfoLogger 
 
 // PYTHON PART
 // Initialize Knowledge (Q Factor approximator)

@@ -76,13 +76,14 @@ namespace Continuation_Optimal_Deco
             // Profile bottom portion
             time = bottomTime - time;
             model.IntegrateToTime(time, maxDepth, maxDepth);
-
-            model.SaveN2Pressure();
+            
+            
+            
 
             // Profile linear ascent portion
             time = ArrivalTime(breakFraction * maxDepth, ascentRate);
             model.IntegrateToTime(time, maxDepth, (1.0 - breakFraction) * maxDepth);
-
+            model.SaveOutputToDisk("LarsResults");
             // Profile power law ascent portion
             time = surfaceTime - (bottomTime + time);
             model.IntegrateToTime(time, (1.0 - breakFraction) * maxDepth, 0.0, exponent);
@@ -423,28 +424,36 @@ namespace Continuation_Optimal_Deco
 
         }
 
-        public void SaveN2Pressure ( )
+        public void SaveOutputToDisk ( string aFileName )
         {
             //FolderBrowserDialog fbd = new FolderBrowserDialog();
             //if (fbd.ShowDialog() != DialogResult.OK)
             //    return;
             string dir = "C:\\Users\\glddm\\Desktop" ;
-            string fileName = dir + "\\LarsResults.csv";
+            var fileName = dir + "\\" + aFileName + ".csv";  
 
             FileStream fs = new FileStream(fileName, FileMode.Create);
             StreamWriter sw = new StreamWriter(fs);
             for (int i = 0; i < ListN2Pressure.Count; i++)
             {
 
-                string s = ListPressure[i].ToString("F6") + ", " +  ListN2Pressure[i].ToString("F6") + ", " 
-                     + TissueTensionToString(ListTissueTension[i]); 
+                string s = ListPressure[i].ToString("F6") + ", " + ListN2Pressure[i].ToString("F6") + ", "
+                     + VectorToString(ListTissueTension[i]) + ", "
+                     + VectorToString(ListRiskIntegrated[i]) + ", " + ambientPressure2Depth(ListPressure[i]).ToString("F6")
+                     + ", " + ListTime[i].ToString("F6"); 
                 sw.WriteLine(s);
             }
             sw.Close();
             fs.Close();
         }
 
-        public static string TissueTensionToString(double[] tissueTension)
+        public static double ambientPressure2Depth(double ambientPressure)
+        {
+            var dDepthOverrelativePress = 33.066;
+            return dDepthOverrelativePress * (ambientPressure - 1.0);
+        }
+
+        public static string VectorToString(double[] tissueTension)
         {
             var returnString = "";
 
