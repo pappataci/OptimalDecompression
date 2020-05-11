@@ -23,6 +23,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestLibraryFramework", "Tes
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpWrapperToPython", "CSharpWrapperToPython\CSharpWrapperToPython.csproj", "{967DF3F7-4059-4750-85E1-7B5AFC52B98E}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestImportingLibrary", "TestImportingLibrary\TestImportingLibrary.fsproj", "{D66F2BCC-1041-40C4-983C-68859740AB62}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -103,6 +105,14 @@ Global
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.ActiveCfg = Release|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.Build.0 = Release|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|x64.Build.0 = Debug|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|x64.ActiveCfg = Release|Any CPU
+		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

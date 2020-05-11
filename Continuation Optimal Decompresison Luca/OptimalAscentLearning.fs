@@ -59,8 +59,6 @@ module ModelDefinition =
         {   IntegrationModel = integrationModel 
             ActionModel      = actionModel }
 
-  
-
 [<AutoOpen>]
 module RewardDefinition = 
     

@@ -7,7 +7,6 @@
 #load "IOUtilities.fs"
 #r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
 
- 
 open ReinforcementLearning
 open Gas
 open InitDescent
@@ -17,7 +16,7 @@ open FSharp.Data
 open System
 
 let initDepth = 0.0
-let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
+//let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
 
 let discretizationTimeForLegs = 0.1 
 

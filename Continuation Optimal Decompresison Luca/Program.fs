@@ -47,15 +47,13 @@ let main _ =
     let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
                                                                                  shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
     
-    Console.WriteLine(initState)
-    let envResponse = environment initState ( Control  90.0 ) 
-    Console.WriteLine(envResponse)
+    let seqOfDepths = [|90.0 .. -30.0 .. 0.0|] 
 
-    let integrationModel  action (s:State<LEStatus> )  = 
-        integrationModel' s action
-    
-    let seqOfDepths = [| 117.0 .. -3.0 .. 72.0 |] |> Seq.ofArray |> Seq.map Control
-    let finalState = Seq.fold integrationModel' initState seqOfDepths
-    finalState |> Console.WriteLine
+    let states = seqOfDepths
+                 |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth)).NextState ) initState 
+                 |> Seq.toArray 
+
+
+   
     pressAnyKey()
     0 // return an integer exit code
