@@ -54,6 +54,5 @@ let main _ =
                  |> Seq.toArray 
 
 
-   
     pressAnyKey()
     0 // return an integer exit code
