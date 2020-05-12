@@ -79,6 +79,7 @@
     <Compile Include="LEModel.fs" />
     <Compile Include="OptimalAscentLearning.fs" />
     <Compile Include="InputDefinition.fs" />
+    <Compile Include="EnvironmentToPython.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />

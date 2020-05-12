@@ -4,7 +4,13 @@ module Calculate =
 
     open Dependency
     
-     
+    let testSumThisUp ( x:float[] , b,c )  = 
+        (x
+         |> Array.sum 
+         |> (+) b
+         |> (+) c , c * 3.1) 
+
+
     let createyVectorInFSharp( x:float ) numOfComponents = 
         Array.create numOfComponents x 
 
