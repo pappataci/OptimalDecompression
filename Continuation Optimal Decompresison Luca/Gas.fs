@@ -28,3 +28,7 @@ module Gas
         depth 
         |> depth2AmbientPressure
         |> externalN2Pressure bThalmanError fractionO2
+
+    let n2Pressure2Depth (bThalmannError:bool) fractionO2 n2Pressure = 
+        let k = dPH2O  + dPACO2 * (System.Convert.ToDouble  bThalmannError) 
+        (( n2Pressure / ( 1.0 - fractionO2) ) + k - 1.0) * dDepthOverrelativePress

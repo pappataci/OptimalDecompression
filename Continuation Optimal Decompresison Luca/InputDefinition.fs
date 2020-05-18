@@ -1,10 +1,13 @@
-﻿module InputDefinition
+﻿[<AutoOpen>]
+module InputDefinition.ForPython
 
 // Learn more about F# at http://fsharp.org
 // See the 'F# Tutorial' project for more help.
 open LEModel
 open OptimalAscentLearning
 
+let pDCSToRisk pDCS = 
+    -log(1.0-pDCS)
 
 [<AutoOpen>]
 module ModelParams = 

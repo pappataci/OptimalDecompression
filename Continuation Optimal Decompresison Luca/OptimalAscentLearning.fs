@@ -11,9 +11,6 @@ type DescentParams = { DescentRate      : float
                        LegDiscreteTime  : float
                        InitialDepth     : float  }
 
-let pDCSToRisk pDCS = 
-    -log(1.0-pDCS)
-
 [<AutoOpen>]
 module ModelDefinition =
 
@@ -43,6 +40,17 @@ module ModelDefinition =
                                         let actualIncrement = float (idx + 1 ) * depthIncrement 
                                         initDepth + actualIncrement
                                         |> Control)
+
+    // rate is positive when new depth is higher than previous depth (during descent phase)
+    let maximumPositiveRateForDepthAndTissue(actualState: State<LEStatus> ) (temporalParams : TemporalParams) =
+        let maxTissuePressure = actualState
+                                |> leStatus2TissueTension
+                                |> Array.max
+                                |> n2Pressure2Depth true dFO2Air
+
+                                
+        
+        0.0
 
     let defEnvironmentModels ( Parameters ( { TimeParams  =  timeParams
                                               LEParamsGeneratorFcn = leModelParamsGenerator
@@ -152,16 +160,13 @@ module GetStateAfterFixedLegImmersion =
         seqOfNodes
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelAcrossSequenceOfNodesNGetFinalState initState model
-
-    
-
     
 [<AutoOpen>]
 module InfoLoggerDefinition = 
 
     let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) 
                                (_:  State<LEStatus> * State<LEStatus> *Action<float> *float*bool) -> None ) 
-                            |> InfoLogger 
+                            |> HelperFunction 
 
 // PYTHON PART
 // Initialize Knowledge (Q Factor approximator)

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Windows.Forms;
-using LEModel;
+//using LEModel;
 
 namespace Continuation_Optimal_Deco
 {

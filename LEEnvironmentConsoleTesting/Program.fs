@@ -49,13 +49,18 @@ let main _ =
     let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
                                                                                  shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
     
-    let seqOfDepths = [|90.0 .. -30.0 .. 0.0|] 
+    //let seqOfDepths = [|90.0 .. -30.0 .. 0.0|] 
 
-    let states = seqOfDepths
-                 |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
-                                                        |> (fun x -> x.NextState ) )  initState 
-                 |> Seq.toArray 
-
-
+    //let states = seqOfDepths
+    //             |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
+    //                                                    |> (fun x -> x.NextState ) )  initState 
+    //             |> Seq.toArray 
+    
+    let equivalentDepth = initState 
+                          |> leStatus2TissueTension
+                          |> Array.max
+                          |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
+    Console.WriteLine (initState)
+    Console.WriteLine(equivalentDepth)
     pressAnyKey()
     0 // return an integer exit code

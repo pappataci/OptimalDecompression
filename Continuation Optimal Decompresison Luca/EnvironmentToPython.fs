@@ -41,4 +41,12 @@ module EnvironmentToPython =
                                                                 shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
          
         environment ,  initstate 
-         
+
+    let getNextEnvironmentResponse(Environment environm: Environment<LEStatus, float, obj>  , actualState: State<LEStatus> ,  nextDepth : float )  =
+        
+        let environmResp2Tuple ( envResp: EnvironmentResponse<LEStatus, obj>)=
+            (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
+        
+        nextDepth|> Control
+        |> environm actualState 
+        |> environmResp2Tuple

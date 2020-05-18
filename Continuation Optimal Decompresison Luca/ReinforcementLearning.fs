@@ -2,33 +2,28 @@
 module ReinforcementLearning
 
 type State<'S>       =         | State of 'S
-type Action<'A>      =         |  Control of  'A                       
-type Model<'S, 'A>   =         |  Model of (State<'S> -> Action<'A> -> State<'S>) 
+type Action<'A>      =         | Control of  'A                       
+type Model<'S, 'A>   =         | Model of (State<'S> -> Action<'A> -> State<'S>) 
 
-type EnvironmentModel<'S,'A>   = { IntegrationModel : Model<'S,'A>
-                                   ActionModel      : Model<'S,'A> } 
+type EnvironmentModel<'S,'A>         = { IntegrationModel   : Model<'S,'A>
+                                         ActionModel        : Model<'S,'A> } 
 
-type EnvironmentResponse<'S ,'I > = { NextState         : State<'S> 
-                                      TransitionReward  : float
-                                      IsTerminalState   : bool 
-                                      ExtraInfo         : Option<'I> }
+type EnvironmentResponse<'S ,'I >    =  { NextState         : State<'S> 
+                                          TransitionReward  : float
+                                          IsTerminalState   : bool 
+                                          ExtraInfo         : Option<'I> }
 
-type Environment<'S, 'A ,'I> =    |Environment of (State<'S> -> Action<'A> -> EnvironmentResponse<'S ,'I>)
-
-type EnvironmentParameters<'P> = | Parameters of 'P 
-
-type MissionParameters<'SP> = | System2InitStateParams of 'SP
-
-type ExtraInfoLogger<'S,'A,'I ,'P> = | InfoLogger of (EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
-
-type TerminalStatePredicate<'S , 'P> = |   StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
-
-type InstantaneousReward<'S,'A ,'P > = |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
+type Environment<'S, 'A ,'I>         =   |Environment of (State<'S> -> Action<'A> -> EnvironmentResponse<'S ,'I>)
+type EnvironmentParameters<'P>       =   | Parameters of 'P 
+type MissionParameters<'SP>          =   | System2InitStateParams of 'SP
+type ExtraFunctions<'S,'A,'I ,'P>    =   | HelperFunction of (EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
+type TerminalStatePredicate<'S , 'P> =   |   StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
+type InstantaneousReward<'S,'A ,'P > =   |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
 
 type ShortTermRewardEstimator<'S,'A ,'P> = { InstantaneousReward : InstantaneousReward<'S,'A,'P>
                                              TerminalReward      : EnvironmentParameters<'P> -> State<'S> -> float      }
 
-type ModelEvaluator<'S,'A,'P> = | ModelDefiner of (EnvironmentParameters<'P> ->  EnvironmentModel<'S, 'A> )
+type ModelEvaluator<'S,'A,'P>        =   | ModelDefiner of (EnvironmentParameters<'P> ->  EnvironmentModel<'S, 'A> )
 
 let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) = 
     let innerFcn ( System2InitStateParams missionParams: MissionParameters<'SP> ) (model:Model<'S,'A> )    =
@@ -38,7 +33,7 @@ let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) 
 let initializeEnvironment<'S, 'P , 'I , 'A , 'SP> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward';  TerminalReward = finalReward'} 
     (StatePredicate isTerminalState': TerminalStatePredicate<'S ,'P>) 
-    (InfoLogger extraInfoCreator'  : ExtraInfoLogger<'S,'A,'I ,'P> )
+    (HelperFunction extraInfoCreator'  : ExtraFunctions<'S,'A,'I ,'P> )
     ( initStateCreator: MissionParameters<'SP> -> Model<'S,'A> -> State<'S>  ,
       missionParams   : MissionParameters<'SP> ) = 
 
