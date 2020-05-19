@@ -49,18 +49,32 @@ let main _ =
     let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
                                                                                  shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
     
-    //let seqOfDepths = [|90.0 .. -30.0 .. 0.0|] 
+    let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
 
-    //let states = seqOfDepths
-    //             |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
-    //                                                    |> (fun x -> x.NextState ) )  initState 
-    //             |> Seq.toArray 
+    let seqOfZeros = Seq.init 750 ( fun _ -> 0.0)
+
+    let seqOfDepths = seq {yield! seqOfDepths' 
+                           yield! seqOfZeros}
+
+    let states = seqOfDepths
+                 |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
+                                                        |> (fun x -> x.EnvironmentFeedback.NextState ) )  initState 
+                 |> Seq.toArray 
     
-    let equivalentDepth = initState 
-                          |> leStatus2TissueTension
-                          |> Array.max
-                          |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
+    let equivalentDepthStatete state  =  state 
+                                        |> leStatus2TissueTension
+                                        |> Array.max
+                                        |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
     Console.WriteLine (initState)
-    Console.WriteLine(equivalentDepth)
+    Console.WriteLine("COMPUTED DEPTHS")
+    states |> 
+    Array.iter ( equivalentDepthStatete >> Console.WriteLine)
+
+    Console.WriteLine("STATES")
+    states
+    |> Array.iter ( fun s -> Console.WriteLine(s))
+
+    Console.WriteLine("Last State")
+    Console.WriteLine(states |> Array.last)
     pressAnyKey()
     0 // return an integer exit code

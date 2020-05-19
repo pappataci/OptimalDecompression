@@ -44,9 +44,9 @@ module EnvironmentToPython =
 
     let getNextEnvironmentResponse(Environment environm: Environment<LEStatus, float, obj>  , actualState: State<LEStatus> ,  nextDepth : float )  =
         
-        let environmResp2Tuple ( envResp: EnvironmentResponse<LEStatus, obj>)=
+        let environmOutput2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  )=
             (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
         
         nextDepth|> Control
         |> environm actualState 
-        |> environmResp2Tuple
+        |> environmOutput2Tuple

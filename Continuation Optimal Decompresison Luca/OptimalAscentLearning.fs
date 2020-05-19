@@ -41,16 +41,7 @@ module ModelDefinition =
                                         initDepth + actualIncrement
                                         |> Control)
 
-    // rate is positive when new depth is higher than previous depth (during descent phase)
-    let maximumPositiveRateForDepthAndTissue(actualState: State<LEStatus> ) (temporalParams : TemporalParams) =
-        let maxTissuePressure = actualState
-                                |> leStatus2TissueTension
-                                |> Array.max
-                                |> n2Pressure2Depth true dFO2Air
-
-                                
-        
-        0.0
+ 
 
     let defEnvironmentModels ( Parameters ( { TimeParams  =  timeParams
                                               LEParamsGeneratorFcn = leModelParamsGenerator
@@ -164,12 +155,20 @@ module GetStateAfterFixedLegImmersion =
 [<AutoOpen>]
 module InfoLoggerDefinition = 
 
-    let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) 
-                               (_:  State<LEStatus> * State<LEStatus> *Action<float> *float*bool) -> None ) 
-                            |> HelperFunction 
+    // rate is positive when new depth is higher than previous depth (during descent phase)
+    let maximumPositiveRateForDepthAndTissue(actualState: State<LEStatus> ) (temporalParams : TemporalParams) =
+         let maxTissuePressure = actualState
+                                 |> leStatus2TissueTension
+                                 |> Array.max
+                                 |> n2Pressure2Depth true dFO2Air
+
+                             
+     
+         0.0
+    let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) (_: EnvironmentExperience<LEStatus, float>) -> 
+                                None |> Log ) // null function used to build the EnvLogger 
+                            |> EnvLogger 
 
 // PYTHON PART
 // Initialize Knowledge (Q Factor approximator)
 // Initialize Learning Function
-// Define reward function
-// Define finalState

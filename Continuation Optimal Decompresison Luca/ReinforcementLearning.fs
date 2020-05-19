@@ -5,19 +5,31 @@ type State<'S>       =         | State of 'S
 type Action<'A>      =         | Control of  'A                       
 type Model<'S, 'A>   =         | Model of (State<'S> -> Action<'A> -> State<'S>) 
 
-type EnvironmentModel<'S,'A>         = { IntegrationModel   : Model<'S,'A>
-                                         ActionModel        : Model<'S,'A> } 
-
-type EnvironmentResponse<'S ,'I >    =  { NextState         : State<'S> 
-                                          TransitionReward  : float
-                                          IsTerminalState   : bool 
-                                          ExtraInfo         : Option<'I> }
-
-type Environment<'S, 'A ,'I>         =   |Environment of (State<'S> -> Action<'A> -> EnvironmentResponse<'S ,'I>)
 type EnvironmentParameters<'P>       =   | Parameters of 'P 
 type MissionParameters<'SP>          =   | System2InitStateParams of 'SP
-type ExtraFunctions<'S,'A,'I ,'P>    =   | HelperFunction of (EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'I> )
-type TerminalStatePredicate<'S , 'P> =   |   StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
+
+type EnvironmentModel<'S,'A>         = { IntegrationModel     : Model<'S,'A>
+                                         ActionModel          : Model<'S,'A> } 
+
+type EnvironmentResponse<'S>         = { NextState           : State<'S> 
+                                         TransitionReward    : float
+                                         IsTerminalState     : bool  } 
+
+type EnvironmentExperience<'S, 'A > = { InitState           : State<'S>
+                                        ActionTaken         : Action<'A>    
+                                        EnvironmentDynamics : EnvironmentResponse<'S> }
+
+type LoggerOutput<'I>               =  | Log of Option<'I>
+
+type EnvironmentLogger<'S,'P,'I,'A>  = | EnvLogger of ( EnvironmentParameters<'P> -> EnvironmentExperience<'S,'A> -> LoggerOutput<'I >)
+
+type EnvironmentOutput<'S ,'I >    =  { EnvironmentFeedback : EnvironmentResponse<'S>
+                                        EnvLoggerOutput     : LoggerOutput<'I>              }
+
+type Environment<'S, 'A ,'I>         =   |Environment of (State<'S> -> Action<'A> -> EnvironmentOutput<'S ,'I>)
+
+type HelperFunctions<'S,'A,'F,'P>    =   | HelpFuncs of ((EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'F> ))
+type TerminalStatePredicate<'S , 'P> =   | StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
 type InstantaneousReward<'S,'A ,'P > =   |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
 
 type ShortTermRewardEstimator<'S,'A ,'P> = { InstantaneousReward : InstantaneousReward<'S,'A,'P>
@@ -33,7 +45,7 @@ let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) 
 let initializeEnvironment<'S, 'P , 'I , 'A , 'SP> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward';  TerminalReward = finalReward'} 
     (StatePredicate isTerminalState': TerminalStatePredicate<'S ,'P>) 
-    (HelperFunction extraInfoCreator'  : ExtraFunctions<'S,'A,'I ,'P> )
+    (EnvLogger extraInfoCreator'  : EnvironmentLogger<'S,'P,'I,'A> )
     ( initStateCreator: MissionParameters<'SP> -> Model<'S,'A> -> State<'S>  ,
       missionParams   : MissionParameters<'SP> ) = 
 
@@ -57,10 +69,13 @@ let initializeEnvironment<'S, 'P , 'I , 'A , 'SP> (ModelDefiner modelCreator:Mod
                                 | _ -> 0.0
 
         let totalReward = transitionReward + finalStateReward 
-        {NextState = nextState  
-         TransitionReward = totalReward
-         IsTerminalState = isTerminalState
-         ExtraInfo = extraInfoCreator (actualState , nextState , action , totalReward , isTerminalState ) 
+
+        let envDynamics = {NextState = nextState  
+                           TransitionReward = totalReward
+                           IsTerminalState = isTerminalState } 
+        let experience = {InitState = actualState ; ActionTaken = action ; EnvironmentDynamics = envDynamics}
+        { EnvironmentFeedback =  envDynamics
+          EnvLoggerOutput =  extraInfoCreator experience
          } 
 
     (Environment innerEnvinromentComputation , initState , integrationModel ) 
