@@ -28,7 +28,11 @@ type EnvironmentOutput<'S ,'I >    =  { EnvironmentFeedback : EnvironmentRespons
 
 type Environment<'S, 'A ,'I>         =   |Environment of (State<'S> -> Action<'A> -> EnvironmentOutput<'S ,'I>)
 
-type HelperFunctions<'S,'A,'F,'P>    =   | HelpFuncs of ((EnvironmentParameters<'P> -> State<'S>*State<'S>*Action<'A>*float*bool -> Option<'F> ))
+type HelperFunction<'S,'A,'F>        =   | HelpFuncs of  ( EnvironmentExperience<'S, 'A> -> 'F )
+
+type OptionalExtraFunctions<'S,'A,'F,'P>    =   | HelperFunctions of   Option< ( EnvironmentParameters<'P> ->    HelperFunction<'S,'A,'F> ) > 
+                                          
+
 type TerminalStatePredicate<'S , 'P> =   | StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
 type InstantaneousReward<'S,'A ,'P > =   |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
 
@@ -42,12 +46,13 @@ let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) 
         downliftFcn missionParams model
     innerFcn
 
-let initializeEnvironment<'S, 'P , 'I , 'A , 'SP> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
+let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward';  TerminalReward = finalReward'} 
     (StatePredicate isTerminalState': TerminalStatePredicate<'S ,'P>) 
     (EnvLogger extraInfoCreator'  : EnvironmentLogger<'S,'P,'I,'A> )
     ( initStateCreator: MissionParameters<'SP> -> Model<'S,'A> -> State<'S>  ,
-      missionParams   : MissionParameters<'SP> ) = 
+      missionParams   : MissionParameters<'SP> ) 
+    (HelperFunctions optionalExtraFunction :  OptionalExtraFunctions<'S,'A, 'F,'P> )    = 
 
     let instantaneousReward = instantaneousReward'  environmentParams
     let isTerminalState = isTerminalState' environmentParams
@@ -77,6 +82,10 @@ let initializeEnvironment<'S, 'P , 'I , 'A , 'SP> (ModelDefiner modelCreator:Mod
         { EnvironmentFeedback =  envDynamics
           EnvLoggerOutput =  extraInfoCreator experience
          } 
+    
+    let extraComputation = match optionalExtraFunction with
+                           | None ->  None 
+                           | Some f  ->   None
 
     (Environment innerEnvinromentComputation , initState , integrationModel ) 
 

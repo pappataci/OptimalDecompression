@@ -47,7 +47,11 @@ let main _ =
 
     let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
     let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-                                                                                 shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
+                                                                                 shortTermRewardEstimator 
+                                                                                 terminalStatePredicate 
+                                                                                 infoLogger 
+                                                                                 (initialStateCreator , missionParameters )   
+                                                                                 (HelperFunctions None)
     
     let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
 

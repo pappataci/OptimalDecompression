@@ -37,8 +37,10 @@ module EnvironmentToPython =
                                   InitialDepth      = 0.0 }    // ft
                                   |> System2InitStateParams
         
+        let nullHelperFunc = HelperFunctions None
+
         let ( environment ,  initstate ,  _  ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-                                                                shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters ) 
+                                                                shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters )  nullHelperFunc
          
         environment ,  initstate 
 

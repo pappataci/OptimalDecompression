@@ -156,11 +156,12 @@ module GetStateAfterFixedLegImmersion =
 module InfoLoggerDefinition = 
 
     // rate is positive when new depth is higher than previous depth (during descent phase)
-    let maximumPositiveRateForDepthAndTissue(actualState: State<LEStatus> ) (temporalParams : TemporalParams) =
+    let maximumPositiveRateForDepthAndTissue bThalmannnHyp fo2Air (actualState: State<LEStatus> ) 
+            (temporalParams : TemporalParams) =
          let maxTissuePressure = actualState
                                  |> leStatus2TissueTension
                                  |> Array.max
-                                 |> n2Pressure2Depth true dFO2Air
+                                 |> n2Pressure2Depth bThalmannnHyp fo2Air
 
                              
      
