@@ -21,14 +21,14 @@ module ModelParams =
     let penaltyForExceedingRisk = 5000.0
     let maxFinalTime = penaltyForExceedingRisk
 
-    let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
-                                              ControlToIntegrationTimeRatio    = 10  
-                                              MaximumFinalTime                 = maxFinalTime }  // minute 
-                               LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
-                               StateTransitionGeneratorFcn = modelTransitionFunction 
-                               ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
-                               RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
-                                                                         PenaltyForExceedingRisk = penaltyForExceedingRisk }  }
+    //let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
+    //                                          ControlToIntegrationTimeRatio    = 10  
+    //                                          MaximumFinalTime                 = maxFinalTime }  // minute 
+    //                           LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
+    //                           StateTransitionGeneratorFcn = modelTransitionFunction 
+    //                           ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
+    //                           RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
+    //                                                                     PenaltyForExceedingRisk = penaltyForExceedingRisk }  }
 
 [<AutoOpen>]
 module EnvironmentSetup = 

@@ -84,7 +84,7 @@
     <None Include="App.config" />
     <Content Include="packages.config" />
     <None Include="OptimAscentScript.fsx" />
-    <None Include="Scratch.fsx" />
+    <None Include="TestAPI.fsx" />
     <None Include="ActivePatternExample.fsx" />
   </ItemGroup>
   <ItemGroup>

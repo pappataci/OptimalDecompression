@@ -46,12 +46,12 @@ let main _ =
                             |> System2InitStateParams
 
     let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
-    let (Environment environment ,  initState ,  Model  integrationModel' ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-                                                                                 shortTermRewardEstimator 
-                                                                                 terminalStatePredicate 
-                                                                                 infoLogger 
-                                                                                 (initialStateCreator , missionParameters )   
-                                                                                 (HelperFunctions None)
+    let (Environment environment ,  initState ,  Model  integrationModel', _ ) = 
+        initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+            shortTermRewardEstimator 
+            terminalStatePredicate 
+            infoLogger 
+            (initialStateCreator , missionParameters ) (ExtraFunctions None)
     
     let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
 

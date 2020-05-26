@@ -37,18 +37,32 @@ module EnvironmentToPython =
                                   InitialDepth      = 0.0 }    // ft
                                   |> System2InitStateParams
         
-        let nullHelperFunc = HelperFunctions None
+        let nullHelperFunc = ExtraFunctions None
 
-        let ( environment ,  initstate ,  _  ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-                                                                shortTermRewardEstimator terminalStatePredicate infoLogger (initialStateCreator , missionParameters )  nullHelperFunc
+        let ( environment ,  initstate ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+                                                                   shortTermRewardEstimator terminalStatePredicate infoLogger 
+                                                                   (initialStateCreator , missionParameters )  nullHelperFunc
          
-        environment ,  initstate 
+        environment ,  initstate , ascentLimiter
 
-    let getNextEnvironmentResponse(Environment environm: Environment<LEStatus, float, obj>  , actualState: State<LEStatus> ,  nextDepth : float )  =
-        
-        let environmOutput2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  )=
-            (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
-        
+    let private environmOutput2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  )=
+        (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
+
+    let private getEnvironmentOutput(Environment environm: Environment<LEStatus, float, obj> )  (actualState: State<LEStatus> ) ( nextDepth : float ) = 
         nextDepth|> Control
-        |> environm actualState 
+        |> environm actualState
+
+    let getNextEnvironmentResponse(  environm: Environment<LEStatus, float, obj>  , actualState: State<LEStatus> ,  nextDepth : float )  =        
+        nextDepth
+        |> getEnvironmentOutput environm actualState 
         |> environmOutput2Tuple
+
+    let getNextEnvResponseAndBoundForNextAction ( environm: Environment<LEStatus, float, obj>  ,
+                                                   actualState: State<LEStatus> ,  nextDepth : float , 
+                                                   rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> 'F> ) = 
+        nextDepth
+        |> getEnvironmentOutput  environm actualState 
+     
+
+    //let tupleEnvOutput2EnvExperience  ( initState: State<LEStatus>, nextState:State<LEStatus> , transReward:float , isFinaleState:bool , actionTaken: float ) = 
+        

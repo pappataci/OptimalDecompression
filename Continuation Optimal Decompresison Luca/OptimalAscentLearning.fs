@@ -47,16 +47,17 @@ module ModelDefinition =
                                               LEParamsGeneratorFcn = leModelParamsGenerator
                                               StateTransitionGeneratorFcn = stateTransitionGeneratorFcn
                                               ModelIntegration2ModelActionConverter = integration2ActionModelConverter} ) ) = 
-        let integrationModel = timeParams.IntegrationTime
-                                |> leModelParamsGenerator
-                                |> stateTransitionGeneratorFcn
-                                |> fromValueFuncToStateFunc
+        let leModelParams       =   timeParams.IntegrationTime
+                                    |> leModelParamsGenerator
+        let integrationModel    =   leModelParams 
+                                    |> stateTransitionGeneratorFcn
+                                    |> fromValueFuncToStateFunc
 
         let actionModel     = integrationModel
                               |> defineModelOnSlowerDecisionTime ( integration2ActionModelConverter timeParams.ControlToIntegrationTimeRatio)
         
-        {   IntegrationModel = integrationModel 
-            ActionModel      = actionModel }
+        ( {   IntegrationModel = integrationModel 
+              ActionModel      = actionModel         }      , leModelParams ) 
 
 [<AutoOpen>]
 module RewardDefinition = 
@@ -153,19 +154,58 @@ module GetStateAfterFixedLegImmersion =
         |> runModelAcrossSequenceOfNodesNGetFinalState initState model
     
 [<AutoOpen>]
-module InfoLoggerDefinition = 
+module ExtraEnvironmentFunctions = 
+    
+    let environmentNModelParams2SpecificParams (Parameters envParams: EnvironmentParameters<LEModelEnvParams> , 
+                                                leModelParams: LEModelParams ) = 
+        (leModelParams.ThalmanErrorHypothesis , leModelParams.FractionO2 , envParams.TimeParams ) 
 
     // rate is positive when new depth is higher than previous depth (during descent phase)
-    let maximumPositiveRateForDepthAndTissue bThalmannnHyp fo2Air (actualState: State<LEStatus> ) 
-            (temporalParams : TemporalParams) =
-         let maxTissuePressure = actualState
-                                 |> leStatus2TissueTension
-                                 |> Array.max
-                                 |> n2Pressure2Depth bThalmannnHyp fo2Air
+    let getMaxPositiveRateFcnForTheseParams (bThalmannnHyp, fO2Air , (temporalParams : TemporalParams) ) =
+        
+        let actionTime = temporalParams.IntegrationTime * (temporalParams.ControlToIntegrationTimeRatio |> float )
+        let computeRate actualDepth newDepth = (newDepth - actualDepth) / actionTime
+        let n2Pressure2DepthWithThisParams =  n2Pressure2Depth bThalmannnHyp fO2Air
 
-                             
-     
-         0.0
+        let getTissueDepth  =
+            leStatus2TissueTension
+            >> Array.max
+            >> n2Pressure2DepthWithThisParams
+            
+        let computeMaximumPositiveRateFcn (experience: EnvironmentExperience<LEStatus, float> )  =    
+            let nextState = experience.EnvironmentDynamics.NextState  
+            let actualDepth =  nextState
+                               |> leState2Depth
+            nextState
+            |> getTissueDepth
+            |> (computeRate actualDepth) 
+            |>  min MissionConstraints.ascentRateLimit
+        
+        computeMaximumPositiveRateFcn
+
+    let maximumAllowableAscentRate (Parameters modelParams: EnvironmentParameters<LEModelEnvParams> , leModelParams: LEModelParams ) = 
+        let internalComputation (experience: EnvironmentExperience<LEStatus, float> )  = 
+            experience.EnvironmentDynamics.NextState
+            //|> computeMaximumPositiveRateFcn 
+        internalComputation  |> HelpFuncs
+    
+    let extraFunctionExample = maximumAllowableAscentRate
+                               |> Some 
+                               |> ExtraFunctions
+
+
+    //let extraFunctionCreator 
+    //        (paramsUnwrapper: (EnvironmentParameters<LEModelEnvParams> * LEModelParams) -> 'InputParams )
+    //        (statusComputation : ) = 
+    //    extraFunctionExample // dodgy output
+
+
+    let testMax = ExtraFunctions (Some maximumAllowableAscentRate) 
+
+
+
+
+
     let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) (_: EnvironmentExperience<LEStatus, float>) -> 
                                 None |> Log ) // null function used to build the EnvLogger 
                             |> EnvLogger 

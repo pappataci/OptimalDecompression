@@ -6,6 +6,7 @@ type Action<'A>      =         | Control of  'A
 type Model<'S, 'A>   =         | Model of (State<'S> -> Action<'A> -> State<'S>) 
 
 type EnvironmentParameters<'P>       =   | Parameters of 'P 
+
 type MissionParameters<'SP>          =   | System2InitStateParams of 'SP
 
 type EnvironmentModel<'S,'A>         = { IntegrationModel     : Model<'S,'A>
@@ -30,35 +31,41 @@ type Environment<'S, 'A ,'I>         =   |Environment of (State<'S> -> Action<'A
 
 type HelperFunction<'S,'A,'F>        =   | HelpFuncs of  ( EnvironmentExperience<'S, 'A> -> 'F )
 
-type OptionalExtraFunctions<'S,'A,'F,'P>    =   | HelperFunctions of   Option< ( EnvironmentParameters<'P> ->    HelperFunction<'S,'A,'F> ) > 
+type OptionalExtraFunctions<'S,'A,'F,'P,'Q>    =   | ExtraFunctions of  Option< ( (EnvironmentParameters<'P>*'Q) ->    HelperFunction<'S,'A,'F> ) > 
                                           
-
 type TerminalStatePredicate<'S , 'P> =   | StatePredicate of (EnvironmentParameters<'P> -> State<'S> -> bool)
 type InstantaneousReward<'S,'A ,'P > =   |InstantaneousReward of (EnvironmentParameters<'P> ->  State<'S> -> Action<'A> -> State<'S> -> float)
 
 type ShortTermRewardEstimator<'S,'A ,'P> = { InstantaneousReward : InstantaneousReward<'S,'A,'P>
                                              TerminalReward      : EnvironmentParameters<'P> -> State<'S> -> float      }
 
-type ModelEvaluator<'S,'A,'P>        =   | ModelDefiner of (EnvironmentParameters<'P> ->  EnvironmentModel<'S, 'A> )
+type ModelEvaluator<'S,'A,'P ,'Q>        =   | ModelDefiner of (EnvironmentParameters<'P> -> ( EnvironmentModel<'S, 'A> * 'Q ) )
 
 let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) = 
     let innerFcn ( System2InitStateParams missionParams: MissionParameters<'SP> ) (model:Model<'S,'A> )    =
         downliftFcn missionParams model
     innerFcn
 
-let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P> ,  environmentParams ) 
+let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F ,'Q> (ModelDefiner modelCreator:ModelEvaluator<'S,'A,'P ,'Q> ,  environmentParams ) 
     {InstantaneousReward   =  InstantaneousReward instantaneousReward';  TerminalReward = finalReward'} 
     (StatePredicate isTerminalState': TerminalStatePredicate<'S ,'P>) 
     (EnvLogger extraInfoCreator'  : EnvironmentLogger<'S,'P,'I,'A> )
     ( initStateCreator: MissionParameters<'SP> -> Model<'S,'A> -> State<'S>  ,
       missionParams   : MissionParameters<'SP> ) 
-    (HelperFunctions optionalExtraFunction :  OptionalExtraFunctions<'S,'A, 'F,'P> )    = 
+    (ExtraFunctions optionalExtraFunction' :  OptionalExtraFunctions<'S,'A, 'F,'P ,'Q> )    = 
+    
+    let {IntegrationModel = integrationModel ; ActionModel = actionModel' } , modelComputedParams  = modelCreator environmentParams 
 
     let instantaneousReward = instantaneousReward'  environmentParams
     let isTerminalState = isTerminalState' environmentParams
     let finalReward     = finalReward' environmentParams
     let extraInfoCreator = extraInfoCreator' environmentParams
-    let {IntegrationModel = integrationModel ; ActionModel = actionModel' }  = modelCreator environmentParams   
+
+    let optionalExtraFunction = match optionalExtraFunction' with
+                                | None ->   None 
+                                | Some f  -> let  (HelpFuncs outputExtraFcn) = f (environmentParams , modelComputedParams)
+                                             Some outputExtraFcn
+
     let (Model actionModel ) = actionModel'
 
     let initState = initStateCreator missionParams integrationModel
@@ -82,13 +89,13 @@ let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F> (ModelDefiner modelCreator
         { EnvironmentFeedback =  envDynamics
           EnvLoggerOutput =  extraInfoCreator experience
          } 
-    
-    let extraComputation = match optionalExtraFunction with
-                           | None ->  None 
-                           | Some f  ->   None
 
-    (Environment innerEnvinromentComputation , initState , integrationModel ) 
+    (Environment innerEnvinromentComputation , initState , integrationModel , optionalExtraFunction) 
 
+let defEnvironmentExperience ( {EnvironmentFeedback = envFeedback}  : EnvironmentOutput<'S ,'I > ) (initState: State<'S>) (actionTaken: Action<'A>) = 
+    {InitState                  = initState 
+     ActionTaken                = actionTaken
+     EnvironmentDynamics        = envFeedback }
 
 // this generic type is used to express an iteration
 type CountedSequence<'T> = 

@@ -1,5 +1,9 @@
 ﻿namespace InitDescent
 
+module MissionConstraints = 
+    let ascentRateLimit = -30.0  // ft/min: ascent is negative  (decreasing depth)
+    let descentRateLimit = 60.0 // ft/min : descent is positive (increasing depth)
+
 [<AutoOpen>]
 module PredefinedDescent = 
 
