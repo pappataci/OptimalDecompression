@@ -152,6 +152,13 @@ module LEModel  =
         let weAreAtSurfaceLevel = abs(actualDepth) < 1.e-3
 
         tissueTensionsAreNotRiskSource && weAreAtSurfaceLevel
+    
+    let getTissueDepth thalmanHyp fractionO2=
+        leStatus2TissueTension
+        >> Array.max
+        >> n2Pressure2Depth thalmanHyp fractionO2
+
+     
         
 module USN93_EXP = 
     open InitDescent

@@ -65,14 +65,14 @@ let main _ =
                                                         |> (fun x -> x.EnvironmentFeedback.NextState ) )  initState 
                  |> Seq.toArray 
     
-    let equivalentDepthStatete state  =  state 
+    let equivalentDepthState state  =  state 
                                         |> leStatus2TissueTension
                                         |> Array.max
                                         |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
     Console.WriteLine (initState)
     Console.WriteLine("COMPUTED DEPTHS")
     states |> 
-    Array.iter ( equivalentDepthStatete >> Console.WriteLine)
+    Array.iter ( equivalentDepthState >> Console.WriteLine)
 
     Console.WriteLine("STATES")
     states

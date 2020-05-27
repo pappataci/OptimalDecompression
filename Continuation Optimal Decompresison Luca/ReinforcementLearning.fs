@@ -41,6 +41,21 @@ type ShortTermRewardEstimator<'S,'A ,'P> = { InstantaneousReward : Instantaneous
 
 type ModelEvaluator<'S,'A,'P ,'Q>        =   | ModelDefiner of (EnvironmentParameters<'P> -> ( EnvironmentModel<'S, 'A> * 'Q ) )
 
+let optionalExtraFunctionCreator  computationalFunctions  = 
+    
+    let extraF = match computationalFunctions with
+                 |Some (externalParamsToInternalParamsFcn , actualComputation) -> let extraFcnInternalCreator  externalParamsToInternalParamsFcn  
+                                                                                     actualComputation (envParams:EnvironmentParameters<'P>, modelParams : 'Q) = 
+                                                                                     externalParamsToInternalParamsFcn envParams modelParams
+                                                                                     |> actualComputation 
+                                                                                     |> HelpFuncs
+                                                                                  actualComputation
+                                                                                  |> extraFcnInternalCreator externalParamsToInternalParamsFcn
+                                                                                  |> Some                                                                         
+                 |None                                                          -> None  
+    extraF |>  ExtraFunctions
+    
+
 let defInitStateCreatorFcn ( downliftFcn : ('SP -> Model<'S,'A> -> State<'S>) ) = 
     let innerFcn ( System2InitStateParams missionParams: MissionParameters<'SP> ) (model:Model<'S,'A> )    =
         downliftFcn missionParams model
@@ -55,7 +70,7 @@ let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F ,'Q> (ModelDefiner modelCre
     (ExtraFunctions optionalExtraFunction' :  OptionalExtraFunctions<'S,'A, 'F,'P ,'Q> )    = 
     
     let {IntegrationModel = integrationModel ; ActionModel = actionModel' } , modelComputedParams  = modelCreator environmentParams 
-
+    
     let instantaneousReward = instantaneousReward'  environmentParams
     let isTerminalState = isTerminalState' environmentParams
     let finalReward     = finalReward' environmentParams

@@ -38,3 +38,6 @@ module EnvironmentSetup =
     let infoLogger = nullLogger 
 
     let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
+    let ascentLimiterFcn =  (params2InternalComputationFcn  , computeMaxPositiveRateFcn )
+                            |> Some
+                            |> optionalExtraFunctionCreator

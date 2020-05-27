@@ -156,60 +156,42 @@ module GetStateAfterFixedLegImmersion =
 [<AutoOpen>]
 module ExtraEnvironmentFunctions = 
     
-    let environmentNModelParams2SpecificParams (Parameters envParams: EnvironmentParameters<LEModelEnvParams> , 
-                                                leModelParams: LEModelParams ) = 
-        (leModelParams.ThalmanErrorHypothesis , leModelParams.FractionO2 , envParams.TimeParams ) 
+    let private getActionTime (Parameters { TimeParams =  timeParams} : EnvironmentParameters<LEModelEnvParams> ) = 
+        timeParams.IntegrationTime * (timeParams.ControlToIntegrationTimeRatio |> float )
 
-    // rate is positive when new depth is higher than previous depth (during descent phase)
-    let getMaxPositiveRateFcnForTheseParams (bThalmannnHyp, fO2Air , (temporalParams : TemporalParams) ) =
-        
-        let actionTime = temporalParams.IntegrationTime * (temporalParams.ControlToIntegrationTimeRatio |> float )
-        let computeRate actualDepth newDepth = (newDepth - actualDepth) / actionTime
-        let n2Pressure2DepthWithThisParams =  n2Pressure2Depth bThalmannnHyp fO2Air
-
-        let getTissueDepth  =
-            leStatus2TissueTension
-            >> Array.max
-            >> n2Pressure2DepthWithThisParams
-            
-        let computeMaximumPositiveRateFcn (experience: EnvironmentExperience<LEStatus, float> )  =    
-            let nextState = experience.EnvironmentDynamics.NextState  
-            let actualDepth =  nextState
-                               |> leState2Depth
-            nextState
-            |> getTissueDepth
-            |> (computeRate actualDepth) 
-            |>  min MissionConstraints.ascentRateLimit
-        
-        computeMaximumPositiveRateFcn
-
-    let maximumAllowableAscentRate (Parameters modelParams: EnvironmentParameters<LEModelEnvParams> , leModelParams: LEModelParams ) = 
-        let internalComputation (experience: EnvironmentExperience<LEStatus, float> )  = 
-            experience.EnvironmentDynamics.NextState
-            //|> computeMaximumPositiveRateFcn 
-        internalComputation  |> HelpFuncs
+    let optionalExtraFunctionCreator computationalFunctions  = 
     
-    let extraFunctionExample = maximumAllowableAscentRate
-                               |> Some 
-                               |> ExtraFunctions
+        let extraF = match computationalFunctions with
+                     |Some (externalParamsToInternalParamsFcn , actualComputation) -> let extraFcnInternalCreator  externalParamsToInternalParamsFcn  
+                                                                                         actualComputation (envParams:EnvironmentParameters<'P>, modelParams : 'Q) = 
+                                                                                         let internalComputation  = 
+                                                                                             externalParamsToInternalParamsFcn envParams modelParams
+                                                                                             |> actualComputation 
+                                                                                         internalComputation
+                                                                                         |> HelpFuncs
+                                                                                      actualComputation
+                                                                                      |> extraFcnInternalCreator externalParamsToInternalParamsFcn
+                                                                                      |> Some                                                                         
+                     |None                                                          -> None  
+        extraF |>  ExtraFunctions
+    
+    let params2InternalComputationFcn envParams leModelParams = 
+         
+        let tissueDepthFcn =  getTissueDepth leModelParams.ThalmanErrorHypothesis leModelParams.FractionO2
+        let actionTime = getActionTime envParams 
+        let computeRateBound actualDepth newDepth = (newDepth - actualDepth) / actionTime
+        (tissueDepthFcn , computeRateBound  )
 
+    let computeMaxPositiveRateFcn (tissueDepthFcn , computeRateFcn)  (experience: EnvironmentExperience<LEStatus, float> ) = 
+        let nextState = experience.EnvironmentDynamics.NextState
+        let actualDepth = nextState
+                          |> leState2Depth 
 
-    //let extraFunctionCreator 
-    //        (paramsUnwrapper: (EnvironmentParameters<LEModelEnvParams> * LEModelParams) -> 'InputParams )
-    //        (statusComputation : ) = 
-    //    extraFunctionExample // dodgy output
-
-
-    let testMax = ExtraFunctions (Some maximumAllowableAscentRate) 
-
-
-
-
+        nextState
+        |> tissueDepthFcn
+        |> (computeRateFcn actualDepth)
+        |>  min MissionConstraints.descentRateLimit
 
     let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) (_: EnvironmentExperience<LEStatus, float>) -> 
                                 None |> Log ) // null function used to build the EnvLogger 
                             |> EnvLogger 
-
-// PYTHON PART
-// Initialize Knowledge (Q Factor approximator)
-// Initialize Learning Function
