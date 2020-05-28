@@ -41,8 +41,6 @@ module ModelDefinition =
                                         initDepth + actualIncrement
                                         |> Control)
 
- 
-
     let defEnvironmentModels ( Parameters ( { TimeParams  =  timeParams
                                               LEParamsGeneratorFcn = leModelParamsGenerator
                                               StateTransitionGeneratorFcn = stateTransitionGeneratorFcn

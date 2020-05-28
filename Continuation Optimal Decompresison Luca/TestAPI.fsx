@@ -13,13 +13,9 @@ open Gas
 open InitDescent
 open LEModel
 open OptimalAscentLearning
-
 open System
-
 open ToPython
 
-let initDepth = 0.0
-//let descentParameters = {DescentRate = 60.0 ; MaximumDepth = 120.0; BottomTime = 30.0}
 
 let maxPDCS = 3.3e-2
 let penaltyForExceedingRisk = 5000.0

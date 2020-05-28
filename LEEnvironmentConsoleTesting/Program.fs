@@ -51,7 +51,7 @@ let main _ =
             shortTermRewardEstimator 
             terminalStatePredicate 
             infoLogger 
-            (initialStateCreator , missionParameters ) (ExtraFunctions None)
+            (initialStateCreator , missionParameters ) (ascentLimiterFcn)
     
     let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
 
@@ -80,5 +80,6 @@ let main _ =
 
     Console.WriteLine("Last State")
     Console.WriteLine(states |> Array.last)
+
     pressAnyKey()
     0 // return an integer exit code
