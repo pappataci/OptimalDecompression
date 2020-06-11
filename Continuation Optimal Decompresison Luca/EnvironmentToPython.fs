@@ -24,7 +24,7 @@ module EnvironmentToPython =
         let maxRiskBound = pDCSToRisk maxPDCS
         let modelBuilderParams = { TimeParams = { IntegrationTime                  = integrationTime  // minute  
                                                   ControlToIntegrationTimeRatio    = controlToIntegrationTimeRatio 
-                                                  MaximumFinalTime                 = maxFinalTime }  // minute 
+                                                  MaximumFinalTime                 = penaltyForExceedingRisk }  // minute 
                                    LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
                                    StateTransitionGeneratorFcn = modelTransitionFunction 
                                    ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
@@ -77,4 +77,49 @@ module EnvironmentToPython =
                                  |> getRateDelimiter rateOfAscentLimiter
                                  |> round 
         
-        (envOutput , ascentRateLimit) ||> envOutputAndDelimiter2Tuple        
+        (envOutput , ascentRateLimit) ||> envOutputAndDelimiter2Tuple 
+        
+    let private getGuassianNoiseWithLevel noiseLevel = 
+        (new System.Random()).NextDouble() * noiseLevel
+
+    let private perturbeSingleTissueTension noiseLevel (x:Tissue) =
+        noiseLevel
+        |>getGuassianNoiseWithLevel 
+        |> Tension
+        |> (+>) x  
+
+    let private perturbeTissueTensions (tissueTensions:Tissue[]) noiseLevel = 
+        tissueTensions
+        |> Array.map (perturbeSingleTissueTension noiseLevel)
+
+    let private perturbCurrentDepth noiseLevel (TemporalValue depthNTime: DepthInTime) = 
+        let actualDepth = depthNTime.Value
+        let increment =  match  abs(actualDepth) < 1.0e-6 with         
+                         | true -> 0.0
+                         | false -> getGuassianNoiseWithLevel noiseLevel
+        { depthNTime with Value = actualDepth +  increment } 
+        |>TemporalValue
+
+    let private perturbLEPhysics (x:LEState) noiseLevel = 
+        { TissueTensions = perturbeTissueTensions x.TissueTensions noiseLevel
+          CurrentDepthAndTime = perturbCurrentDepth  noiseLevel x.CurrentDepthAndTime}
+
+    let private perturbRisk (x:RiskInfo) noiseLevel = 
+        let actualRiskIncrement = x.IntegratedRisks |> Array.sum
+        
+        let noisedRisks = x.IntegratedRisks
+                          |> Array.map (fun actualRisk ->  (1.0 + abs(getGuassianNoiseWithLevel noiseLevel) ) * actualRisk
+                                                           |> max   0.0 )  
+        
+        let cummulativeRiskIncrement = noisedRisks 
+                                       |> Array.sum
+                                       |> (+) -actualRiskIncrement
+
+        { AccruedRisk       = x.AccruedRisk + cummulativeRiskIncrement 
+          IntegratedRisks   = noisedRisks } // this increment first single risks and then perturb consequently the accrued risk
+
+    let perturbState (State leStatus , physicsNoiseLevel, riskNoiseLevel) =  // have to use closure, since Python cannot use curried functions
+        {LEPhysics = perturbLEPhysics leStatus.LEPhysics physicsNoiseLevel
+         Risk      = perturbRisk leStatus.Risk riskNoiseLevel}
+        |> State 
+        

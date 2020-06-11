@@ -83,7 +83,7 @@ module LEModel  =
     // We assume the model is always expressed in terms of depth. So that next action is expressing the final depth.
     // For example suppose actual depth is 300 ft and we want to go to 100 ft with multiple 10; then target will be 100
     // and this function will create subtargets of 30 ft (300/10) since every substep is a tenth of the original target.
-    // The function also takes care of providing non negative targets (we cannot go aboe the sea level).
+    // The function also takes care of providing non negative targets (we cannot go above the sea level).
     
     let defineModelOnSlowerDecisionTime (subDividedNextActionIntoSubActions: State<'S> -> Action<'A> -> seq<Action<'A>>) 
         (Model initialModel:Model<'S,'A>) = 

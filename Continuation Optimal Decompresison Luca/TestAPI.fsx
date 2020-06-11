@@ -49,3 +49,17 @@ let a = 0.0
 
 let (states, depths ) = ( a |> Array.unzip)
 let lastState = states |> Array.last 
+
+let (State lastStateContent ) = lastState
+
+//let tensions = lastStateContent.LEPhysics.TissueTensions
+
+//let noiseLevel = 0.02
+
+//let perturbedTensions tensions noiseLevel = tensions
+//                                            |> Array.map ( fun  x  ->  (new System.Random()).NextDouble() * noiseLevel
+//                                                                        |> Tension
+//                                                                        |> (+>) x  )
+
+
+let perturbedState  =  perturbState (lastState , 0.00 , 1.0e3)
