@@ -11,7 +11,16 @@ module EnvironmentToPython =
         |> Array.append (leStatus2TissueTension x)
         |> Array.append  [|leState2Depth x|]   
         |> Array.append [|leStatus2ModelTime x |]
-   
+    
+    let getRateDelimiter ( rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> float > )
+                         ( experience          : EnvironmentExperience<LEStatus , float >                  ) =
+        match rateOfAscentLimiter with
+        | None           -> MissionConstraints.descentRateLimit
+        | Some rateLimit -> rateLimit experience
+
+    let getRateLimit (rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> float > ) = 
+        (getRateDelimiter rateOfAscentLimiter) >> round
+
     let getEnvInitStateAndAscentLimiter( maxPDCS, 
                                          penaltyForExceedingRisk, 
                                          integrationTime, 
@@ -41,8 +50,11 @@ module EnvironmentToPython =
         let ( environment ,  initstate ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
                                                                    shortTermRewardEstimator terminalStatePredicate infoLogger 
                                                                    (initialStateCreator , missionParameters )  ascentLimiterFcn     
-        
-        environment ,  initstate , ascentLimiter
+        let nextAscentLimit = initstate 
+                              |> createDummyExperienceWithThisAsNextState
+                              |> getRateLimit ascentLimiter
+                              
+        environment ,  initstate , ascentLimiter , nextAscentLimit
 
     let private environmOutput2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  )=
         (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
@@ -57,12 +69,6 @@ module EnvironmentToPython =
         |> getEnvironmentOutput environm actualState 
         |> environmOutput2Tuple
 
-    let getRateDelimiter ( rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> float > )
-                         ( experience          : EnvironmentExperience<LEStatus , float >                  ) =
-        match rateOfAscentLimiter with
-        | None           -> MissionConstraints.descentRateLimit
-        | Some rateLimit -> rateLimit experience
-
     let private envOutputAndDelimiter2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  ) (ascentRateLimit :float)   = 
         (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState , ascentRateLimit)
 
@@ -74,8 +80,7 @@ module EnvironmentToPython =
 
         let ascentRateLimit    = (nextDepth|> Control)
                                  |> defEnvironmentExperience envOutput actualState 
-                                 |> getRateDelimiter rateOfAscentLimiter
-                                 |> round 
+                                 |> getRateLimit rateOfAscentLimiter
         
         (envOutput , ascentRateLimit) ||> envOutputAndDelimiter2Tuple 
         
@@ -122,4 +127,3 @@ module EnvironmentToPython =
         {LEPhysics = perturbLEPhysics leStatus.LEPhysics physicsNoiseLevel
          Risk      = perturbRisk leStatus.Risk riskNoiseLevel}
         |> State 
-        

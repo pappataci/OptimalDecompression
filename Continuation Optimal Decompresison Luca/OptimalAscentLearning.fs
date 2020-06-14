@@ -190,6 +190,13 @@ module ExtraEnvironmentFunctions =
         |> (computeRateFcn actualDepth)
         |>  min MissionConstraints.descentRateLimit
 
+    let createDummyExperienceWithThisAsNextState (actualState:State<LEStatus>) = 
+        {InitState = actualState
+         ActionTaken = 0.0 |> Control
+         EnvironmentDynamics = {NextState = actualState 
+                                TransitionReward = 0.0
+                                IsTerminalState = false}  } 
+
     let nullLogger<'I >   = (fun (_:EnvironmentParameters<LEModelEnvParams> ) (_: EnvironmentExperience<LEStatus, float>) -> 
                                 None |> Log ) // null function used to build the EnvLogger 
                             |> EnvLogger 
