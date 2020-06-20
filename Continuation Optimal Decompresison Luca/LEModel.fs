@@ -139,8 +139,10 @@ module LEModel  =
         leRiskInfo.AccruedRisk
 
     let areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualTissueTensions  = 
+        let maxPercentError = 5.0e-2
+        let tissueTolerance = maxPercentError * surfaceN2Tension // [bar]
         actualTissueTensions
-        |> Array.map (fun tissueTension ->  (tissueTension - surfaceN2Tension) <= 1.0e-3 )
+        |> Array.map (fun tissueTension ->   abs(tissueTension - surfaceN2Tension)  <= tissueTolerance  )
         |> Array.reduce (&&)
 
     let leStatus2IsEmergedAndNotAccruingRisk ( actualState: State<LEStatus> ) surfaceN2Tension = 

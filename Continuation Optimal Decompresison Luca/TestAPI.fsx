@@ -28,15 +28,16 @@ let maximumDepth = 120.0
 let bottomTime = 30.0
 let legDiscreteTime =  integrationTime
 
+
 // Python equivalent helper function
-let env, initState ,  ascentLimiter  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , 
-                                                                     penaltyForExceedingRisk    , 
-                                                                     integrationTime  ,
-                                                                     controlToIntegrationTimeRatio,  
-                                                                     descentRate , 
-                                                                     maximumDepth  , 
-                                                                     bottomTime  , 
-                                                                     legDiscreteTime   )  
+let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , 
+                                                                           penaltyForExceedingRisk    , 
+                                                                           integrationTime  ,
+                                                                           controlToIntegrationTimeRatio,  
+                                                                           descentRate , 
+                                                                           maximumDepth  , 
+                                                                           bottomTime  , 
+                                                                           legDiscreteTime   )  
 
 let answer = getNextEnvResponseAndBoundForNextAction(env, initState , 120.0, ascentLimiter)
 
@@ -63,3 +64,5 @@ let (State lastStateContent ) = lastState
 
 
 let perturbedState  =  perturbState (lastState , 0.00 , 1.0e3)
+
+getTissueDepth
