@@ -14,7 +14,7 @@ module ModelParams =
     let gains                   = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |]
     let threshold               = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]
     let fractionO2  = 0.21
-    let maximumRiskBound = pDCSToRisk 3.0e-2
+    let maximumRiskBound = pDCSToRisk 3.3e-2
     let penaltyForExceedingRisk = 5000.0
     let maxFinalTime = penaltyForExceedingRisk
 

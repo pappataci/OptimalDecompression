@@ -1,6 +1,7 @@
 ﻿[<AutoOpen>]
 module OptimalAscentLearning
 
+open Gas
 open ReinforcementLearning
 open LEModel
 open InitDescent
@@ -91,7 +92,7 @@ module FinalStateIdentification =
         let maximumSimulationTime = envParams.TimeParams.MaximumFinalTime
 
         let isFinalStatePredicate (    actualState: State<LEStatus> ) : bool = 
-            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure
+            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure modelParams.LEParams
             let simulationTime = leStatus2ModelTime actualState 
             let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
             let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
