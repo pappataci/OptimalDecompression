@@ -22,7 +22,7 @@ module EnvironmentToPython =
         (getRateDelimiter rateOfAscentLimiter) >> round
 
     let getEnvInitStateAndAscentLimiter( maxPDCS, 
-                                         (penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime) , 
+                                         penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime , 
                                          integrationTime, 
                                          controlToIntegrationTimeRatio,
                                          descentRate,

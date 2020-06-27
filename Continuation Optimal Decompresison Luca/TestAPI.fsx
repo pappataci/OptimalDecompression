@@ -33,7 +33,7 @@ let bottomTime = 1.0
 
 // Python equivalent helper function
 let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , 
-                                                                           (penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime) , 
+                                                                           penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
                                                                            integrationTime  ,
                                                                            controlToIntegrationTimeRatio,  
                                                                            descentRate , 
