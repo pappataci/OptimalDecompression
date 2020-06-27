@@ -22,7 +22,7 @@ module EnvironmentToPython =
         (getRateDelimiter rateOfAscentLimiter) >> round
 
     let getEnvInitStateAndAscentLimiter( maxPDCS, 
-                                         penaltyForExceedingRisk, 
+                                         (penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime) , 
                                          integrationTime, 
                                          controlToIntegrationTimeRatio,
                                          descentRate,
@@ -38,7 +38,9 @@ module EnvironmentToPython =
                                    StateTransitionGeneratorFcn = modelTransitionFunction 
                                    ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
                                    RewardParameters                      = { MaximumRiskBound  = maxRiskBound
-                                                                             PenaltyForExceedingRisk = penaltyForExceedingRisk }  }
+                                                                             PenaltyForExceedingRisk = penaltyForExceedingRisk 
+                                                                             RewardForDelivering = rewardForDelivering
+                                                                             PenaltyForExceedingTime = penaltyForExceedingTime}  }
         
         let missionParameters = { DescentRate       = descentRate     // ft/min
                                   MaximumDepth      = maxDepth    // ft 
@@ -85,7 +87,8 @@ module EnvironmentToPython =
         (envOutput , ascentRateLimit) ||> envOutputAndDelimiter2Tuple 
         
     let private getGuassianNoiseWithLevel noiseLevel = 
-        (new System.Random()).NextDouble() * noiseLevel
+        let  normalDistributionSampler = Microsoft.ML.Probabilistic.Distributions.Gaussian(0.0, 1.0)
+        normalDistributionSampler.Sample() * noiseLevel
 
     let private perturbeSingleTissueTension noiseLevel (x:Tissue) =
         noiseLevel

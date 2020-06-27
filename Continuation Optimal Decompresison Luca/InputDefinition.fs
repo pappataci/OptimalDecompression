@@ -21,7 +21,7 @@ module ModelParams =
 [<AutoOpen>]
 module EnvironmentSetup = 
     let modelsDefinition = defEnvironmentModels |> ModelDefiner
-    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  penaltyIfMaximumRiskIsExceeded
+    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  finalRewardComputation
     let terminalStatePredicate = StatePredicate defineFinalStatePredicate
     let infoLogger = nullLogger 
 

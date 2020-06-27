@@ -21,65 +21,65 @@ let pressAnyKey() = Console.Read() |> ignore
 [<EntryPoint>]
 let main _ = 
         
-    let maximumRiskBound = pDCSToRisk 3.0e-2
+    //let maximumRiskBound = pDCSToRisk 3.0e-2
 
-    let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
-                                              ControlToIntegrationTimeRatio    = 10  
-                                              MaximumFinalTime                 = 5000.0 }  // minute 
-                               LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
-                               StateTransitionGeneratorFcn = modelTransitionFunction 
-                               ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
-                               RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
-                                                                         PenaltyForExceedingRisk =  5000.0 }  }
+    //let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
+    //                                          ControlToIntegrationTimeRatio    = 10  
+    //                                          MaximumFinalTime                 = 5000.0 }  // minute 
+    //                           LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
+    //                           StateTransitionGeneratorFcn = modelTransitionFunction 
+    //                           ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
+    //                           RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
+    //                                                                     PenaltyForExceedingRisk =  5000.0 }  }
     
-    let modelsDefinition = defEnvironmentModels |> ModelDefiner
-    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  penaltyIfMaximumRiskIsExceeded
-    let terminalStatePredicate = StatePredicate defineFinalStatePredicate
-    let infoLogger = nullLogger 
+    //let modelsDefinition = defEnvironmentModels |> ModelDefiner
+    //let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  finalRewardComputation
+    //let terminalStatePredicate = StatePredicate defineFinalStatePredicate
+    //let infoLogger = nullLogger 
 
-    let missionParameters = { DescentRate       = 60.0     // ft/min
-                              MaximumDepth      = 120.0    // ft 
-                              BottomTime        = 30.0     // min
-                              LegDiscreteTime   = 0.1      // min 
-                              InitialDepth      = 0.0 }    // ft
+    //let missionParameters = { DescentRate       = 60.0     // ft/min
+    //                          MaximumDepth      = 120.0    // ft 
+    //                          BottomTime        = 30.0     // min
+    //                          LegDiscreteTime   = 0.1      // min 
+    //                          InitialDepth      = 0.0 }    // ft
 
-                            |> System2InitStateParams
+    //                        |> System2InitStateParams
 
-    let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
-    let (Environment environment ,  initState ,  Model  integrationModel', _ ) = 
-        initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-            shortTermRewardEstimator 
-            terminalStatePredicate 
-            infoLogger 
-            (initialStateCreator , missionParameters ) (ascentLimiterFcn)
+    //let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
+    //let (Environment environment ,  initState ,  Model  integrationModel', _ ) = 
+    //    initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+    //        shortTermRewardEstimator 
+    //        terminalStatePredicate 
+    //        infoLogger 
+    //        (initialStateCreator , missionParameters ) (ascentLimiterFcn)
     
-    let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
+    //let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
 
-    let seqOfZeros = Seq.init 750 ( fun _ -> 0.0)
+    //let seqOfZeros = Seq.init 750 ( fun _ -> 0.0)
 
-    let seqOfDepths = seq {yield! seqOfDepths' 
-                           yield! seqOfZeros}
+    //let seqOfDepths = seq {yield! seqOfDepths' 
+    //                       yield! seqOfZeros}
 
-    let states = seqOfDepths
-                 |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
-                                                        |> (fun x -> x.EnvironmentFeedback.NextState ) )  initState 
-                 |> Seq.toArray 
+    //let states = seqOfDepths
+    //             |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
+    //                                                    |> (fun x -> x.EnvironmentFeedback.NextState ) )  initState 
+    //             |> Seq.toArray 
     
-    let equivalentDepthState state  =  state 
-                                        |> leStatus2TissueTension
-                                        |> Array.max
-                                        |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
-    Console.WriteLine (initState)
-    Console.WriteLine("COMPUTED DEPTHS")
-    states |> 
-    Array.iter ( equivalentDepthState >> Console.WriteLine)
+    //let equivalentDepthState state  =  state 
+    //                                    |> leStatus2TissueTension
+    //                                    |> Array.max
+    //                                    |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
+    //Console.WriteLine (initState)
+    //Console.WriteLine("COMPUTED DEPTHS")
+    //states |> 
+    //Array.iter ( equivalentDepthState >> Console.WriteLine)
 
-    Console.WriteLine("STATES")
-    states
-    |> Array.iter ( fun s -> Console.WriteLine(s))
+    //Console.WriteLine("STATES")
+    //states
+    //|> Array.iter ( fun s -> Console.WriteLine(s))
 
-    Console.WriteLine("Last State")
-    Console.WriteLine(states |> Array.last)
+    //Console.WriteLine("Last State")
+    //Console.WriteLine(states |> Array.last)
 
-    pressAnyKey()
+    //pressAnyKey()
     0 // return an integer exit code

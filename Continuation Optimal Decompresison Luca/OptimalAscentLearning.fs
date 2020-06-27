@@ -20,7 +20,9 @@ module ModelDefinition =
                             MaximumFinalTime                  : float }
 
     type TerminalRewardParameters = { MaximumRiskBound        : float 
-                                      PenaltyForExceedingRisk : float   }
+                                      PenaltyForExceedingRisk : float 
+                                      RewardForDelivering     : float 
+                                      PenaltyForExceedingTime : float }
 
     type LEModelEnvParams =  { TimeParams                            : TemporalParams 
                                LEParamsGeneratorFcn                  : float -> LEModelParams 
@@ -66,18 +68,25 @@ module RewardDefinition =
         let finalTime = leStatus2ModelTime nextState
         initTime - finalTime // it is minus duration: time length is a cost 
 
-    let penaltyIfMaximumRiskIsExceeded (Parameters penaltyParams':EnvironmentParameters<LEModelEnvParams>) ( finalState:State<LEStatus>)  = 
+    let getRewardOfFinalState  rewardParameters {MaximumFinalTime = maxFinalTime} finalState  = 
+        match (leStatus2ModelTime finalState < maxFinalTime) with 
+        | true ->  rewardParameters.RewardForDelivering
+        | false -> -abs(rewardParameters.PenaltyForExceedingTime)
+
+    let finalRewardComputation (Parameters penaltyParams':EnvironmentParameters<LEModelEnvParams>) ( finalState:State<LEStatus>)  = 
          let penaltyParams = penaltyParams'.RewardParameters
+         let temporalParams = penaltyParams'.TimeParams
          match   ( leStatus2Risk finalState >= penaltyParams.MaximumRiskBound ) with 
          | true -> -abs(penaltyParams.PenaltyForExceedingRisk) // penalty is strictly non positive
-         | _ -> 0.0
+         | _ -> finalState
+                |> getRewardOfFinalState penaltyParams temporalParams
 
     let defineShortTermRewardEstimator ( shortTermNonTerminalRewardFcn: 
                                             EnvironmentParameters<LEModelEnvParams> -> State<LEStatus> -> Action<float> -> State<LEStatus> -> float ) 
                                         terminalRewardFcn   =
 
         {InstantaneousReward = InstantaneousReward shortTermNonTerminalRewardFcn
-         TerminalReward      =  terminalRewardFcn  }
+         TerminalReward      = terminalRewardFcn  }
      
 [<AutoOpen>]
 module FinalStateIdentification = 

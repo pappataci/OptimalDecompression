@@ -1,4 +1,8 @@
-﻿#load "Learner.fs"
+﻿open System
+
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Microsoft.ML.Probabilistic.0.3.1912.403\lib\netstandard2.0\Microsoft.ML.Probabilistic.dll"
+
+#load "Learner.fs"
 #load "ReinforcementLearning.fs"
 #load "Gas.fs"
 #load "PredefinedDescent.fs"
@@ -9,29 +13,27 @@
 #load "EnvironmentToPython.fs"
 
 open ReinforcementLearning
-open Gas
-open InitDescent
 open LEModel
-open OptimalAscentLearning
-open System
 open ToPython
 
+//let maxPDCS = 3.3e-2
 
-let maxPDCS = 3.3e-2
-let penaltyForExceedingRisk = 5000.0
+let penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime= 4999.0 , 4999.0, 1999.0
 let integrationTime = 0.1 
 let controlToIntegrationTimeRatio = 10
+let descentRate = 60.0
+let legDiscreteTime =  integrationTime
 
 // MISSION PARAMETERS
-let descentRate = 60.0
-let maximumDepth = 120.0
-let bottomTime = 30.0
-let legDiscreteTime =  integrationTime
+let maxPDCS =  4.5e-4
+let maximumDepth = 30.0
+let bottomTime = 1.0
+
 
 
 // Python equivalent helper function
 let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , 
-                                                                           penaltyForExceedingRisk    , 
+                                                                           (penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime) , 
                                                                            integrationTime  ,
                                                                            controlToIntegrationTimeRatio,  
                                                                            descentRate , 
@@ -39,30 +41,55 @@ let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentL
                                                                            bottomTime  , 
                                                                            legDiscreteTime   )  
 
-let answer = getNextEnvResponseAndBoundForNextAction(env, initState , 120.0, ascentLimiter)
+let answer = getNextEnvResponseAndBoundForNextAction(env, initState ,maximumDepth, ascentLimiter)
 
 let (nextState, transitionRew, isTerminalState , ascentRateLimit)  = answer 
+
+let getCompleteSeqAtConstantDepth (constantDepth:float)  =   
+    let infinitSeqOfConstantValues = (fun _ -> constantDepth) |> Seq.initInfinite
+    let  ascentSeq   =  infinitSeqOfConstantValues 
+                        |> Seq.scan ( fun ( nextState, rew, isTerminal, _ )  depth -> getNextEnvResponseAndBoundForNextAction(env, nextState , depth , ascentLimiter)  ) (  initState, 0.0 , false, 0.0)  
+                        |> Seq.takeWhile (fun (_ , _, isTerminalState, _) ->  not isTerminalState)
+    let aState, aReward, isTerminal, aLimit  = (ascentSeq |> Seq.last )
+    let lastNode = seq { getNextEnvResponseAndBoundForNextAction(env, aState , constantDepth, ascentLimiter )  } 
+    lastNode 
+    |> Seq.append  ascentSeq
+    |> Seq.toArray
+
+let seqOfNodes = 0.0
+                 |> getCompleteSeqAtConstantDepth  
+
+let lastNode = seqOfNodes |> Seq.last 
+seqOfNodes |> Seq.length
+
+let riskToPDCS aRisk = 
+    ( 1.0 - exp( -aRisk))
+
+let leToPDCS (State aNode)  =
+    aNode.Risk.AccruedRisk
+    |> riskToPDCS 
+
+/// THIS IS A TEST
+(fun _ -> 1.0)
+|> Seq.initInfinite
+|> Seq.scan (fun sum value -> sum +  value) 0.0
+
+
+perturbState
+
+
+
 
 let a = 0.0
         |> Array.create 150 
         |> Array.scan ( fun (actualState, _)  actualDepth -> getNextEnvResponseAndBoundForNextAction(env, actualState , actualDepth , ascentLimiter) 
                                                              |> (fun (x,_,_, z) -> (x , z)   ) ) (initState, ascentRateLimit) 
 
-let (states, depths ) = ( a |> Array.unzip)
-let lastState = states |> Array.last 
+        
 
-let (State lastStateContent ) = lastState
+//System.IO.File.WriteAllLines( Environment.SpecialFolder.Desktop, randNum)
+//let desktopPath = Environment.GetFolderPath Environment.SpecialFolder.Desktop
 
-//let tensions = lastStateContent.LEPhysics.TissueTensions
-
-//let noiseLevel = 0.02
-
-//let perturbedTensions tensions noiseLevel = tensions
-//                                            |> Array.map ( fun  x  ->  (new System.Random()).NextDouble() * noiseLevel
-//                                                                        |> Tension
-//                                                                        |> (+>) x  )
+//System.IO.File.WriteAllLines(desktopPath  + @"\outHist.txt" , randNum)
 
 
-let perturbedState  =  perturbState (lastState , 0.00 , 1.0e3)
-
-getTissueDepth
