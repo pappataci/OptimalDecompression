@@ -62,6 +62,9 @@ module ModelDefinition =
 
 [<AutoOpen>]
 module RewardDefinition = 
+
+    let shortTermRewardIsAlwaysZero  (_:EnvironmentParameters<LEModelEnvParams>) _ (_ :Action<float>) _ =
+        0.0
     
     let shortTermRewardOnTimeDifference (_:EnvironmentParameters<LEModelEnvParams>) initState (_ :Action<float>) nextState = 
         let initTime = leStatus2ModelTime initState

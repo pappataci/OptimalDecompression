@@ -21,43 +21,6 @@ module EnvironmentToPython =
     let getRateLimit (rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> float > ) = 
         (getRateDelimiter rateOfAscentLimiter) >> round
 
-    let getEnvInitStateAndAscentLimiter( maxPDCS, 
-                                         penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime , 
-                                         integrationTime, 
-                                         controlToIntegrationTimeRatio,
-                                         descentRate,
-                                         maxDepth,
-                                         bottomTime, 
-                                         legDiscreteTime )  = 
-
-        let maxRiskBound = pDCSToRisk maxPDCS
-        let modelBuilderParams = { TimeParams = { IntegrationTime                  = integrationTime  // minute  
-                                                  ControlToIntegrationTimeRatio    = controlToIntegrationTimeRatio 
-                                                  MaximumFinalTime                 = penaltyForExceedingRisk }  // minute 
-                                   LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
-                                   StateTransitionGeneratorFcn = modelTransitionFunction 
-                                   ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
-                                   RewardParameters                      = { MaximumRiskBound  = maxRiskBound
-                                                                             PenaltyForExceedingRisk = penaltyForExceedingRisk 
-                                                                             RewardForDelivering = rewardForDelivering
-                                                                             PenaltyForExceedingTime = penaltyForExceedingTime}  }
-        
-        let missionParameters = { DescentRate       = descentRate     // ft/min
-                                  MaximumDepth      = maxDepth    // ft 
-                                  BottomTime        = bottomTime    // min
-                                  LegDiscreteTime   = legDiscreteTime      // min 
-                                  InitialDepth      = 0.0 }    // ft
-                                  |> System2InitStateParams
-
-        let ( environment ,  initstate ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-                                                                   shortTermRewardEstimator terminalStatePredicate infoLogger 
-                                                                   (initialStateCreator , missionParameters )  ascentLimiterFcn     
-        let nextAscentLimit = initstate 
-                              |> createDummyExperienceWithThisAsNextState
-                              |> getRateLimit ascentLimiter
-                              
-        environment ,  initstate , ascentLimiter , nextAscentLimit
-
     let private environmOutput2Tuple (  { EnvironmentFeedback = envResp} : EnvironmentOutput<LEStatus, obj>  )=
         (envResp.NextState, envResp.TransitionReward, envResp.IsTerminalState)
 
@@ -130,3 +93,40 @@ module EnvironmentToPython =
         {LEPhysics = perturbLEPhysics leStatus.LEPhysics physicsNoiseLevel
          Risk      = perturbRisk leStatus.Risk riskNoiseLevel}
         |> State 
+
+    let getEnvInitStateAndAscentLimiter( maxPDCS, 
+                                         penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime , 
+                                         integrationTime, 
+                                         controlToIntegrationTimeRatio,
+                                         descentRate,
+                                         maxDepth,
+                                         bottomTime, 
+                                         legDiscreteTime )  = 
+
+        let maxRiskBound = pDCSToRisk maxPDCS
+        let modelBuilderParams = { TimeParams = { IntegrationTime                  = integrationTime  // minute  
+                                                  ControlToIntegrationTimeRatio    = controlToIntegrationTimeRatio 
+                                                  MaximumFinalTime                 = penaltyForExceedingRisk }  // minute 
+                                   LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
+                                   StateTransitionGeneratorFcn = modelTransitionFunction 
+                                   ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
+                                   RewardParameters                      = { MaximumRiskBound  = maxRiskBound
+                                                                             PenaltyForExceedingRisk = penaltyForExceedingRisk 
+                                                                             RewardForDelivering = rewardForDelivering
+                                                                             PenaltyForExceedingTime = penaltyForExceedingTime}  }
+        
+        let missionParameters = { DescentRate       = descentRate     // ft/min
+                                  MaximumDepth      = maxDepth    // ft 
+                                  BottomTime        = bottomTime    // min
+                                  LegDiscreteTime   = legDiscreteTime      // min 
+                                  InitialDepth      = 0.0 }    // ft
+                                  |> System2InitStateParams
+
+        let ( environment ,  initstate ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+                                                                   shortTermRewardEstimator terminalStatePredicate infoLogger 
+                                                                   (initialStateCreator , missionParameters )  ascentLimiterFcn     
+        let nextAscentLimit = initstate 
+                              |> createDummyExperienceWithThisAsNextState
+                              |> getRateLimit ascentLimiter
+                              
+        environment ,  initstate , ascentLimiter , nextAscentLimit

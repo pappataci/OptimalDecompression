@@ -7,7 +7,7 @@ module MissionConstraints =
 [<AutoOpen>]
 module PredefinedDescent = 
 
-    type TemporalValue<'T> = {Time : float 
+    type TemporalValue<'T> = {Time :  float 
                               Value : 'T}
 
     type DepthInTime = | TemporalValue of TemporalValue<float>
