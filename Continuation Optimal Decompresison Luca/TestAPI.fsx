@@ -18,21 +18,22 @@ open ToPython
 
 //let maxPDCS = 3.3e-2
 
-let penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime= 4999.0 , 4999.0, 1999.0
+let penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime= 1.0 , 1.0, 0.5
 let integrationTime = 0.1 
 let controlToIntegrationTimeRatio = 10
 let descentRate = 60.0
 let legDiscreteTime =  integrationTime
+let maximumSimulationTime = 2.0
 
 // MISSION PARAMETERS
-let maxPDCS =  4.5e-4
+let maxPDCS =  4.e-4
 let maximumDepth = 30.0
 let bottomTime = 1.0
 
 
 
 // Python equivalent helper function
-let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , 
+let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
                                                                            penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
                                                                            integrationTime  ,
                                                                            controlToIntegrationTimeRatio,  

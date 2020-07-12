@@ -108,6 +108,12 @@ module FinalStateIdentification =
             let simulationTime = leStatus2ModelTime actualState 
             let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
             let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
+            printfn "%A"  isEmergedAndNotAccruingRisk 
+            printfn "%A" maximumSimulationTime
+            printfn "%A"  hasExceededMaximumTime 
+            printfn "%A"  hasExceededMaximumRisk 
+
+
             ( isEmergedAndNotAccruingRisk ||  hasExceededMaximumTime || hasExceededMaximumRisk ) 
         isFinalStatePredicate
 

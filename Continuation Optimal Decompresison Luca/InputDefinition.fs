@@ -15,8 +15,8 @@ module ModelParams =
     let threshold               = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]
     let fractionO2  = 0.21
     let maximumRiskBound = pDCSToRisk 3.3e-2
-    let penaltyForExceedingRisk = 5000.0
-    let maxFinalTime = penaltyForExceedingRisk
+    //let penaltyForExceedingRisk = 5000.0
+    let maxFinalTime = 5000.0
 
 [<AutoOpen>]
 module EnvironmentSetup = 

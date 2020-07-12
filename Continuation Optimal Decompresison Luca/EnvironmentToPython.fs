@@ -55,7 +55,7 @@ module EnvironmentToPython =
 
     let private perturbeSingleTissueTension noiseLevel (x:Tissue) =
         noiseLevel
-        |>getGuassianNoiseWithLevel 
+        |> getGuassianNoiseWithLevel 
         |> Tension
         |> (+>) x  
 
@@ -94,7 +94,7 @@ module EnvironmentToPython =
          Risk      = perturbRisk leStatus.Risk riskNoiseLevel}
         |> State 
 
-    let getEnvInitStateAndAscentLimiter( maxPDCS, 
+    let getEnvInitStateAndAscentLimiter( maxPDCS, maximumSimulationTime, 
                                          penaltyForExceedingRisk, rewardForDelivering , penaltyForExceedingTime , 
                                          integrationTime, 
                                          controlToIntegrationTimeRatio,
@@ -106,7 +106,7 @@ module EnvironmentToPython =
         let maxRiskBound = pDCSToRisk maxPDCS
         let modelBuilderParams = { TimeParams = { IntegrationTime                  = integrationTime  // minute  
                                                   ControlToIntegrationTimeRatio    = controlToIntegrationTimeRatio 
-                                                  MaximumFinalTime                 = penaltyForExceedingRisk }  // minute 
+                                                  MaximumFinalTime                 = maximumSimulationTime }  // minute 
                                    LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
                                    StateTransitionGeneratorFcn = modelTransitionFunction 
                                    ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
