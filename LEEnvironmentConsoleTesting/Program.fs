@@ -1,85 +1,62 @@
 ﻿// Learn more about F# at http://fsharp.org
 // See the 'F# Tutorial' project for more help.
 open System
-open LEModel
-open OptimalAscentLearning
-open InputDefinition
+open AscentSimulator
+open Nessos.Streams
 
 let pressAnyKey() = Console.Read() |> ignore
 
-//[<AutoOpen>]
-//module ModelParams = 
-//    let crossover               = [|     9.9999999999E+09   ;     2.9589519286E-02    ;      9.9999999999E+09    |]
-//    let rates                   = [| 1.0 / 1.7727676636E+00 ; 1.0 / 6.0111598753E+01  ;  1.0 / 5.1128788835E+02  |]
-//    let thalmanErrorHypothesis  = true                           
-//    let gains                   = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |]
-//    let threshold               = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]
-//    let fractionO2  = 0.21
-
-//    let integrationTime = 0.1 // minute
-
 [<EntryPoint>]
 let main _ = 
+    
+    let commonSimulationParameters = {MaxPDCS = 0.32 ; MaxSimTime = 1000.0 ; PenaltyForExceedingRisk  = 1.0 ; RewardForDelivering = 10.0; PenaltyForExceedingTime = 0.5 ;
+                                      IntegrationTime = 0.1; ControlToIntegrationTimeRatio = 10; DescentRate = 60.0; MaximumDepth = 20.0 ; BottomTime = 10.0;  LegDiscreteTime = 0.1}
+
+    printfn"insert number of elements"
+    let maxInputsString = Console.ReadLine()
+    let maxInputs = maxInputsString |> Double.Parse
+    let inputsStrategies =  [|0.0 .. maxInputs|] |> Array.map (fun x -> ( commonSimulationParameters , Seq.initInfinite (fun _ -> x )  |> Ascent ) |> StrategyInput )
+
+    printfn "init"
+    let stopWatch = System.Diagnostics.Stopwatch.StartNew()
+    let testSequential = inputsStrategies 
+                         |> Array.map simulateStrategy
+    let durSequentialMap = stopWatch.Elapsed.TotalMilliseconds
+    printfn "Seq Done"
+    printfn "SequenceTime time: %A" (   durSequentialMap )
+    
+    Console.Read() |> ignore
+    
+    
+    stopWatch.Restart()
+    let testParallel = inputsStrategies 
+                       |> Array.Parallel.map simulateStrategy
+    let durParallel = stopWatch.Elapsed.TotalMilliseconds
+    printfn "parallel done"
+
+    printfn "Parallel time: %A" (   durParallel )
+    //testSequential |> Array.last |> Seq.last |> printfn "%A"
+    //testParallel |> Array.last   |>Seq.last  |> printfn "%A"
+
+
+    Console.Read() |> ignore
+
+    //stopWatch.Restart()
+    //let testParallelAsync = inputsStrategies 
+    //                            |> applyInParallelAndAsync simulateStrategy  
         
-    //let maximumRiskBound = pDCSToRisk 3.0e-2
+    //let asyncTime = stopWatch.Elapsed.TotalMilliseconds 
+    //printfn "Async Done"
+    //printfn "Async Time: %A" (   asyncTime )
 
-    //let modelBuilderParams = { TimeParams = { IntegrationTime                  = 0.1  // minute  
-    //                                          ControlToIntegrationTimeRatio    = 10  
-    //                                          MaximumFinalTime                 = 5000.0 }  // minute 
-    //                           LEParamsGeneratorFcn = USN93_EXP.fromConstants2ModelParamsWithThisDeltaT crossover rates threshold gains thalmanErrorHypothesis 
-    //                           StateTransitionGeneratorFcn = modelTransitionFunction 
-    //                           ModelIntegration2ModelActionConverter = targetNodesPartitionFcnDefinition 
-    //                           RewardParameters                      = { MaximumRiskBound  = maximumRiskBound
-    //                                                                     PenaltyForExceedingRisk =  5000.0 }  }
-    
-    //let modelsDefinition = defEnvironmentModels |> ModelDefiner
-    //let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardOnTimeDifference  finalRewardComputation
-    //let terminalStatePredicate = StatePredicate defineFinalStatePredicate
-    //let infoLogger = nullLogger 
+    stopWatch.Restart()
+    let nessosResult = inputsStrategies
+                        |> ParStream.ofArray
+                        |> ParStream.map simulateStrategy
+                        |> ParStream.toArray
+    let nessosTime = stopWatch.Elapsed.TotalMilliseconds 
+    printfn "Nessos Done"
+    printfn "Async Time: %A" nessosTime
+    Console.Read() |> ignore
 
-    //let missionParameters = { DescentRate       = 60.0     // ft/min
-    //                          MaximumDepth      = 120.0    // ft 
-    //                          BottomTime        = 30.0     // min
-    //                          LegDiscreteTime   = 0.1      // min 
-    //                          InitialDepth      = 0.0 }    // ft
-
-    //                        |> System2InitStateParams
-
-    //let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
-    //let (Environment environment ,  initState ,  Model  integrationModel', _ ) = 
-    //    initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
-    //        shortTermRewardEstimator 
-    //        terminalStatePredicate 
-    //        infoLogger 
-    //        (initialStateCreator , missionParameters ) (ascentLimiterFcn)
-    
-    //let seqOfDepths' = [|90.0 .. -30.0 .. 0.0|] 
-
-    //let seqOfZeros = Seq.init 750 ( fun _ -> 0.0)
-
-    //let seqOfDepths = seq {yield! seqOfDepths' 
-    //                       yield! seqOfZeros}
-
-    //let states = seqOfDepths
-    //             |> Seq.scan (fun actualState depth ->  (environment actualState (Control depth))
-    //                                                    |> (fun x -> x.EnvironmentFeedback.NextState ) )  initState 
-    //             |> Seq.toArray 
-    
-    //let equivalentDepthState state  =  state 
-    //                                    |> leStatus2TissueTension
-    //                                    |> Array.max
-    //                                    |> n2Pressure2Depth thalmanErrorHypothesis dFO2Air
-    //Console.WriteLine (initState)
-    //Console.WriteLine("COMPUTED DEPTHS")
-    //states |> 
-    //Array.iter ( equivalentDepthState >> Console.WriteLine)
-
-    //Console.WriteLine("STATES")
-    //states
-    //|> Array.iter ( fun s -> Console.WriteLine(s))
-
-    //Console.WriteLine("Last State")
-    //Console.WriteLine(states |> Array.last)
-
-    //pressAnyKey()
-    0 // return an integer exit code
+    0

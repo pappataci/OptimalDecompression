@@ -77,7 +77,7 @@
     </Reference>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Numpy.Bare, Version=3.7.1.4, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>..\packages\Numpy.Bare.3.7.1.16\lib\netstandard2.0\Numpy.Bare.dll</HintPath>
+      <HintPath>..\packages\Numpy.Bare.3.7.1.21\lib\netstandard2.0\Numpy.Bare.dll</HintPath>
     </Reference>
     <Reference Include="Python.Runtime, Version=3.7.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Python.Runtime.NETStandard.3.7.1\lib\netstandard2.0\Python.Runtime.dll</HintPath>

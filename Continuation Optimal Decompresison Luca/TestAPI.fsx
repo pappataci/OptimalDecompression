@@ -1,6 +1,7 @@
 ﻿open System
 
 #r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Microsoft.ML.Probabilistic.0.3.1912.403\lib\netstandard2.0\Microsoft.ML.Probabilistic.dll"
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Collections.ParallelSeq.1.1.3\lib\net45\FSharp.Collections.ParallelSeq.dll"
 
 #load "Learner.fs"
 #load "ReinforcementLearning.fs"
@@ -11,10 +12,14 @@
 #load "IOUtilities.fs"
 #load "InputDefinition.fs"
 #load "EnvironmentToPython.fs"
+#load "AsyncHelpers.fs"
+#load "SeqExtension.fs"
+#load "AscentSimulator.fs"
 
 open ReinforcementLearning
 open LEModel
 open ToPython
+open AscentSimulator
 
 //let maxPDCS = 3.3e-2
 
@@ -23,14 +28,12 @@ let integrationTime = 0.1
 let controlToIntegrationTimeRatio = 10
 let descentRate = 60.0
 let legDiscreteTime =  integrationTime
-let maximumSimulationTime = 2.0
+let maximumSimulationTime = 50001.0
 
 // MISSION PARAMETERS
-let maxPDCS =  4.e-4
+let maxPDCS =  4.e-2
 let maximumDepth = 30.0
-let bottomTime = 1.0
-
-
+let bottomTime = 10.0
 
 // Python equivalent helper function
 let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
@@ -57,8 +60,28 @@ let getCompleteSeqAtConstantDepth (constantDepth:float)  =
     |> Seq.append  ascentSeq
     |> Seq.toArray
 
-let seqOfNodes = 0.0
+let seqOfNodes = 5.0
                  |> getCompleteSeqAtConstantDepth  
+
+let stopWatch = System.Diagnostics.Stopwatch.StartNew()
+let testParallel = [|5.0; 3.0; 2.0 ; 7.0|]
+                   |> Array.map getCompleteSeqAtConstantDepth
+let dur' = stopWatch.Elapsed.TotalMilliseconds
+
+let one() = 1.0 |> getCompleteSeqAtConstantDepth
+let tw() = 2.0 |> getCompleteSeqAtConstantDepth
+
+let testMe = [ async{return one()  } ; async{return  tw()  } ] 
+
+let a = testMe
+        |> Async.Parallel
+        |> Async.RunSynchronously
+
+
+
+//let stopWatch = System.Diagnostics.Stopwatch.StartNew()
+//let out =  applyInParallelAndAsync getCompleteSeqAtConstantDepth   [|5.0; 3.0; 2.0 ; 7.0|]
+//let dur = stopWatch.Elapsed.TotalMilliseconds
 
 let lastNode = seqOfNodes |> Seq.last 
 seqOfNodes |> Seq.length
@@ -71,20 +94,19 @@ let leToPDCS (State aNode)  =
     |> riskToPDCS 
 
 /// THIS IS A TEST
-(fun _ -> 1.0)
-|> Seq.initInfinite
-|> Seq.scan (fun sum value -> sum +  value) 0.0
+//(fun _ -> 1.0)
+//|> Seq.initInfinite
+//|> Seq.scan (fun sum value -> sum +  value) 0.0
 
 
-perturbState
+//perturbState
 
 
 
-
-let a = 0.0
-        |> Array.create 150 
-        |> Array.scan ( fun (actualState, _)  actualDepth -> getNextEnvResponseAndBoundForNextAction(env, actualState , actualDepth , ascentLimiter) 
-                                                             |> (fun (x,_,_, z) -> (x , z)   ) ) (initState, ascentRateLimit) 
+//let a = 0.0
+//        |> Array.create 150 
+//        |> Array.scan ( fun (actualState, _)  actualDepth -> getNextEnvResponseAndBoundForNextAction(env, actualState , actualDepth , ascentLimiter) 
+//                                                             |> (fun (x,_,_, z) -> (x , z)   ) ) (initState, ascentRateLimit) 
 
         
 
@@ -92,5 +114,3 @@ let a = 0.0
 //let desktopPath = Environment.GetFolderPath Environment.SpecialFolder.Desktop
 
 //System.IO.File.WriteAllLines(desktopPath  + @"\outHist.txt" , randNum)
-
-

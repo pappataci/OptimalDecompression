@@ -71,6 +71,8 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="SeqExtension.fs" />
+    <Compile Include="AsyncHelpers.fs" />
     <Compile Include="Vector.fs" />
     <Compile Include="PredefinedDescent.fs" />
     <Compile Include="Gas.fs" />
@@ -80,14 +82,19 @@
     <Compile Include="OptimalAscentLearning.fs" />
     <Compile Include="InputDefinition.fs" />
     <Compile Include="EnvironmentToPython.fs" />
+    <Compile Include="AscentSimulator.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />
     <None Include="OptimAscentScript.fsx" />
     <None Include="TestAPI.fsx" />
+    <None Include="TestMBX.fsx" />
     <None Include="ActivePatternExample.fsx" />
   </ItemGroup>
   <ItemGroup>
+    <Reference Include="FSharp.Collections.ParallelSeq">
+      <HintPath>..\packages\FSharp.Collections.ParallelSeq.1.1.3\lib\net45\FSharp.Collections.ParallelSeq.dll</HintPath>
+    </Reference>
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.7.2\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
