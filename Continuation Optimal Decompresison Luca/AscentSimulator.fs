@@ -39,7 +39,7 @@ let simulateStrategyWithInput (optInitState : Option<State<LEStatus>>) (  Strate
                                                                            bottomTime  , 
                                                                            legDiscreteTime   ) 
     let actualInitState = match optInitState with
-                          | Some optInitStateValue -> optInitStateValue
+                          | Some optInitStateValue -> optInitStateValue // overwrite initialState 
                           | None -> initState 
     (ascentStrategy
     |> simulateAscent  env ascentLimiter actualInitState
@@ -47,6 +47,22 @@ let simulateStrategyWithInput (optInitState : Option<State<LEStatus>>) (  Strate
 
 let simulateStrategy  = 
     simulateStrategyWithInput None
+
+let simulateStrategyWithDefaultParamsAndThisInitNode (initState : State<LEStatus> ) (ascentStrategy :seq<float>)  =
+    
+    let maxPDCS = infinity 
+    let maxSimTime = infinity
+    let penaltyForExceedingRisk , rewardForDelivering , penaltyForExceedingTime = 10.0, 10.0, 5.0
+    let integrationTime , controlToIntegrationTimeRatio , descentRate = 0.1, 10, 60.0
+    let maximumDepth , bottomTime, legDiscreteTime = 10.0 , 1.0, 0.1 // irrelevant since init state is overwritten
+    let simParams =  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTime ; PenaltyForExceedingRisk = penaltyForExceedingRisk ; 
+                      RewardForDelivering = rewardForDelivering ; PenaltyForExceedingTime = penaltyForExceedingTime ; IntegrationTime = integrationTime ;
+                      ControlToIntegrationTimeRatio = controlToIntegrationTimeRatio; DescentRate = descentRate; MaximumDepth = maximumDepth ;
+                      BottomTime = bottomTime ; LegDiscreteTime = legDiscreteTime }
+
+    ( simParams , Ascent ascentStrategy ) 
+    |> StrategyInput
+    |> simulateStrategyWithInput (Some initState) 
 
 let getConstantRateAscent stepsFromMaxToTarget initDepth  targetDepth = 
     let step = (targetDepth - initDepth ) / (stepsFromMaxToTarget |> float )

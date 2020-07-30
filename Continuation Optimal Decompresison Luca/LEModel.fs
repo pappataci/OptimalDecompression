@@ -164,6 +164,13 @@ module LEModel  =
         {leStatus with Risk = {AccruedRisk = 0.0 ; IntegratedRisks = Array.zeroCreate  numberOfTissues } ; 
                        LEPhysics = {leStatus.LEPhysics with CurrentDepthAndTime  = resetTimeOfDepthInTime leStatus.LEPhysics.CurrentDepthAndTime } } 
         |> State
+
+    let resetTimeOfCurrentDepthAndTime (TemporalValue currentDepthAndTime   ) = 
+        {currentDepthAndTime with Time = 0.0}
+        |> TemporalValue
+
+    let resetTimeOfLEState leState  = 
+        {leState with  CurrentDepthAndTime = resetTimeOfCurrentDepthAndTime leState.CurrentDepthAndTime }
         
         
 module USN93_EXP = 

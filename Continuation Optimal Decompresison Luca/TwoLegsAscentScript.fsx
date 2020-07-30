@@ -40,59 +40,77 @@ type ImmersionAnalytics  = { LastNodeAtBottom                   : ImmersionNode
                              InitFinalAscentNode                : ImmersionNode
                              AtSurfaceNode                      : ImmersionNode
                              FinalNode                          : ImmersionNode }
-                          
+
+let immersionNode2StateResetTime immersionNode  = 
+    { LEPhysics =  resetTimeOfLEState immersionNode.CurrentState ; 
+      Risk  = { AccruedRisk = 0.0 ; IntegratedRisks =  0.0 
+                                                       |> Array.create  ( immersionNode.CurrentState.TissueTensions |> Array.length )    } } 
+    |> State
+         
 let getAscentToSurfaceSeq initialDepth ascentRateLimit = 
     [ initialDepth .. ascentRateLimit .. 0.0 ] @ [0.0]
     |> List.toSeq
     |> Seq.skip 1  // was already there 
                
-let twolegParamsToAscentStrategy (twoLegParams: TwoLegAscentParams) (maxAscentRate:float) = // ascentRate should be NEGATIVE 
+let twolegParamsToAscentStrategy (maxAscentRate:float)  (twoLegParams: TwoLegAscentParams) = // ascentRate should be NEGATIVE 
     let constantDepthSeq = Seq.init twoLegParams.TimeStepsAtConstantDepth (fun _ -> twoLegParams.ConstantDepth) 
     let ascentToSurface  = getAscentToSurfaceSeq twoLegParams.ConstantDepth  ( max maxAscentRate   MissionConstraints.ascentRateLimit) 
     let atDepthSequence  = Seq.initInfinite  ( fun _ -> 0.0) 
     seq{ yield! constantDepthSeq
          yield! ascentToSurface 
-         yield! atDepthSequence} , constantDepthSeq |> Seq.length , ascentToSurface |> Seq.length
+         yield! atDepthSequence} , [|constantDepthSeq ; ascentToSurface |]
+                                   |> Array.map ( fun x -> (x |> Seq.length )  - 1 ) 
+                                   |> Array.sum
 
-let strategyOutput2ImmersionNode strategyNode  = 
+let strategyOutput2ImmersionNodeNState strategyNode  = 
     let (State state ) , _ , _ , descentBound = strategyNode
     { CurrentState = state.LEPhysics 
       AccruedRisk  = state.Risk.AccruedRisk
-      DescentBound = descentBound}
+      DescentBound = descentBound} 
 
-let resetImmersionNodeRisk (immersionNode: ImmersionNode )  = 
-    {immersionNode with AccruedRisk = 0.0}
+let resetImmersionNodeRiskAndTime (immersionNode: ImmersionNode )  = 
+    {immersionNode with AccruedRisk = 0.0; CurrentState  = resetTimeOfLEState immersionNode.CurrentState}
 
 let getInitAndTargetNodeFromDescent ( Output strategyToTargetOut : StrategyOutput) stepsFromMaxToTarget   =
     let lastNodeInfoAtMaxDepth = strategyToTargetOut.[0]
     let targetOut = strategyToTargetOut |> Array.last
     let lastNodeAtBottom = lastNodeInfoAtMaxDepth 
-                           |> strategyOutput2ImmersionNode 
-                             
-    let targetNode         = targetOut 
-                             |> strategyOutput2ImmersionNode
-                             |> resetImmersionNodeRisk
-    [|lastNodeAtBottom ; targetNode |]
+                           |> strategyOutput2ImmersionNodeNState 
+
+    let targetNode       = targetOut 
+                           |> strategyOutput2ImmersionNodeNState
+                              
+    [|lastNodeAtBottom ; targetNode |> resetImmersionNodeRiskAndTime |]  
      
 let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentParams (maxAscentRate : option<float> ) =  //: ImmersionAnalytics = 
     let toTargetHistory , _ = getInitCondAfterDescentWithDefaultTimes stepsFromMaxToTarget  initialDepthParams.MaxDepth  initialDepthParams.BottomTime initialDepthParams.TargetDepth
-    let initNodeAndTargetNode  = getInitAndTargetNodeFromDescent toTargetHistory stepsFromMaxToTarget 
+    let initNodeAndTargetNode   = getInitAndTargetNodeFromDescent toTargetHistory stepsFromMaxToTarget 
+
+    let targetState =  initNodeAndTargetNode 
+                       |> Array.last 
+                       |> immersionNode2StateResetTime
 
     let getMaxAscentRate = function 
         | Some ascentRate -> ascentRate 
         | None            -> MissionConstraints.ascentRateLimit
 
-    twolegParamsToAscentStrategy  twoLegAscentParams (getMaxAscentRate maxAscentRate)
+    let ascentStrategyToSurface , lagToSurface  = twoLegAscentParams
+                                                  |>  twolegParamsToAscentStrategy   (getMaxAscentRate maxAscentRate)
 
+    let simulationOutput =  simulateStrategyWithDefaultParamsAndThisInitNode targetState  ascentStrategyToSurface
 
+    initNodeAndTargetNode , ascentStrategyToSurface , lagToSurface , simulationOutput , targetState
 
-let stepsFromMaxToTarget , initialDepthParams , twoLegAscentParams , maxAscentRate  = 4  ,  {MaxDepth = 120.0 ; BottomTime = 50.0 ; TargetDepth = 50.0 } , { ConstantDepth  = 60.0   ;  TimeStepsAtConstantDepth  = 5    } , None
+let stepsFromMaxToTarget ,                         initialDepthParams                    ,              twoLegAscentParams                                 , maxAscentRate  = 
+              4          ,  {MaxDepth = 120.0 ; BottomTime = 50.0 ; TargetDepth = 50.0 } , { ConstantDepth  = 60.0   ;  TimeStepsAtConstantDepth  = 5    } ,    None
 
-let ascent  = solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentParams maxAscentRate 
+let initNodeAndTargetNode , ascent , laggedElements , simulationOutput , targetState = solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentParams maxAscentRate 
 
-//constantDepthSeq |> Seq.length , ascentToSurface |> Seq.length
-let ascStrategySeq, lenConstantDepth  , lenAscentSurf = ascent
-//let (Output out ) = toTargHist
+// target node is init simulation mode
 
-ascStrategySeq |> SeqExtension.takeWhileWithLast (fun x -> abs(x) > 1.e-2)  |> Seq.toArray
+ascent |> SeqExtension.takeWhileWithLast (fun x -> abs(x) > 1.e-2)  |> Seq.toArray
 
+let x   = simulationOutput 
+          |>  (fun (Output x , _ )  -> x )
+          |> Seq.take 10
+          |> Seq.toArray
