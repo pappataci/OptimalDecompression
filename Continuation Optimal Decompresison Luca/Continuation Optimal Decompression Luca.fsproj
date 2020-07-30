@@ -90,6 +90,7 @@
     <None Include="TestAPI.fsx" />
     <None Include="TestMBX.fsx" />
     <None Include="ActivePatternExample.fsx" />
+    <None Include="TwoLegsAscentScript.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Collections.ParallelSeq">

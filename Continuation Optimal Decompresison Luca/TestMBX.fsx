@@ -70,4 +70,3 @@ let agent  = Agent<SimulationMessage>.Start(fun inbox ->
                                                     return! loop() } 
                                                 loop() )
 
-defaultSimulationParameters

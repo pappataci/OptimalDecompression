@@ -159,7 +159,12 @@ module LEModel  =
         >> Array.max
         >> n2Pressure2Depth thalmanHyp fractionO2
 
-     
+    let resetTissueRiskAndTime ((State  leStatus ) : State<LEStatus>) = 
+        let numberOfTissues = leStatus.Risk.IntegratedRisks |> Array.length
+        {leStatus with Risk = {AccruedRisk = 0.0 ; IntegratedRisks = Array.zeroCreate  numberOfTissues } ; 
+                       LEPhysics = {leStatus.LEPhysics with CurrentDepthAndTime  = resetTimeOfDepthInTime leStatus.LEPhysics.CurrentDepthAndTime } } 
+        |> State
+        
         
 module USN93_EXP = 
     open InitDescent

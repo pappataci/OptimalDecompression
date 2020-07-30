@@ -88,14 +88,15 @@ let initializeEnvironment<'S, 'P , 'I , 'A , 'SP ,'F ,'Q> (ModelDefiner modelCre
     let innerEnvinromentComputation ( actualState: State<'S> ) ( action:Action<'A> )  = 
         
         let nextState =  actionModel actualState action
-        let transitionReward = instantaneousReward actualState action nextState
         let isTerminalState = isTerminalState nextState
 
-        let finalStateReward =  match isTerminalState with 
-                                | true -> finalReward nextState
-                                | _ -> 0.0
+        //let finalStateReward =  match isTerminalState with 
+        //                        | true -> finalReward nextState
+        //                        | _ -> 0.0
 
-        let totalReward = transitionReward + finalStateReward 
+        let totalReward = match isTerminalState  with
+                          | true -> finalReward nextState
+                          | false -> instantaneousReward actualState action nextState 
 
         let envDynamics = {NextState = nextState  
                            TransitionReward = totalReward

@@ -66,10 +66,38 @@ module RewardDefinition =
     let shortTermRewardIsAlwaysZero  (_:EnvironmentParameters<LEModelEnvParams>) _ (_ :Action<float>) _ =
         0.0
     
-    let shortTermRewardOnTimeDifference (_:EnvironmentParameters<LEModelEnvParams>) initState (_ :Action<float>) nextState = 
-        let initTime = leStatus2ModelTime initState
-        let finalTime = leStatus2ModelTime nextState
-        initTime - finalTime // it is minus duration: time length is a cost 
+    // first toy experiment: reward is proportional to negative descent
+
+    //let rewardForKeepingZero = 1.0
+    let gainForDescent = 0.1
+
+    //let rewardZeroRateOnly actualDescentRate = 
+    //    match abs(actualDescentRate) < 1.0 with
+    //    | true  -> rewardForKeepingZero
+    //    | false -> 0.0
+
+    let shortTermReward (Parameters p :EnvironmentParameters<LEModelEnvParams>) initState (Control action :Action<float>) nextState = 
+        let applyFcnToTheTwoStates fcn = [|initState ; nextState |] |> Array.map fcn 
+
+        let depths = applyFcnToTheTwoStates leState2Depth
+        let times = applyFcnToTheTwoStates leStatus2ModelTime
+        
+        //p.RewardParameters.MaximumRiskBound // to retrieve maximumRiskBound --> compute residual risk
+
+        // negative rate is ascent; positive rate is descent
+        let actualDescentRate = ( depths |> Array.reduce (-) ) / ( (p.TimeParams.ControlToIntegrationTimeRatio |> float)  * p.TimeParams.IntegrationTime)  
+        let initialDepth = depths.[0]
+        
+        //match abs(initialDepth)  < 1.0 with
+        //| true -> (rewardZeroRateOnly actualDescentRate)
+        //| false -> 
+        ( actualDescentRate * gainForDescent ) 
+        
+        
+
+        //let initTime = leStatus2ModelTime initState
+        //let finalTime = leStatus2ModelTime nextState
+        //(initTime - finalTime) * 0.05 // it is minus duration: time length is a cost 
 
     let getRewardOfFinalState  rewardParameters {MaximumFinalTime = maxFinalTime} finalState  = 
         match (leStatus2ModelTime finalState < maxFinalTime) with 
@@ -108,12 +136,6 @@ module FinalStateIdentification =
             let simulationTime = leStatus2ModelTime actualState 
             let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
             let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
-            //printfn "%A"  isEmergedAndNotAccruingRisk 
-            //printfn "%A" maximumSimulationTime
-            //printfn "%A"  hasExceededMaximumTime 
-            //printfn "%A"  hasExceededMaximumRisk 
-
-
             ( isEmergedAndNotAccruingRisk ||  hasExceededMaximumTime || hasExceededMaximumRisk ) 
         isFinalStatePredicate
 

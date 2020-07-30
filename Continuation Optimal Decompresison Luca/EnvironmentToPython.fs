@@ -122,11 +122,11 @@ module EnvironmentToPython =
                                   InitialDepth      = 0.0 }    // ft
                                   |> System2InitStateParams
 
-        let ( environment ,  initstate ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
+        let ( environment ,  initState ,  _ , ascentLimiter ) = initializeEnvironment  (modelsDefinition , modelBuilderParams |> Parameters ) 
                                                                    shortTermRewardEstimator terminalStatePredicate infoLogger 
                                                                    (initialStateCreator , missionParameters )  ascentLimiterFcn     
-        let nextAscentLimit = initstate 
+        let nextAscentLimit = initState 
                               |> createDummyExperienceWithThisAsNextState
                               |> getRateLimit ascentLimiter
                               
-        environment ,  initstate , ascentLimiter , nextAscentLimit
+        environment ,  initState , ascentLimiter , nextAscentLimit

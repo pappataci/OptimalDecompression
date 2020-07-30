@@ -15,7 +15,7 @@ let main _ =
     printfn"insert number of elements"
     let maxInputsString = Console.ReadLine()
     let maxInputs = maxInputsString |> Double.Parse
-    let inputsStrategies =  [|0.0 .. maxInputs|] |> Array.map (fun x -> ( commonSimulationParameters , Seq.initInfinite (fun _ -> x )  |> Ascent ) |> StrategyInput )
+    let inputsStrategies =  [|0.0 .. maxInputs|] |> Array.map (fun x -> ( commonSimulationParameters , Seq.initInfinite (fun _ -> x )  |> Ascent ) |> StrategyInput   )
 
     printfn "init"
     let stopWatch = System.Diagnostics.Stopwatch.StartNew()
@@ -27,17 +27,19 @@ let main _ =
     
     Console.Read() |> ignore
     
-    
     stopWatch.Restart()
     let testParallel = inputsStrategies 
                        |> Array.Parallel.map simulateStrategy
     let durParallel = stopWatch.Elapsed.TotalMilliseconds
     printfn "parallel done"
 
-    printfn "Parallel time: %A" (   durParallel )
+    printfn "Parallel time: %A" durParallel 
+    
+    let envResponse = testParallel |> Array.last |> (fun (Output x , _ ) -> x ) 
+    printfn "%A" (envResponse|>Array.last) 
+
     //testSequential |> Array.last |> Seq.last |> printfn "%A"
     //testParallel |> Array.last   |>Seq.last  |> printfn "%A"
-
 
     Console.Read() |> ignore
 

@@ -23,7 +23,7 @@ module EnvironmentSetup =
     let modelsDefinition = defEnvironmentModels |> ModelDefiner
     
     // default is shortTermRewardOnTimeDifference
-    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermRewardIsAlwaysZero  finalRewardComputation
+    let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermReward  finalRewardComputation
     let terminalStatePredicate = StatePredicate defineFinalStatePredicate
     let infoLogger = nullLogger 
 

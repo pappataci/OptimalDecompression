@@ -25,6 +25,9 @@ module PredefinedDescent =
                                 MaximumDepth = maximumDepth } 
           BottomTime  = bottomTime}
 
+    let resetTimeOfDepthInTime (TemporalValue x : DepthInTime) = 
+        {x with Time = 0.0} |> TemporalValue
+
     [<AutoOpen>]
     module DescentConstant = 
         let tolerance = 1.0e-6

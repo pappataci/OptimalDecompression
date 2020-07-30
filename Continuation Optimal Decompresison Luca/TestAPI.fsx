@@ -16,101 +16,139 @@
 #load "SeqExtension.fs"
 #load "AscentSimulator.fs"
 
-open ReinforcementLearning
+//open ReinforcementLearning
 open LEModel
 open ToPython
 open AscentSimulator
 
-//let maxPDCS = 3.3e-2
-
-let penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime= 1.0 , 1.0, 0.5
-let integrationTime = 0.1 
+let maxPDCS = infinity // not stringent bound 
+let maximumSimulationTime = 10000.0
+let penaltyForExceedingRisk = 1.0
+let rewardForDelivering = 10.0
+let penaltyForExceedingTime = 0.5
+let integrationTime = 0.1
 let controlToIntegrationTimeRatio = 10
 let descentRate = 60.0
-let legDiscreteTime =  integrationTime
-let maximumSimulationTime = 50001.0
-
-// MISSION PARAMETERS
-let maxPDCS =  4.e-2
 let maximumDepth = 30.0
-let bottomTime = 10.0
+let legDiscreteTime = 0.1
 
-// Python equivalent helper function
-let env, initState ,  ascentLimiter , nextAscLimit  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
-                                                                           penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
-                                                                           integrationTime  ,
-                                                                           controlToIntegrationTimeRatio,  
-                                                                           descentRate , 
-                                                                           maximumDepth  , 
-                                                                           bottomTime  , 
-                                                                           legDiscreteTime   )  
+let commonSimulationParameters = {MaxPDCS = maxPDCS ; MaxSimTime = maximumSimulationTime ; PenaltyForExceedingRisk  = penaltyForExceedingRisk ; RewardForDelivering = rewardForDelivering; PenaltyForExceedingTime =penaltyForExceedingTime ;
+                                  IntegrationTime = integrationTime; ControlToIntegrationTimeRatio = controlToIntegrationTimeRatio; DescentRate = descentRate; MaximumDepth = maximumDepth ; BottomTime = 15.0;  LegDiscreteTime = legDiscreteTime}
 
-let answer = getNextEnvResponseAndBoundForNextAction(env, initState ,maximumDepth, ascentLimiter)
+let inputStrategy =  0.0 |>   (fun x -> ( commonSimulationParameters , Seq.initInfinite (fun _ -> x )  |> Ascent ) |> StrategyInput )
 
-let (nextState, transitionRew, isTerminalState , ascentRateLimit)  = answer 
+let (Output history, _ ) = simulateStrategy inputStrategy
 
-let getCompleteSeqAtConstantDepth (constantDepth:float)  =   
-    let infinitSeqOfConstantValues = (fun _ -> constantDepth) |> Seq.initInfinite
-    let  ascentSeq   =  infinitSeqOfConstantValues 
-                        |> Seq.scan ( fun ( nextState, rew, isTerminal, _ )  depth -> getNextEnvResponseAndBoundForNextAction(env, nextState , depth , ascentLimiter)  ) (  initState, 0.0 , false, 0.0)  
-                        |> Seq.takeWhile (fun (_ , _, isTerminalState, _) ->  not isTerminalState)
-    let aState, aReward, isTerminal, aLimit  = (ascentSeq |> Seq.last )
-    let lastNode = seq { getNextEnvResponseAndBoundForNextAction(env, aState , constantDepth, ascentLimiter )  } 
-    lastNode 
-    |> Seq.append  ascentSeq
-    |> Seq.toArray
-
-let seqOfNodes = 5.0
-                 |> getCompleteSeqAtConstantDepth  
-
-let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-let testParallel = [|5.0; 3.0; 2.0 ; 7.0|]
-                   |> Array.map getCompleteSeqAtConstantDepth
-let dur' = stopWatch.Elapsed.TotalMilliseconds
-
-let one() = 1.0 |> getCompleteSeqAtConstantDepth
-let tw() = 2.0 |> getCompleteSeqAtConstantDepth
-
-let testMe = [ async{return one()  } ; async{return  tw()  } ] 
-
-let a = testMe
-        |> Async.Parallel
-        |> Async.RunSynchronously
+let setBottomTimeMaximumTimeAndMaxDepth maxDepth  bottomTime maxLength  = { commonSimulationParameters with BottomTime = bottomTime ; MaxSimTime = bottomTime + maxLength ; MaximumDepth = maxDepth }
 
 
 
-//let stopWatch = System.Diagnostics.Stopwatch.StartNew()
-//let out =  applyInParallelAndAsync getCompleteSeqAtConstantDepth   [|5.0; 3.0; 2.0 ; 7.0|]
-//let dur = stopWatch.Elapsed.TotalMilliseconds
+let env, initState ,  ascentLimiter , _  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
+                                                                        penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
+                                                                        integrationTime  ,
+                                                                        controlToIntegrationTimeRatio,  
+                                                                        descentRate , 
+                                                                        maximumDepth  , 
+                                                                        4000.0  , 
+                                                                        legDiscreteTime   ) 
+printfn "%A" initState
+let findMinBottomSaturationTime seqOfTimes pressValue =   seqOfTimes 
+                                                        |> SeqExtension.takeWhileWithLast  ( fun  bt ->
+                                                                                                let env, initState ,  ascentLimiter , _  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
+                                                                                                                                                penaltyForExceedingRisk ,  rewardForDelivering , 
+                                                                                                                                                penaltyForExceedingTime , integrationTime  ,
+                                                                                                                                                controlToIntegrationTimeRatio,     descentRate , 
+                                                                                                                                                maximumDepth  ,   bt  ,   legDiscreteTime   )  
+                                                                                                let tensions = leStatus2TissueTension initState
+                                                                                                let minTension =  tensions |> Array.min
+                                                                                
+                                                                                                minTension < pressValue)  
+                                                        |> Seq.toArray |> Seq.last 
 
-let lastNode = seqOfNodes |> Seq.last 
-seqOfNodes |> Seq.length
+let bottomTimes = Array.append  ( Array.append [|10.0 ..10.0 ..100.0 |] [| 100.0 .. 100.0 .. 900.0 |] ) [| 1000.0 .. 500.0 .. 4000.0|]
 
-let riskToPDCS aRisk = 
-    ( 1.0 - exp( -aRisk))
-
-let leToPDCS (State aNode)  =
-    aNode.Risk.AccruedRisk
-    |> riskToPDCS 
-
-/// THIS IS A TEST
-//(fun _ -> 1.0)
-//|> Seq.initInfinite
-//|> Seq.scan (fun sum value -> sum +  value) 0.0
+//let inputStrategyWithThisBottomTime bottomTime  = 0.0 |>   (fun x -> ( setBottomTime bottomTime , Seq.initInfinite (fun _ -> x )  |> Ascent ) |> StrategyInput )
 
 
-//perturbState
+let maxAscentCreator actualDepth indexOfAscent = 
+    seq { yield! Seq.init (indexOfAscent  ) (fun _ -> actualDepth )
+          yield! Seq.initInfinite (fun _ -> 0.0) 
+        } 
+
+//let (Output strategyOutput )  = 4000.0 
+//                                |> inputStrategyWithThisBottomTime 
+//                                |> simulateStrategy
 
 
+let getHistoryOfResponse maxDepth bottomTime  indexOfAscent = 
+    let incrementWrtToBottomTime = 2000.0
+    
+    (incrementWrtToBottomTime
+     |> setBottomTimeMaximumTimeAndMaxDepth maxDepth bottomTime  , 
+     maxAscentCreator maxDepth indexOfAscent // ascentHistory
+     |> Ascent  )
+    |> StrategyInput
+    |> simulateStrategy
 
-//let a = 0.0
-//        |> Array.create 150 
-//        |> Array.scan ( fun (actualState, _)  actualDepth -> getNextEnvResponseAndBoundForNextAction(env, actualState , actualDepth , ascentLimiter) 
-//                                                             |> (fun (x,_,_, z) -> (x , z)   ) ) (initState, ascentRateLimit) 
+let indecesOfAscent = [|0 .. 50 |]
 
-        
+let actualDepth = 30.0
 
-//System.IO.File.WriteAllLines( Environment.SpecialFolder.Desktop, randNum)
-//let desktopPath = Environment.GetFolderPath Environment.SpecialFolder.Desktop
+let getStrategyOutputForThisBottomTime bottomTime =
+    indecesOfAscent
+    |> Array.map (getHistoryOfResponse actualDepth bottomTime)
 
-//System.IO.File.WriteAllLines(desktopPath  + @"\outHist.txt" , randNum)
+let pathForSavingData = @"C:\Users\glddm\Desktop\"
+
+let vector2String  aVec   = 
+    let xprecision = 3
+    let line = sprintf "%.*g"
+    aVec
+    |> Array.map  ( fun x -> ( line xprecision ) x)
+    |> (fun x -> String.Join("," ,  x ) ) 
+    //|> Array.fold (+) " " 
+
+
+let writeDataToFileWithDepthTitle numericMaxDepth ( dataToBeWritten : string []) = 
+    let fileName = pathForSavingData + "depth_"  + 
+                          ( numericMaxDepth |> string )   + 
+                           ".csv"
+    using (new System.IO.StreamWriter  (fileName , append =  true ) )  ( fun writer -> Array.map  (fun (x:string) -> writer.Write ( x + " " )   )  dataToBeWritten |> ignore ; writer.WriteLine("") )  
+
+let strategyToString actualDepth bottomTime indexOfAscent (Output response)  =   
+    let  initState , _ , _ ,_  = response |> Seq.head 
+    let initStateTissue = initState 
+                              |> leStatus2TissueTension
+                              |> vector2String
+    initStateTissue
+   
+let outputForAllBottomTimes  = 
+    bottomTimes
+    |> Array.map (fun bottomTime -> indecesOfAscent 
+                                             |> Array.map ( fun indexOfAscent  ->           
+                                                                  getHistoryOfResponse actualDepth bottomTime indexOfAscent ))
+                                                                  //|> strategyToString actualDepth bottomTime indexOfAscent )  )
+                                                                  
+
+//let (Output firstDatum) = outputForAllBottomTimes  // this index refers to bottomTimes
+                          //|> Seq.item 1  
+
+//let testState , _ , _ , _  = firstDatum |> Array.last
+
+//let a' = outputForAllBottomTimes.[0] 
+//            |> Seq.map (fun (Output x ) -> 
+//                            let length  = x |> Array.length
+//                            let finalRisk , rew,  isFinallyDone = x |> Array.last |> (fun (y, reward, isDone ,_ ) -> (leStatus2Risk y, reward, isDone) )
+//                            (length, finalRisk , rew , isFinallyDone) )  |> Seq.toArray
+
+//let getImmersionInitCondition maxDepth bottomTime targetInitAscentDepth = 
+    
+    //let maxPDCS , maxSimTime, integrationTime, controlToIntegration, descentRate , legDiscreteTime = 
+    //    infinity, infinity  , 0.1            ,   10                , 60.0         , 0.1 
+    //let  penaltyForExceedingRisk, rewardForDelivering, penaltyForExceedingTime = 10.0 , 10.0, 5.0 
+
+    //let  environment ,  initState , ascentLimiter , nextAscentLimit = getEnvInitStateAndAscentLimiter(maxPDCS ,maxSimTime , penaltyForExceedingRisk, rewardForDelivering, penaltyForExceedingTime, 
+    //                                                                    integrationTime, controlToIntegrationTimeRatio, descentRate,  maxDepth, bottomTime , legDiscreteTime )
+
+    //environment,  initState |> resetTissueRiskAndTime , ascentLimiter , nextAscentLimit
+
