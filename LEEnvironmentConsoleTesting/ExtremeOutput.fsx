@@ -157,3 +157,55 @@ let peopleRecds =
 #r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Deedle.2.2.0\lib\net45\Deedle.dll"
 open Deedle
 let peopleList = Frame.ofRecords peopleRecds
+
+let columnsNames = [ "TargetDepth" ; "P0" ; "P1";"P2"; "TimeStepsAtConstDepth" ; "ConstantDepthLev"; "AscentRate" ;  "OnSurfaceTime"; "FinalRisk"; "FinalTime"]
+
+let dt' = new System.Data.DataTable()
+
+columnsNames
+|> List.map (fun colName -> dt'.Columns.Add(colName , typeof<float> ) |> ignore )
+
+let resultVector = [70.0; 2.847648884; 2.344844143; 0.9825187289; 150.0; 30.0; -30.0; 151.0; 0.06461583884; 574.0]
+
+let insertNewColumn   (aDataTable:Data.DataTable) (aLabel:string) (aValue:float) = 
+    let r = aDataTable.NewRow()
+    r.[aLabel] <- aValue
+    
+List.iter2 (insertNewColumn dt') columnsNames resultVector
+
+open Extreme.Mathematics
+open Extreme.Mathematics.LinearAlgebra
+
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
+open FSharp.Data
+
+//type MyCsvType = CsvProvider<Schema = "Month (int), Year (int), Income (float), Family (int), Dogs (int), Cats (int)", HasHeaders = true, Sample = >
+type MyCsvType = CsvProvider<"Month, Year, Income, Family, Dogs, Cats", 
+                             Schema="int ,int ,float ,int,int,int " ,HasHeaders = true >
+type Family =
+    { Month : int
+      Year : int
+      Income : float
+      Family : int
+      Dogs : int
+      Cats : int
+    }
+
+let myCsvBuildRow (x:Family) = 
+  MyCsvType.Row(x.Month,x.Year,x.Income,x.Family,x.Dogs,x.Cats)
+
+let myCsvBuildTable data = 
+  new MyCsvType(Seq.map myCsvBuildRow data)
+
+let myCsv = seq{{Month = 1; Year = 2020; Income = 23000.0; Family = 3; Dogs = 0 ; Cats = 0 } ; {Month = 4; Year = 2020; Income = 2300000.0; Family = 3; Dogs = 0 ; Cats = 0 }}  |> myCsvBuildTable
+
+myCsv.Save(@"C:/Users/glddm/Desktop/mammolo.csv")
+
+let duplicate times sequence = 
+    seq{
+           for i = 1 to times do yield! sequence
+    }
+
+type AscentCsvProvider = CsvProvider<"TargetDepth, P0, P1, P2, TimeStepsAtConstDepth, ConstantDepthLev, AscentRate, OnSurfaceTime, FinalRisk, FinalTime" , 
+                                     Schema= "float, float, float, float, float, float, float, float, float, float" , HasHeaders = true >
+

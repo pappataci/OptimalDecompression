@@ -28,6 +28,12 @@ module PredefinedDescent =
     let resetTimeOfDepthInTime (TemporalValue x : DepthInTime) = 
         {x with Time = 0.0} |> TemporalValue
 
+    let getTime (TemporalValue x : DepthInTime) = 
+        x.Time
+
+    let getValue (TemporalValue x : DepthInTime) = 
+        x.Value
+
     [<AutoOpen>]
     module DescentConstant = 
         let tolerance = 1.0e-6

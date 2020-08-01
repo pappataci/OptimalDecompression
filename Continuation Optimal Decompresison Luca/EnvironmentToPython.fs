@@ -9,7 +9,7 @@ module EnvironmentToPython =
     let state2Vector (x : State<LEStatus>) : float[] = 
         [| leStatus2Risk x |]
         |> Array.append (leStatus2TissueTension x)
-        |> Array.append  [|leState2Depth x|]   
+        |> Array.append  [|leStatus2Depth x|]   
         |> Array.append [|leStatus2ModelTime x |]
     
     let getRateDelimiter ( rateOfAscentLimiter : option< EnvironmentExperience<LEStatus, float> -> float > )

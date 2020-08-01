@@ -33,7 +33,7 @@ module ModelDefinition =
     let targetNodesPartitionFcnDefinition (numberOfActions: int) (  initialState:State<LEStatus> ) 
         (Control targetDepth: Action<float>)  =
 
-        let initDepth = initialState |>  leState2Depth
+        let initDepth = initialState |>  leStatus2Depth
         let depthIncrement = targetDepth 
                              |> max 0.0
                              |> (+) -initDepth
@@ -79,7 +79,7 @@ module RewardDefinition =
     let shortTermReward (Parameters p :EnvironmentParameters<LEModelEnvParams>) initState (Control action :Action<float>) nextState = 
         let applyFcnToTheTwoStates fcn = [|initState ; nextState |] |> Array.map fcn 
 
-        let depths = applyFcnToTheTwoStates leState2Depth
+        let depths = applyFcnToTheTwoStates leStatus2Depth
         let times = applyFcnToTheTwoStates leStatus2ModelTime
         
         //p.RewardParameters.MaximumRiskBound // to retrieve maximumRiskBound --> compute residual risk
@@ -224,7 +224,7 @@ module ExtraEnvironmentFunctions =
     let computeMaxPositiveRateFcn (tissueDepthFcn , computeRateFcn)  (experience: EnvironmentExperience<LEStatus, float> ) = 
         let nextState = experience.EnvironmentDynamics.NextState
         let actualDepth = nextState
-                          |> leState2Depth 
+                          |> leStatus2Depth 
 
         nextState
         |> tissueDepthFcn

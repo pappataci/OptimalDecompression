@@ -95,12 +95,12 @@ module LEModel  =
 
         nextStepFunction |> Model
 
-    let leState2Depth (State actualLEStatus: State<LEStatus>) = 
+    let leStatus2Depth (State actualLEStatus: State<LEStatus>) = 
         let (TemporalValue actualDepthInTime) = actualLEStatus.LEPhysics.CurrentDepthAndTime
         actualDepthInTime.Value
 
     let getNextDepth  (integrationTime:float) (  actualLEStatus:State<LEStatus>) (depthRate:float) = 
-        let actualDepth = actualLEStatus |>  leState2Depth
+        let actualDepth = actualLEStatus |>  leStatus2Depth
         actualDepth + depthRate * integrationTime
 
     let modelTransitionFunction (modelConstants:LEModelParams) (actualLEStatus:LEStatus) (nextDepth:float)  =
@@ -144,7 +144,7 @@ module LEModel  =
         |> Array.reduce (&&)
 
     let leStatus2IsEmergedAndNotAccruingRisk ( actualState: State<LEStatus> ) surfaceN2Tension  (leParams: SingleLEModelParam[] ) = 
-        let actualDepth = actualState |>  leState2Depth
+        let actualDepth = actualState |>  leStatus2Depth
         let actualAmbientPressure = actualDepth |> depth2AmbientPressure
         let tissueTensionsAreNotRiskSource = actualState 
                                              |> leStatus2TissueTension 
@@ -171,6 +171,18 @@ module LEModel  =
 
     let resetTimeOfLEState leState  = 
         {leState with  CurrentDepthAndTime = resetTimeOfCurrentDepthAndTime leState.CurrentDepthAndTime }
+
+    let leState2Time (leState:LEState) = 
+        leState.CurrentDepthAndTime
+        |> getTime 
+
+    let leState2TensionValues( { TissueTensions = tissueTensions} ) = 
+        tissueTensions
+        |> Array.map (fun (Tension t ) -> t ) 
+
+    let leState2Depth (leState:LEState) = 
+        leState.CurrentDepthAndTime
+        |> getValue
         
         
 module USN93_EXP = 
