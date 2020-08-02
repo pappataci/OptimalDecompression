@@ -84,6 +84,7 @@
     <Compile Include="EnvironmentToPython.fs" />
     <Compile Include="AscentSimulator.fs" />
     <Compile Include="TwoLegAscent.fs" />
+    <Compile Include="Result2CSV.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />

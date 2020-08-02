@@ -130,3 +130,21 @@ let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentPara
     let resultVector = immersionAnalyticsToResult immersionAnalytics twoLegAscentParams actualAscentRate
  
     resultVector , immersionAnalytics   , simulationOutput   
+
+let createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates targetDepth =
+    seq { for stepFromMaxToTarget in seqStepsMaxTarget do
+            for maxDepth in seqMaxDepth do
+                for bottomTime in seqBottomTimes do
+                    for constantDepth in seqConstDepth do  
+                        for timeAtConstDepth in seqTimeAtConstDepth do 
+                            for maxAscentRate in seqAscentRates -> (stepFromMaxToTarget , {MaxDepth = maxDepth ; BottomTime  = bottomTime ; TargetDepth = targetDepth} , 
+                                                                    { ConstantDepth  = constantDepth   ;  TimeStepsAtConstantDepth  = timeAtConstDepth   } , Some maxAscentRate) } 
+
+let solveThisAscentForThisTargetDepth targetDepth  seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates = 
+    
+    let inputs = createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates targetDepth
+                 |> Seq.toArray
+
+    inputs
+    |> Array.Parallel.map (fun   (stepsFromMaxToTarget, initDepthParams, twoLegAscentParams, maxAscentRate ) -> 
+                                  solveThis2LegAscent stepsFromMaxToTarget initDepthParams twoLegAscentParams maxAscentRate )  
