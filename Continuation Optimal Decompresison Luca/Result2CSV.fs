@@ -1,5 +1,5 @@
-﻿module Result2CSV
-
+﻿[<AutoOpen>]
+module Result2CSV
 open FSharp.Data
 open TwoLegAscent
 
@@ -12,5 +12,17 @@ let addRowToMyCsv (x:ResultData) =
 let myCsvBuildTable data = 
   new AscentCsvProvider(Seq.map addRowToMyCsv data)
 
-let myCsvSave (fileName:string) (csvTable:AscentCsvProvider) = 
+let saveToCsv (fileName:string) (csvTable:AscentCsvProvider) = 
     csvTable.Save fileName
+
+let writeResultsToDisk fileName (finalSubFolder:option<string>) results = 
+    
+    let finalSubFolder = match finalSubFolder with
+                         | None -> @"TwoLegStudy\"
+                         | Some v -> (v + @"\")
+      
+    let subFolder =  @"C:\Users\glddm\Desktop\" + finalSubFolder 
+
+    results
+    |> myCsvBuildTable
+    |> saveToCsv ( subFolder + fileName) 

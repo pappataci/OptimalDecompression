@@ -278,19 +278,19 @@ namespace Continuation_Optimal_Deco
             // Create the initial guess
             // The first element is the exponent and the second
             // element is the break fraction.  
-            var initialGuess   = Vector.Create(2);
-            initialGuess [ 0 ] = 10.0 * exponent;
+            var initialGuess   = Vector.Create(0.0,0.0);
+            initialGuess [ 0 ] = 10.0 *  exponent  ;
             initialGuess [ 1 ] = 10.0 * breakFraction;
             
             // Powell's method does not use derivatives:
             pw.InitialGuess = initialGuess;
-            pw.ObjectiveFunction = ObjectiveFunction;
+            pw.ObjectiveFunction =  ObjectiveFunction;
             pw.FindExtremum ( );
 
             MessageBox.Show ( "Optimization complete" );
             
         }
-        private double ObjectiveFunction (Vector x)
+        private double ObjectiveFunction (Vector<float> x)
         {
 
             model.ResetInformation ( );

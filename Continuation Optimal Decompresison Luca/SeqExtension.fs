@@ -14,3 +14,13 @@ let takeWhileWithLast predicate (s:seq<_>) =  // by T. Petricek
   // (making sure that the enumerator gets disposed)
   seq { use en = s.GetEnumerator()
         yield! loop en }
+
+let replicateSequence n originalSeq = 
+    seq { for _ in 1..n do
+            for x in originalSeq do
+               yield x } 
+
+let mergeSequenceSkippingIC  overallSeq= 
+    overallSeq
+    |> Seq.map (Seq.skip 1)
+    |> Seq.concat

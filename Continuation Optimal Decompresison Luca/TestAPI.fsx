@@ -26,11 +26,14 @@ let maximumSimulationTime = 10000.0
 let penaltyForExceedingRisk = 1.0
 let rewardForDelivering = 10.0
 let penaltyForExceedingTime = 0.5
+
 let integrationTime = 0.1
 let controlToIntegrationTimeRatio = 10
+
 let descentRate = 60.0
-let maximumDepth = 30.0
+let maximumDepth = 72.0
 let legDiscreteTime = 0.1
+let bottomTime = 60.0;
 
 let commonSimulationParameters = {MaxPDCS = maxPDCS ; MaxSimTime = maximumSimulationTime ; PenaltyForExceedingRisk  = penaltyForExceedingRisk ; RewardForDelivering = rewardForDelivering; PenaltyForExceedingTime =penaltyForExceedingTime ;
                                   IntegrationTime = integrationTime; ControlToIntegrationTimeRatio = controlToIntegrationTimeRatio; DescentRate = descentRate; MaximumDepth = maximumDepth ; BottomTime = 15.0;  LegDiscreteTime = legDiscreteTime}
@@ -42,19 +45,36 @@ let (Output history, _ ) = simulateStrategy inputStrategy
 let setBottomTimeMaximumTimeAndMaxDepth maxDepth  bottomTime maxLength  = { commonSimulationParameters with BottomTime = bottomTime ; MaxSimTime = bottomTime + maxLength ; MaximumDepth = maxDepth }
 
 
-
-let env, initState ,  ascentLimiter , _  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
+let env, initState ,  ascentLimiter , _ , integrationModel =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
                                                                         penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
                                                                         integrationTime  ,
                                                                         controlToIntegrationTimeRatio,  
                                                                         descentRate , 
                                                                         maximumDepth  , 
-                                                                        4000.0  , 
+                                                                        bottomTime  , 
                                                                         legDiscreteTime   ) 
 printfn "%A" initState
+
+
+let out =      
+    match ascentLimiter with
+    | Some x ->  x
+    | None -> (fun x -> 0.0) 
+
+let (Model fcn ) = integrationModel
+
+let second = 15.0
+             |> Control
+             |> fcn initState
+
+let third = 0.0
+            |> Control
+            |> fcn second
+
+
 let findMinBottomSaturationTime seqOfTimes pressValue =   seqOfTimes 
                                                         |> SeqExtension.takeWhileWithLast  ( fun  bt ->
-                                                                                                let env, initState ,  ascentLimiter , _  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
+                                                                                                let env, initState ,  ascentLimiter , _ , _ =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
                                                                                                                                                 penaltyForExceedingRisk ,  rewardForDelivering , 
                                                                                                                                                 penaltyForExceedingTime , integrationTime  ,
                                                                                                                                                 controlToIntegrationTimeRatio,     descentRate , 

@@ -34,7 +34,6 @@ type ResultData  = { TargetDepth:float
                      FinalRisk:float
                      FinalTime:float}
 
- 
 let immersionNode2StateResetTime immersionNode  =  { LEPhysics =  resetTimeOfLEState immersionNode.CurrentState ; 
                                                       Risk  = { AccruedRisk = 0.0 ; IntegratedRisks =  0.0 
                                                                                     |> Array.create  ( immersionNode.CurrentState.TissueTensions |> Array.length )    } } 
@@ -76,6 +75,7 @@ let getInitAndTargetNodeFromDescent ( Output strategyToTargetOut : StrategyOutpu
     [|lastNodeAtBottom ; targetNode |> resetImmersionNodeRiskAndTime |]  
       
 let strategyOutput2ImmersionNodes ( Output strategyOutput )  lagToSurface timeStepAtConstantDepth = 
+
     [| 0 ;  1 ;    timeStepAtConstantDepth ; lagToSurface + 1 ; ( strategyOutput |> Array.length ) - 1 |] 
     |> Array.map (fun x -> strategyOutput.[x]  
                            |> strategyOutput2ImmersionNodeNState  )
@@ -99,8 +99,11 @@ let immersionAnalyticsToResult immersionAnalytics twoLegAscentParams actualAscen
       FinalRisk = finalNodeInfos.[0]
       FinalTime = finalNodeInfos.[1]  }
  
-let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentParams (maxAscentRate : option<float> ) =   
+let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentParams maxAscentRate  =   
+    //printf "%A" (stepsFromMaxToTarget  ,initialDepthParams.MaxDepth , initialDepthParams.BottomTime ,initialDepthParams.TargetDepth)
     let toTargetHistory , _ = getInitCondAfterDescentWithDefaultTimes stepsFromMaxToTarget  initialDepthParams.MaxDepth  initialDepthParams.BottomTime initialDepthParams.TargetDepth
+    
+ 
     let initNodeAndTargetNode   = getInitAndTargetNodeFromDescent toTargetHistory stepsFromMaxToTarget 
  
     let targetState =  initNodeAndTargetNode 
@@ -117,7 +120,7 @@ let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentPara
                                                    |>  twolegParamsToAscentStrategy  actualAscentRate
  
     let simulationOutput , _ =  simulateStrategyWithDefaultParamsAndThisInitNode targetState ascentStrategyToSurface
- 
+    //printfn "%A" (targetState , ascentStrategyToSurface)
     let targetNode, nodeAtConstantDepth, initFinalAscentNode, atSurfaceNode , finalNode = strategyOutput2ImmersionNodes simulationOutput lagToSurface twoLegAscentParams.TimeStepsAtConstantDepth
  
     let immersionAnalytics = { LastNodeAtBottom         = initNodeAndTargetNode.[0] 
@@ -131,7 +134,7 @@ let solveThis2LegAscent stepsFromMaxToTarget initialDepthParams twoLegAscentPara
  
     resultVector , immersionAnalytics   , simulationOutput   
 
-let createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates targetDepth =
+let createInputs (seqStepsMaxTarget:seq<int>) seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates targetDepth =
     seq { for stepFromMaxToTarget in seqStepsMaxTarget do
             for maxDepth in seqMaxDepth do
                 for bottomTime in seqBottomTimes do
@@ -140,11 +143,50 @@ let createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seq
                             for maxAscentRate in seqAscentRates -> (stepFromMaxToTarget , {MaxDepth = maxDepth ; BottomTime  = bottomTime ; TargetDepth = targetDepth} , 
                                                                     { ConstantDepth  = constantDepth   ;  TimeStepsAtConstantDepth  = timeAtConstDepth   } , Some maxAscentRate) } 
 
-let solveThisAscentForThisTargetDepth targetDepth  seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates = 
-    
-    let inputs = createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates targetDepth
-                 |> Seq.toArray
-
-    inputs
+let solveThisAscentForThisTargetDepthGen targetDepth2InputsFcn (targetDepth:float) =    
+    targetDepth
+    |> targetDepth2InputsFcn
     |> Array.Parallel.map (fun   (stepsFromMaxToTarget, initDepthParams, twoLegAscentParams, maxAscentRate ) -> 
-                                  solveThis2LegAscent stepsFromMaxToTarget initDepthParams twoLegAscentParams maxAscentRate )  
+        solveThis2LegAscent stepsFromMaxToTarget initDepthParams twoLegAscentParams maxAscentRate )  
+    |> Array.unzip3
+
+let solveThisAscentForThisTargetDepth targetDepth  seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates = 
+    let inputCreator = ( createInputs seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates ) >> Seq.toArray
+    targetDepth
+    |> solveThisAscentForThisTargetDepthGen   inputCreator
+
+let solveThisAscentwithInitEndAscent seqBottomTimes seqConstDepth seqTimeAtConstDepth  seqAscentRates (targetDepth: float ) = 
+    
+    let seqStepsMaxTarget = seq{1} 
+    let seqMaxDepth = seq{targetDepth}
+    solveThisAscentForThisTargetDepth targetDepth  seqStepsMaxTarget seqMaxDepth seqBottomTimes  seqConstDepth seqTimeAtConstDepth seqAscentRates
+
+let lengthOfDataForThisGroup (aGroup : seq<float*ResultData[]> ) =
+    aGroup
+    |> Seq.map snd
+    |> Seq.sumBy Array.length
+
+let private assignNoneIfIncreasingTime (riskOrderedSeq: seq<ResultData>) = 
+    let firstElement = riskOrderedSeq |> Seq.item 0 
+    riskOrderedSeq
+    |> Seq.scan (fun (previousMinTime ,  _   ) actualElement   -> match actualElement.FinalTime >= previousMinTime with
+                                                                  | true  -> (previousMinTime,  None)
+                                                                  | false -> actualElement.FinalTime , Some actualElement   
+                                                                                                                                            )  
+                ( firstElement.FinalTime ,  firstElement |> Some )
+
+let results2Groups results = 
+    results
+    |> Array.groupBy (fun x -> (x.P0, x.P1, x.P2))
+    |> Array.Parallel.map (fun (x,y ) ->   ( y |> Array.groupBy ( fun z -> z.FinalRisk )  ) ) // array (P0,P1,P2) of (risk * resultData)  
+    |> Seq.map ( fun x  ->  x |> Array.sortBy ( fun ( risk, _  ) ->  risk) ) 
+
+
+let getRidOfSubOptimalSolutionsForThisGroup (aGroup : seq<float*ResultData[]> ) = 
+    let getRidOfSubOptimalSolutionForThisRiskLvl (_:float , dataWithThisRisk:ResultData[])  = 
+        dataWithThisRisk |> Array.minBy (fun x -> x.FinalTime)
+    
+    aGroup
+    |> Seq.map getRidOfSubOptimalSolutionForThisRiskLvl 
+    |> assignNoneIfIncreasingTime
+    |> Seq.choose snd

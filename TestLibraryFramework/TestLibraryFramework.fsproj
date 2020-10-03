@@ -48,6 +48,7 @@
     <None Include="Script.fsx" />
     <None Include="MonadExperiment.fsx" />
     <Content Include="packages.config" />
+    <None Include="websiteChange.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

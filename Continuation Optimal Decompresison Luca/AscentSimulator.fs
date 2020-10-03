@@ -30,7 +30,7 @@ let simulateStrategyWithInput (optInitState : Option<State<LEStatus>>) (  Strate
                                 ControlToIntegrationTimeRatio = controlToIntegrationTimeRatio; DescentRate = descentRate; MaximumDepth = maximumDepth ;
                                 BottomTime = bottomTime ; LegDiscreteTime = legDiscreteTime }   ,  Ascent  ascentStrategy )     )  = 
     
-    let env, initState ,  ascentLimiter , _  =  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
+    let env, initState ,  ascentLimiter , _  , _=  getEnvInitStateAndAscentLimiter  ( maxPDCS    , maximumSimulationTime , 
                                                                            penaltyForExceedingRisk ,  rewardForDelivering , penaltyForExceedingTime , 
                                                                            integrationTime  ,
                                                                            controlToIntegrationTimeRatio,  
@@ -66,7 +66,14 @@ let simulateStrategyWithDefaultParamsAndThisInitNode (initState : State<LEStatus
 
 let getConstantRateAscent stepsFromMaxToTarget initDepth  targetDepth = 
     let step = (targetDepth - initDepth ) / (stepsFromMaxToTarget |> float )
-    [|initDepth .. step .. targetDepth|] 
+
+    let getDepthArray( initDepth, step, targetDepth) = 
+        match step with 
+        | 0.0 -> [|targetDepth|]
+        | _   -> [|initDepth .. step .. targetDepth|] 
+
+    (initDepth, step, targetDepth)
+    |> getDepthArray
     |> Array.skip 1 
     |> Seq.ofArray
 

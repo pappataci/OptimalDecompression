@@ -27,6 +27,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestImportingLibrary", "Tes
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LEEnvironmentConsoleTesting", "LEEnvironmentConsoleTesting\LEEnvironmentConsoleTesting.fsproj", "{C4890114-F7F2-4182-993C-A7BD7585D12F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IntelligentAscent", "IntelligentAscent\IntelligentAscent.csproj", "{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -123,6 +125,14 @@ Global
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Release|x64.ActiveCfg = Release|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Release|x64.Build.0 = Release|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Debug|x64.Build.0 = Debug|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Release|x64.ActiveCfg = Release|Any CPU
+		{6E4DFD65-AECF-4A37-916A-5DE6617AA0A7}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
