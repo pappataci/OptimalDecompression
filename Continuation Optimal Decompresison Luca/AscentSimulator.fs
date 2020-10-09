@@ -77,9 +77,14 @@ let getConstantRateAscent stepsFromMaxToTarget initDepth  targetDepth =
     |> Array.skip 1 
     |> Seq.ofArray
 
-let getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, legDiscreteTime ) stepsFromMaxToTarget  maxDepth  bottomTime targetDepth  = 
-    let maxPDCS   , maxSimTime, penaltyForRisk, rewardForDelivering, penaltyForTime ,   descentRate = 
-        infinity  , infinity  , 10.0          , 10.0               , 5.0            ,     60.0
+let  getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, legDiscreteTime ) (maxSimTime':Option<float>) stepsFromMaxToTarget  maxDepth  bottomTime targetDepth    = 
+    
+    let maxSimTime = match maxSimTime' with             
+                     | Some time -> time
+                     | None -> infinity
+    
+    let maxPDCS   , penaltyForRisk, rewardForDelivering, penaltyForTime ,   descentRate = 
+        infinity  ,  10.0          , 10.0               , 5.0            ,     60.0
 
     let ascentStrategy = 
         targetDepth 
@@ -103,7 +108,7 @@ let getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, le
 
 let getInitCondAfterDescentWithDefaultTimes =
     let integrationTime , controlToIntegrationTime , legDiscreteTime = 0.1 , 10, 0.1
-    getInitConditionAfterDescentPhase (integrationTime , controlToIntegrationTime , legDiscreteTime ) 
+    getInitConditionAfterDescentPhase (integrationTime , controlToIntegrationTime , legDiscreteTime )  None 
 
 let getInitCondAfterDescentWithDefaultTimesResettingTimeNRisk stepsFromMaxToTarget  maxDepth  bottomTime targetDepth =
     let (Output sequenceOfResponse) , env = getInitCondAfterDescentWithDefaultTimes stepsFromMaxToTarget  maxDepth  bottomTime targetDepth
