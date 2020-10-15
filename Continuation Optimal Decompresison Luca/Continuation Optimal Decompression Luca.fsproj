@@ -99,6 +99,7 @@
     <None Include="ILNumericsScript.fsx" />
     <None Include="AscentBuilder.fsx" />
     <None Include="Scratch.fsx" />
+    <None Include="AscentBuilderQuick.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">

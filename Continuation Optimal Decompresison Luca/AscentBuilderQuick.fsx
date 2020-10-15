@@ -10,12 +10,10 @@
 open InitDescent
 open Extreme.Mathematics
 open  Extreme.DataAnalysis.Linq 
-open SeqExtension
 open LEModel
 
 let atanh = Extreme.Mathematics.Elementary.Atanh
 let concat (x:Vector<'T> )  y  =  LinqExtensions.Concat(x,y)
-
 
 let outputNotExceeding maxTarget (_:float , y) = 
     y  >= maxTarget - tolerance
@@ -36,18 +34,17 @@ let evaluateFcnBetweenMinMax increment fcn initValue (computationBound: float*fl
 let straightLineEqGen( myParams:Vector<float> )   =
     let slope = myParams.[0]
     let initTime  = myParams.[1]
-    let initDepth = myParams.[2] 
-    
+    let initDepth = myParams.[2]  
     let bias = initDepth - slope * initTime
     (fun x -> slope * x + bias )
 
 let tanhEqGen ( myParams:Vector<float> )   =
-    let initDerivative = myParams.[0]    
-    let initDepth = myParams.[1] 
-    let alpha = myParams.[2]
-    let targetDepth = myParams.[3]
-    let initTime = myParams.[4]  // BC
-    
+    let initDerivative = myParams.[0]    // CORRECT 
+    let initDepth = myParams.[1]         // CORRECT
+    let alpha = myParams.[2]             // CORRECT
+    let targetDepth = myParams.[3]       // CORRECT
+    let initTime = myParams.[5]  // BC   // WRONG 
+
     let deltaF = initDepth - targetDepth
     let rho = -initDerivative/(alpha*deltaF)
     let beta =  atanh (rho - 1.0) - alpha * initTime
@@ -58,19 +55,21 @@ let tanhEqGen ( myParams:Vector<float> )   =
               A * tanh(xHat) + B  ) 
      
 let straightLineSectionGen increment ( curveParams:Vector<float> )   = 
+    
     // curveParams ordering: 
     // 0 r  - Ramp Slope
     // 1 Ft - Target Depth  
     // 4 Tr - Time Ramp (Time Start)
     // 5 Fs - Function Start 
     let targetDepth = curveParams.[1]
-    let initTime = curveParams.[4]
-    
-    let straightLineFcn = concat (curveParams.GetSlice(0,0)) ( curveParams.GetSlice(4,5) )
+    let initTime = curveParams.[5]
+    let straightLineFcn = concat (curveParams.GetSlice(0,0)) ( curveParams.GetSlice(5,6) )
                           |> straightLineEqGen  
+
     evaluateFcnBetweenMinMax increment straightLineFcn initTime (outputNotExceeding targetDepth)
-    
+
 let tanhSectionGen  increment ( curveParams:Vector<float> ) = 
+     
     // curveParams ordering: 
     // 0 r      - Init Function Derivative Value
     // 1 Ft     - Function Start
@@ -79,16 +78,33 @@ let tanhSectionGen  increment ( curveParams:Vector<float> ) =
     // 4 Tr     - Time Tanh (Time Start)
     
     let percentTolerance = 5.0e-3
-    let initTime = curveParams.[4]
-    let targetDepth = curveParams.[3]
-    let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )   
-    let approximateTarget = targetDepth  + targetIncrementTolerance
+    let initTime = curveParams.[5] // CORRECT 
+    let targetDepth = curveParams.[3] // CORRECT 
+    let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )    // CORRECT
+    let approximateTarget = targetDepth  + targetIncrementTolerance  //CORRECT 
+    
+    printfn "%A tanhSection Target " approximateTarget
+
     let tanhFcn = tanhEqGen (curveParams)
-    evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  
+    let tanhPart = evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  
+    let getLastTime = Seq.last >> fst 
+    let  lastTime  = getLastTime tanhPart 
+
+    let extraTime = curveParams.[4]  // minutes 
+     
+    let constantLegDeltaTime =  seq{0.0 .. increment .. extraTime}
+    let constantLeg = constantLegDeltaTime
+                      |> Seq.map (fun deltaT ->  let x = lastTime + deltaT 
+                                                 let y =  tanhFcn  x 
+                                                 x , y    )
+                      |> Seq.skip 1 
+    
+    seq{   yield! tanhPart
+           yield! constantLeg   }
 
 let getNumberofCurves degreesOfFreedom =
     // four parameters define one line-tanh curve (the last one is missing)
-    (degreesOfFreedom + 1) / 4  
+    (degreesOfFreedom + 1) / 5  
 
 let createComputationPipeLine numberOfLegs oneLegComputation  = 
     oneLegComputation
@@ -136,9 +152,12 @@ let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:
 
 
 let oneLegComputation computationSeq myParams (bc:Vector<float>)    = 
+
     let initSeqState = seq{bc.[0] , bc.[1]} 
     let myParamsWithAlpha = param2AlphaValue myParams
-    
+     
+     
+
     let folderFcn (state: seq<float*float>)  (genFcn) = 
         let bcTime, bcDepth = state |> Seq.last 
         let bc =  Vector.Create(bcTime, bcDepth )
@@ -157,9 +176,9 @@ let maxDepth = 60.0 // ft
 
 let targetDepth = 5.0
 
-let myParams   = Vector.Create (-10.0, 50.0 , 0.0,  30.0 ,   // first leg
-                                -20.0, 25.0 , -1.0, 18.0,   // second leg
-                                -8.0 , 12.0 , 1.5   )       // third leg 
+let myParams   = Vector.Create (-10.0, 50.0 , 0.0,  30.0 , 12.0,  // first leg with constant times 
+                                -20.0, 25.0 , -1.0, 18.0,  1.5,  // second leg
+                                -8.0 , 12.0 , 1.5  , 2.5  )       // third leg 
 
 let numberOfCurves = getNumberofCurves  myParams.Length  
 type SegmentDefiner = Vector<float> -> seq<float*float> 
@@ -168,32 +187,51 @@ let firstSegmentDefiner : SegmentDefiner  = straightLineSectionGen integrationTi
 let secondSegmentDefiner  : SegmentDefiner= tanhSectionGen integrationTime
 let  computationSeq  : seq<SegmentDefiner> = seq{firstSegmentDefiner ;  secondSegmentDefiner }  
 let threeAscentComptPipeline = createComputationPipeLine numberOfCurves  computationSeq
-let paramsCompleted = concat myParams  ( Vector.Create(targetDepth) ) 
+
+let addFinalDepthToParams (myParams:Vector<float>) targetDepth = 
+    let numOfParams = myParams |> Seq.length
+    let returnVecArray = Vector.Create<float> (numOfParams + 1 )   
+    returnVecArray.[Range(0, numOfParams - 2  )] <- myParams.GetSlice(0, numOfParams - 2 )
+    returnVecArray.[numOfParams] <- myParams.[numOfParams - 1 ] 
+    returnVecArray.[numOfParams - 1 ] <- targetDepth
+    returnVecArray 
+    :> Vector<float>
+
+let paramsCompleted = addFinalDepthToParams myParams targetDepth 
 
 let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit:int  , previousLegSequence:seq<float*float>  )   (segmetDefiner:seq<SegmentDefiner>)   = 
-    let actualSubParams = paramsCompleted.GetSlice(4*paramsIdxInit, 4* paramsIdxInit + 3) // included constant segment 
-    
+    let actualSubParams = paramsCompleted.GetSlice(5*paramsIdxInit, 5* paramsIdxInit + 4) // included constant segment 
+     
     let bcTime, bcDepth = previousLegSequence |> Seq.last 
     let bcVector = Vector.Create( bcTime, bcDepth)
-
+     
     let oneLegAscent = oneLegComputation segmetDefiner  actualSubParams  bcVector 
 
     (paramsIdxInit + 1  ,  oneLegAscent   )  
 
-let folderWithTheseParams = folderForMultipleFunctions paramsCompleted 
+//let folderWithTheseParams = folderForMultipleFunctions paramsCompleted 
 
 let bc =  ( initTime ,  maxDepth )
 
 let initBC = 0 , seq{bc}   // this is a stub 
 
-let A = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
-        |> Seq.toArray
+//let A = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
+        //|> Seq.toArray
 // how do I execute ONE leg? 
 
-let get idx =  A.[idx]|> snd|>Array.ofSeq |> Array.map snd 
+//let get idx =  A.[idx]|> snd|>Array.ofSeq |> Array.map snd 
 
+
+let actualBC  =  Vector.Create([|initTime; maxDepth|] ) 
 
 // ONE LEG COMPUTATION 
-//oneLegComputation computationSeq myParams (bc ) 
-//|> Seq.toArray THIS WORKS
+let paramsIdxInit = 2  
+let singleComputationParams = paramsCompleted.GetSlice(5*paramsIdxInit, 5* paramsIdxInit + 4)
+
+
+let test = oneLegComputation computationSeq singleComputationParams (actualBC ) 
+
+singleComputationParams |> Seq.toArray , test |> Seq.toArray
+
+//|> Seq.toArray // 
 
