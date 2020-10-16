@@ -12,6 +12,8 @@ open Extreme.Mathematics
 open  Extreme.DataAnalysis.Linq 
 open LEModel
 
+type SegmentDefiner =    ( Vector<float> -> seq<float*float> ) 
+
 let atanh = Extreme.Mathematics.Elementary.Atanh
 let concat (x:Vector<'T> )  y  =  LinqExtensions.Concat(x,y)
 
@@ -82,8 +84,6 @@ let tanhSectionGen  increment ( curveParams:Vector<float> ) =
     let targetDepth = curveParams.[3] // CORRECT 
     let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )    // CORRECT
     let approximateTarget = targetDepth  + targetIncrementTolerance  //CORRECT 
-    
-    printfn "%A tanhSection Target " approximateTarget
 
     let tanhFcn = tanhEqGen (curveParams)
     let tanhPart = evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  
@@ -123,34 +123,6 @@ let param2AlphaValue (myParamsSection:Vector<float>) =
     returnVec.[2] <- alphaComputed
     returnVec
 
-let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>) : seq<float>  = 
-    
-    let numberOfCurves = getNumberofCurves  myParams.Length  
-    let singleLegComputation = [|straightLineSectionGen ;  tanhSectionGen|]   
-    
-    let threeAscentComptPipeline = createComputationPipeLine numberOfCurves  singleLegComputation
-    
-    let computationFolder state output =
-        state
-
-    let initTime, initDepth = leStatus2ModelTime  initState , leStatus2Depth  initState 
-    let initStateVec = Vector.Create(initTime, initDepth )
-    
-
-
-    // include final BC
-    let generalizedParams = concat myParams  ( Vector.Create( targetDepth  ) ) 
-
-    //let generator 
-
-
-    //let firstLegDefinition = () 
-    
-
-    
-    seq{0.0}
-
-
 let oneLegComputation computationSeq myParams (bc:Vector<float>)    = 
 
     let initSeqState = seq{bc.[0] , bc.[1]} 
@@ -168,7 +140,7 @@ let oneLegComputation computationSeq myParams (bc:Vector<float>)    =
     |> Seq.map (Seq.skip 1) 
     |> Seq.concat
 
-let integrationTime = 0.05 
+let integrationTime = 0.1
 
 let initTime = 102.0  // mins
 let maxDepth = 60.0 // ft
@@ -180,12 +152,17 @@ let myParams   = Vector.Create (-10.0, 50.0 , 0.0,  30.0 , 12.0,  // first leg w
                                 -20.0, 25.0 , -1.0, 18.0,  1.5,  // second leg
                                 -8.0 , 12.0 , 1.5  , 2.5  )       // third leg 
 
-let numberOfCurves = getNumberofCurves  myParams.Length  
-type SegmentDefiner = Vector<float> -> seq<float*float> 
+let numberOfCurves = getNumberofCurves  myParams.Length  // DONE
 
-let firstSegmentDefiner : SegmentDefiner  = straightLineSectionGen integrationTime
-let secondSegmentDefiner  : SegmentDefiner= tanhSectionGen integrationTime
+
+let defineSegmentDefiner (integrationTime:float)  sectionGenerator  =
+    sectionGenerator integrationTime
+     
+let firstSegmentDefiner   = defineSegmentDefiner  integrationTime straightLineSectionGen                                       
+let secondSegmentDefiner   =  defineSegmentDefiner integrationTime tanhSectionGen
+
 let  computationSeq  : seq<SegmentDefiner> = seq{firstSegmentDefiner ;  secondSegmentDefiner }  
+
 let threeAscentComptPipeline = createComputationPipeLine numberOfCurves  computationSeq
 
 let addFinalDepthToParams (myParams:Vector<float>) targetDepth = 
@@ -209,29 +186,61 @@ let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit
 
     (paramsIdxInit + 1  ,  oneLegAscent   )  
 
-//let folderWithTheseParams = folderForMultipleFunctions paramsCompleted 
+let folderWithTheseParams = folderForMultipleFunctions paramsCompleted 
 
 let bc =  ( initTime ,  maxDepth )
 
 let initBC = 0 , seq{bc}   // this is a stub 
 
-//let A = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
-        //|> Seq.toArray
+let A' = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
+        |> Seq.toArray
 // how do I execute ONE leg? 
 
-//let get idx =  A.[idx]|> snd|>Array.ofSeq |> Array.map snd 
+let A = A' |> Seq.map snd |> Seq.toArray 
+
+let get idx =  A'.[idx]|> snd|>Array.ofSeq |> Array.map snd 
 
 
-let actualBC  =  Vector.Create([|initTime; maxDepth|] ) 
+let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>)    = 
+    
+    let leStatus2BCInit initState = 
+        let initTimeNDepth =  seq{ leStatus2ModelTime initState,  leStatus2Depth initState}
+        0 , initTimeNDepth
 
-// ONE LEG COMPUTATION 
-let paramsIdxInit = 2  
-let singleComputationParams = paramsCompleted.GetSlice(5*paramsIdxInit, 5* paramsIdxInit + 4)
+    let numberOfCurves = getNumberofCurves  myParams.Length  
+    
+    let firstSegmentDefiner   = defineSegmentDefiner  integrationTime straightLineSectionGen                                       
+    let secondSegmentDefiner   =  defineSegmentDefiner integrationTime tanhSectionGen
+    
+    let threeAscentComptPipeline: seq<seq<SegmentDefiner>> = seq{straightLineSectionGen ; tanhSectionGen }
+                                                             |> Seq.map ( defineSegmentDefiner  integrationTime )
+                                                             |> createComputationPipeLine numberOfCurves
+    
 
+    let paramsCompleted = addFinalDepthToParams myParams targetDepth 
+    let folderWithTheseParams = folderForMultipleFunctions paramsCompleted 
+    let seqOfLegs  = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
+                     |> Seq.map snd 
+                      
+    
+    seqOfLegs
+    |> Seq.concat 
+    |> Seq.map snd 
 
-let test = oneLegComputation computationSeq singleComputationParams (actualBC ) 
+let createFictitiouState (initTime, initDepth) = 
 
-singleComputationParams |> Seq.toArray , test |> Seq.toArray
+    let tensions = [|Tension 1.0; Tension 1.0; Tension 1.0|]
+    let temporalValue = TemporalValue {Time = initTime ; Value = initDepth}
+    let leState = {TissueTensions = tensions  
+                   CurrentDepthAndTime = temporalValue } 
 
-//|> Seq.toArray // 
+    let fictitiousRisk = {   AccruedRisk       =          0.0 
+                             IntegratedRisks   =  [|0.0;0.0;0.0|] }
 
+    {LEPhysics = leState ; Risk = fictitiousRisk}
+    |> State
+
+let testInitState = createFictitiouState (initTime, maxDepth) 
+
+let out = createThreeLegAscentWithTheseBCs testInitState targetDepth integrationTime myParams
+          |> Seq.toArray
