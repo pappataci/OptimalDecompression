@@ -183,7 +183,18 @@ module LEModel  =
     let leState2Depth (leState:LEState) = 
         leState.CurrentDepthAndTime
         |> getValue
-        
+
+    let createFictitiouStateFromDepthTime (initTime, initDepth) = 
+        let tensions = [|Tension 1.0; Tension 1.0; Tension 1.0|]
+        let temporalValue = TemporalValue {Time = initTime ; Value = initDepth}
+        let leState = {TissueTensions = tensions  
+                       CurrentDepthAndTime = temporalValue } 
+
+        let fictitiousRisk = {   AccruedRisk       =          0.0 
+                                 IntegratedRisks   =  [|0.0;0.0;0.0|] }
+
+        {LEPhysics = leState ; Risk = fictitiousRisk}
+        |> State
         
 module USN93_EXP = 
     open InitDescent
