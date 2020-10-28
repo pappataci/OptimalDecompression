@@ -164,25 +164,16 @@ let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit
     let oneLegAscent = oneLegComputation segmetDefiner  actualSubParams  bcVector 
     (paramsIdxInit + 1  ,  oneLegAscent   )  
 
-let mapRealValueToDepth realValue minDepth maxDepth = 
-    let buffer = 0.01
-    let delta  = maxDepth - minDepth - 2.0* buffer 
-    let linearFactor = tanh(exp(realValue * 0.1))  
-    minDepth + linearFactor * delta 
 
-let real2Depths originalParams =
-    Seq.scan (fun state element -> state ) 
+//let addAtTheBeginningOfVector (originalParams:Vector<float>)  (initDepth:float) = 
+//    let output  = Vector.Create<float> (originalParams.Length + 1  ) 
+//    output.[Range(1,originalParams.Length  )] <- originalParams
+//    output.[0] <- initDepth
+//    output :> Vector<float> 
 
-let addAtTheBeginningOfVector (originalParams:Vector<float>)  (initDepth:float) = 
-    let output  = Vector.Create<float> (originalParams.Length + 1  ) 
-    output.[Range(1,originalParams.Length  )] <- originalParams
-    output.[0] <- initDepth
-    output :> Vector<float> 
+let  positionDepthsAccordingToConstraints (originalParams:Vector<float>)  (initDepth:float)   (targetDepth:float) =
 
-let  positionDepthsAccordingToConstraints (originalParams:Vector<float>)  (initDepth:float)   =
-    let originalParamsWithInitDepth = addAtTheBeginningOfVector originalParams initDepth
-
-    originalParamsWithInitDepth
+    originalParams
 
 
 let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>)    = 
@@ -201,7 +192,7 @@ let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:
     
     let paramsCompletedNoTransform = addFinalDepthToParams myParams targetDepth 
     
-    let paramsCompleted = positionDepthsAccordingToConstraints paramsCompletedNoTransform initDepth
+    let paramsCompleted = positionDepthsAccordingToConstraints paramsCompletedNoTransform initDepth targetDepth
 
     let folderWithTheseParams = folderForMultipleFunctions paramsCompletedNoTransform 
     let seqOfLegs  = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
@@ -222,15 +213,72 @@ let controlTime = integrationTime * 10.0
 let initState = createFictitiouStateFromDepthTime (initTime, maxDepth) 
 
 
-let myParams   = Vector.Create (-10.0, 50.0 , 0.0,  30.0 , 12.0,  // first leg with constant times 
-                                -20.0, 25.0 , -1.0, 18.0,  1.5,  // second leg
-                                -8.0 , 12.0 , 1.5  , 2.5  )       // third leg 
+let myParams   = Vector.Create (-10.0,  0.0 , -10.0,  0.0 , 12.0,  // first leg with constant times 
+                                -20.0,  0.0 , -1.0, 0.0,  1.5,  // second leg
+                                -8.0 ,  0.0 , 1.5  , 2.5  )       // third leg 
 
 
 let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime myParams
 
 
 
+let mapRealValueToDepth minDepth maxDepth realValue      = 
+     
+    let buffer = 0.01
+    let xScalingFactor = 0.1 
+    let delta  = maxDepth - minDepth - 2.0* buffer 
+    let linearFactor = realValue
+                       |> (*) xScalingFactor
+                       |> exp
+                       |> tanh
+    
+    max (minDepth + linearFactor * delta ) (minDepth + buffer) 
 
-//let out = createThreeLegAscentWithTheseBCs testInitState targetDepth integrationTime myParams
-//          |> Seq.toArray
+
+let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
+
+
+let depthsIndices = [|1;3;6;8;11;13|]
+
+let getDepthsVectorFromParams (depthsIndices:int[])  (myParams:Vector<float>) = 
+    depthsIndices
+    |> Seq.map (fun index -> myParams.[index])
+
+
+let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
+                                                      >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+
+
+
+myParams
+|> params2Depths
+|> Seq.toArray
+
+//let getDepthsVectorFromParamsAtDefaultLocations = 
+
+let transformParams  (depthsIndices:int[]) (maxDepth:float) (targetDepth:float)   (originalParams:Vector<float>)   =
+    
+    let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
+
+    let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
+                                                          >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+    let updatedParamsValues = originalParams  
+                              |> params2Depths
+                              |> Seq.toArray
+
+    let substituteTheseComponents (initVector:Vector<float>) (updatedValues:float[]) (indeces: int[])=
+        
+        let targetVector = initVector.Clone()
+         
+        [| 0 .. ( indeces.Length - 1)  |] 
+        |> Array.iter (fun index -> targetVector.[indeces.[index]]  <- updatedValues.[index]  )
+        targetVector
+
+    let updateParamsVector = substituteTheseComponents  originalParams updatedParamsValues depthsIndices
+
+    updateParamsVector
+
+
+myParams 
+|> transformParams  depthsIndices maxDepth targetDepth
+|> Seq.toArray
