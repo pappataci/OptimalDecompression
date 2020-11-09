@@ -1,20 +1,22 @@
 ﻿#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
 #r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Microsoft.ML.Probabilistic.0.3.1912.403\lib\netstandard2.0\Microsoft.ML.Probabilistic.dll"
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
 #load "ReinforcementLearning.fs"
 #load "PredefinedDescent.fs"
 #load "Gas.fs"
 #load "LEModel.fs"
+
 #load "OptimalAscentLearning.fs"
 #load "InputDefinition.fs"
 #load "EnvironmentToPython.fs"
 #load "SeqExtension.fs"
 #load "AscentSimulator.fs"
-
+#load "TwoLegAscent.fs"
+#load "Result2CSV.fs"
 
 open ReinforcementLearning
 open InitDescent
 open LEModel
-open System
 open Extreme.Mathematics
 open  Extreme.DataAnalysis.Linq 
 
@@ -25,9 +27,6 @@ let concat (x:Vector<'T> )  y  =  LinqExtensions.Concat(x,y)
 
 let outputNotExceeding maxTarget (_:float , y) = 
     y  >= maxTarget - tolerance
-
-let inputNotExceeding bound (x , _:float ) = 
-     x <= bound + tolerance
 
 let evaluateFcnBetweenMinMax increment fcn initValue (computationBound: float*float -> bool) = 
     let generator x =  
@@ -62,8 +61,14 @@ let tanhEqGen ( myParams:Vector<float> )   =
     (fun x -> let xHat = alpha * x + beta 
               A * tanh(xHat) + B  ) 
      
+let addTargetPointToOutput (actualOutput:seq<float*float>)  increment targetDepth = 
+    let actualDepth, actualValue  = actualOutput |> Seq.head 
+    let target = actualDepth + increment , targetDepth 
+    seq { yield! actualOutput 
+          yield  target  }
+
 let straightLineSectionGen increment ( curveParams:Vector<float> )   = 
-    
+     
     // curveParams ordering: 
     // 0 r  - Ramp Slope
     // 1 Ft - Target Depth  
@@ -73,40 +78,66 @@ let straightLineSectionGen increment ( curveParams:Vector<float> )   =
     let initTime = curveParams.[5]
     let straightLineFcn = concat (curveParams.GetSlice(0,0)) ( curveParams.GetSlice(5,6) )
                           |> straightLineEqGen  
-
-    evaluateFcnBetweenMinMax increment straightLineFcn initTime (outputNotExceeding targetDepth)
-
+    let output =  evaluateFcnBetweenMinMax increment straightLineFcn initTime (outputNotExceeding targetDepth)
+    
+    match ( (output |> Seq.length ) = 1 ) with 
+                    |   true    ->  
+                                addTargetPointToOutput output increment curveParams.[1]
+                    |   false   ->  output 
+     
+ 
+let addTargetNodeIfEmpty  (initTime,   increment)  (functionStart, approximateTarget ) (tanhPart:seq<float*float>) =
+    match tanhPart |> Seq.isEmpty with
+    | true -> let out = seq{(initTime , functionStart) ; 
+                            (initTime + increment, approximateTarget ) }
+             // printfn "PASSED"
+           //   printfn "INSIDE ADD %A" out 
+              out 
+    | false ->    //  printfn "PASSED FALSE"
+                    //printfn "INSIDE FALSE  %A" tanhPart
+                    tanhPart 
+    
 let tanhSectionGen  increment ( curveParams:Vector<float> ) = 
      
     // curveParams ordering: 
     // 0 r      - Init Function Derivative Value
-    // 1 Ft     - Function Start
+    // 1 Fs     - Function Start
     // 2 alpha  - Tanh Param
     // 3 Ft     - Function Target
     // 4 Tr     - Time Tanh (Time Start)
     
-    let percentTolerance = 5.0e-3
+    let percentTolerance  , maxAbsoluteTolerance = 5.0e-3 , 1.0
     let initTime = curveParams.[5] // CORRECT 
     let targetDepth = curveParams.[3] // CORRECT 
-    let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )    // CORRECT
+    let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )  
+                                    |> min maxAbsoluteTolerance 
+
     let approximateTarget = targetDepth  + targetIncrementTolerance  //CORRECT 
+    let functionStart = curveParams.[1]
+    //printfn "%A Fs, Ft , approxTarget " (functionStart , curveParams.[3] , approximateTarget) 
 
     let tanhFcn = tanhEqGen (curveParams)
-    let tanhPart = evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  
+    let tanhPart = (evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  )
+                   |>  addTargetNodeIfEmpty  (initTime,   increment)   (functionStart, approximateTarget )
+
     let getLastTime = Seq.last >> fst 
+
     let  lastTime  = getLastTime tanhPart 
 
     let extraTime = curveParams.[4]  // minutes 
      
     let constantLegDeltaTime =  seq{0.0 .. increment .. extraTime}
+    
     let constantLeg = constantLegDeltaTime
                       |> Seq.map (fun deltaT ->  let x = lastTime + deltaT 
                                                  let y =  tanhFcn  x 
                                                  x , y    )
                       |> Seq.skip 1 
+
+    let output = seq{   yield! tanhPart
+                        yield! constantLeg   }
     
-    seq{   yield! tanhPart
-           yield! constantLeg   }
+    output 
 
 let getNumberofCurves degreesOfFreedom =
     // four parameters define one line-tanh curve (the last one is missing)
@@ -165,15 +196,47 @@ let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit
     (paramsIdxInit + 1  ,  oneLegAscent   )  
 
 
-//let addAtTheBeginningOfVector (originalParams:Vector<float>)  (initDepth:float) = 
-//    let output  = Vector.Create<float> (originalParams.Length + 1  ) 
-//    output.[Range(1,originalParams.Length  )] <- originalParams
-//    output.[0] <- initDepth
-//    output :> Vector<float> 
+let mapRealValueToDepth minDepth maxDepth realValue      = 
+     
+    let buffer = 0.01
+    let xScalingFactor = 0.1 
+    let delta  = maxDepth - minDepth - 2.0* buffer 
+    let linearFactor = realValue
+                       |> (*) xScalingFactor
+                       |> exp
+                       |> tanh
+    
+    max (minDepth + linearFactor * delta ) (minDepth + buffer) 
 
-let  positionDepthsAccordingToConstraints (originalParams:Vector<float>)  (initDepth:float)   (targetDepth:float) =
 
-    originalParams
+let getDepthsVectorFromParams (depthsIndices:int[])  (myParams:Vector<float>) = 
+    depthsIndices
+    |> Seq.map (fun index -> myParams.[index])
+
+
+let positionDepthsAccordingToConstraints  (depthsIndices:int[]) (maxDepth:float) (targetDepth:float)   (originalParams:Vector<float>)   =
+    
+    let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
+
+    let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
+                                                          >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+    let updatedParamsValues = originalParams  
+                              |> params2Depths
+                              |> Seq.toArray
+                              |> Array.skip 1 
+
+    let substituteTheseComponents (initVector:Vector<float>) (updatedValues:float[]) (indeces: int[])=
+        
+        let targetVector = initVector.Clone()
+         
+        [| 0 .. ( indeces.Length - 1)  |] 
+        |> Array.iter (fun index -> targetVector.[indeces.[index]]  <- updatedValues.[index]  )
+        targetVector
+
+    let updateParamsVector = substituteTheseComponents  originalParams updatedParamsValues depthsIndices
+     
+    updateParamsVector
+
 
 
 let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>)    = 
@@ -189,22 +252,76 @@ let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:
     let threeAscentComptPipeline: seq<seq<SegmentDefiner>> = seq{straightLineSectionGen ; tanhSectionGen }
                                                              |> Seq.map ( defineSegmentDefiner  integrationTime )
                                                              |> createComputationPipeLine numberOfCurves
+   
     
-    let paramsCompletedNoTransform = addFinalDepthToParams myParams targetDepth 
-    
-    let paramsCompleted = positionDepthsAccordingToConstraints paramsCompletedNoTransform initDepth targetDepth
+    let depthsIndices = [|1;3;6;8;11|]
+    let paramsCompleted = addFinalDepthToParams myParams targetDepth
+    let paramsCompletedTransformed = positionDepthsAccordingToConstraints depthsIndices initDepth  targetDepth   paramsCompleted 
 
-    let folderWithTheseParams = folderForMultipleFunctions paramsCompletedNoTransform 
+    let folderWithTheseParams = folderForMultipleFunctions paramsCompletedTransformed 
+
+        
     let seqOfLegs  = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
                      |> Seq.map snd 
     
+
     seqOfLegs
     |> Seq.concat 
-    |> Seq.map snd 
+    //|> Seq.map snd 
+
+let createOneLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>)    = 
+    
+    let leStatus2BCInit initState = 
+        let initDepth = leStatus2Depth initState
+        let initTimeNDepth =  seq{ leStatus2ModelTime initState,  initDepth }
+        (0 , initTimeNDepth), initDepth 
+
+    let numberOfCurves = getNumberofCurves  myParams.Length  
+    let initBC , initDepth  = leStatus2BCInit initState
+     
+    let threeAscentComptPipeline: seq<seq<SegmentDefiner>> = seq{straightLineSectionGen ; tanhSectionGen }
+                                                             |> Seq.map ( defineSegmentDefiner  integrationTime )
+                                                             |> createComputationPipeLine numberOfCurves
+   
+    
+    let depthsIndices = [|1;3;6;8;11|]
+    let paramsCompleted = addFinalDepthToParams myParams targetDepth
+    let paramsCompletedTransformed = positionDepthsAccordingToConstraints depthsIndices initDepth  targetDepth   paramsCompleted 
+
+    let folderWithTheseParams = folderForMultipleFunctions paramsCompletedTransformed 
+
+        
+    let seqOfLegs  = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
+                     |> Seq.map snd 
+    
+
+    seqOfLegs
+    |> Seq.concat 
+
+
+let myParamsNotTransformed   = Vector.Create (-1.0,  50.0 , -10.0,  40.0 , 12.0,  // first leg with constant times  : slope, startTanh, alpha, tanhFInf, timeAtConstantLevel
+                                -1.0,  30.0 , -1.0, 10.0, 15.0,  // second leg : slope, startTanh, alpha, tanhFInf, timeAtConstantLevel
+                                -1.0 ,  7.0 , -5.5  , 10.0  )       // third leg : slope, startTanh, alpha, 
+
+
+ 
+
+
+let depthToParamTransform maxValue minValue xToBeTransformed = 
+    let k = 0.1 
+    let argInv = (xToBeTransformed - minValue) / (maxValue - minValue )
+    (1.0/k) * log ( atanh (argInv) ) 
+
+
+let myParams''   = Vector.Create (-1.0,  1.408852647 , -10.0, 0.3895218753, 12.0,  // first leg with constant times 
+                                -1.0,  -1.099490998, -1.0,  -15.95867636, 15.0,  // second leg
+                                -1.0 , -8.588501616 , -5.5  , 10.0   )       // third leg 
+
 
 
 let integrationTime = 0.1
-let initTime = 102.0  // mins
+let initTime = 120.0  // mins
+
 let maxDepth = 60.0 // ft
 let targetDepth = 0.0
 
@@ -213,72 +330,53 @@ let controlTime = integrationTime * 10.0
 let initState = createFictitiouStateFromDepthTime (initTime, maxDepth) 
 
 
-let myParams   = Vector.Create (-10.0,  0.0 , -10.0,  0.0 , 12.0,  // first leg with constant times 
-                                -20.0,  0.0 , -1.0, 0.0,  1.5,  // second leg
-                                -8.0 ,  0.0 , 1.5  , 2.5  )       // third leg 
-
-
-let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime myParams
-
-
-
-let mapRealValueToDepth minDepth maxDepth realValue      = 
-     
-    let buffer = 0.01
-    let xScalingFactor = 0.1 
-    let delta  = maxDepth - minDepth - 2.0* buffer 
-    let linearFactor = realValue
-                       |> (*) xScalingFactor
-                       |> exp
-                       |> tanh
-    
-    max (minDepth + linearFactor * delta ) (minDepth + buffer) 
-
+let depthsIndices = [|1;3;6;8;11|]
 
 let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
 
-
-let depthsIndices = [|1;3;6;8;11;13|]
-
-let getDepthsVectorFromParams (depthsIndices:int[])  (myParams:Vector<float>) = 
-    depthsIndices
-    |> Seq.map (fun index -> myParams.[index])
-
-
 let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
-                                                      >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+                                                        >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+
+//let updatedParamsValues = myParams'' 
+//                            |> params2Depths
+//                            |> Seq.toArray
+//                            |> Array.skip 1 
 
 
 
-myParams
-|> params2Depths
-|> Seq.toArray
-
-//let getDepthsVectorFromParamsAtDefaultLocations = 
-
-let transformParams  (depthsIndices:int[]) (maxDepth:float) (targetDepth:float)   (originalParams:Vector<float>)   =
-    
-    let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
-
-    let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
-                                                          >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
-    let updatedParamsValues = originalParams  
-                              |> params2Depths
-                              |> Seq.toArray
-
-    let substituteTheseComponents (initVector:Vector<float>) (updatedValues:float[]) (indeces: int[])=
-        
-        let targetVector = initVector.Clone()
-         
-        [| 0 .. ( indeces.Length - 1)  |] 
-        |> Array.iter (fun index -> targetVector.[indeces.[index]]  <- updatedValues.[index]  )
-        targetVector
-
-    let updateParamsVector = substituteTheseComponents  originalParams updatedParamsValues depthsIndices
-
-    updateParamsVector
+//let initialGuess =  Vector.Create (-10.0, 0.0 ,  0.0,  0.0 , 1.0,  // first leg with constant times 
+//                                   -10.0, 0.0 , 0.1  , 0.0,  1.5,  // second leg
+//                                   -5.0 , 0.0 , 0.3  , 2.5  )       // third leg 
 
 
-myParams 
-|> transformParams  depthsIndices maxDepth targetDepth
-|> Seq.toArray
+
+
+
+//initialGuess
+//|> positionDepthsAccordingToConstraints  (depthsIndices ) (maxDepth ) (targetDepth )   
+//|> Seq.toArray
+
+
+//let paramsCompleted = addFinalDepthToParams initialGuess targetDepth
+//let paramsCompletedTransformed = positionDepthsAccordingToConstraints depthsIndices maxDepth  targetDepth   paramsCompleted 
+
+
+let initialGuess =  Vector.Create (-30.0, 0.0 ,  0.0,  0.0 ,  30.0,  // first leg with constant times 
+                                    -10.0, 0.0 , 5.0  , 00.0,   31.5,  // second leg
+                                    -25.0 , 0.0 , 1.3  , 32.5  )       // third leg 
+
+
+let actualDepthParams = initialGuess
+                                   |> params2Depths
+                                   |> Seq.toArray
+                                   |> Array.skip 1 
+
+
+let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  0.1   initialGuess 
+                  |>Seq.toArray
+
+
+
+ascentPath 
+|> Seq.map snd 
+|>  writeArrayToDisk "testOneZero.csv" None 

@@ -26,3 +26,27 @@ let writeResultsToDisk fileName (finalSubFolder:option<string>) results =
     results
     |> myCsvBuildTable
     |> saveToCsv ( subFolder + fileName) 
+
+
+
+
+type OnlyAscentNode = CsvProvider<"Depth" , Schema = "float" , HasHeaders = true> 
+
+
+
+let writeArrayToDisk fileName (finalSubFolder:option<string>) (results:seq<float>)  = 
+    
+    let finalSubFolder = match finalSubFolder with
+                         | None -> @"ThreeLegsStudy\"
+                         | Some v -> (v + @"\")
+      
+    let subFolder =  @"C:\Users\glddm\Desktop\" + finalSubFolder 
+
+    let table = new OnlyAscentNode(Seq.map (fun x -> OnlyAscentNode.Row(x)  ) results ) 
+
+    table.Save (subFolder + fileName )
+
+
+    //results
+    //|> myCsvBuildTable
+    //|> saveToCsv ( subFolder + fileName) 

@@ -68,7 +68,7 @@ let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTim
         netCost
 
     let objectiveFunction (functionParams:Vector<float>) = 
-         
+          
          let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime functionParams
          let simulateFromInitStateWithThisAscent = simulateAscent env None 
          let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
@@ -83,7 +83,10 @@ let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTim
          let totalCostComponents = accruedRiskNTimeToTargetDepth + costToGoTermsToSurface
                                    |> expressRiskInTermsOfResidualRisk  maxRisk
            
-         totalCostComponents |> timeNResidualRiskToCost
+         let cost = totalCostComponents |> timeNResidualRiskToCost
+         printfn "Components Cost %A "  totalCostComponents
+         printfn "Total Cost %A " cost 
+         cost
          
     Func<_,_> objectiveFunction
     
@@ -108,9 +111,9 @@ let addLinearConstraints ( nlp: NonlinearProgram ) (startDepth:float) (targetDep
     nlp.AddLinearConstraint("ConstantTimeLeg3" , [| 0.0;  0.0; 0.0 ;  0.0;  0.0 ; 0.0 ;  0.0; 0.0; 0.0 ;  0.0;  0.0;  0.0;  0.0; 1.0 |] ,  ConstraintType.GreaterThanOrEqual , 0.0 ) |> ignore  
 
 
-let getOptimalSolutioForThisMission  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTime ; IntegrationTime = integrationTime ;
+let getOptimalSolutionForThisMission  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTime ; IntegrationTime = integrationTime ;
                                ControlToIntegrationTimeRatio = controlToIntegration; DescentRate = descentRate; MaximumDepth = maximumDepth ;
-                               BottomTime = bottomTime  }  (targetDepth:float) (initialGuess:Vector<float>)  ( costToGoApproximator )  = 
+                               BottomTime = bottomTime  }  (targetDepth:float) (initialGuess:Vector<float>)    ( costToGoApproximator )  = 
     
     let controlTime = integrationTime * (controlToIntegration |> float) // TO BE CHECKED
     let initAscentStateAndEnv = initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime

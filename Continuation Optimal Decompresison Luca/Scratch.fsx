@@ -28,3 +28,17 @@ let addSteadyStateValue increment (seqTimeDepth:seq<float*float>)  steadyStateVa
     //  pw.InitialGuess = initialGuess;
     //  pw.ObjectiveFunction =  ObjectiveFunction;
     //  pw.FindExtremum ( );
+
+
+    //let addAtTheBeginningOfVector (originalParams:Vector<float>)  (initDepth:float) = 
+    //    let output  = Vector.Create<float> (originalParams.Length + 1  ) 
+    //    output.[Range(1,originalParams.Length  )] <- originalParams
+    //    output.[0] <- initDepth
+    //    output :> Vector<float> 
+    
+    
+    //let  params2Depths:Vector<float> -> seq<float>   =   (getDepthsVectorFromParams depthsIndices)
+    //                                                      >> ( Seq.scan mapRealValueToDepthForThisTarget  maxDepth  )
+
+    //let inputNotExceeding bound (x , _:float ) = 
+    //    x <= bound + tolerance

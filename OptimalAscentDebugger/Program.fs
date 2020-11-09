@@ -22,13 +22,18 @@ let main argv =
                   IntegrationTime = integrationTime; ControlToIntegrationTimeRatio = controlToIntegration; DescentRate = MissionConstraints.ascentRateLimit; MaximumDepth = maximumDepth; 
                   BottomTime = bottomTime; LegDiscreteTime = integrationTime} 
     
-    let initialGuess =  Vector.Create (-20.0, 50.0 ,  0.0,  30.0 , 1.0,  // first leg with constant times 
-                                       -20.0, 25.0 , 0.1  , 18.0,  1.5,  // second leg
-                                       -8.0 , 12.0 , 0.3  , 2.5  )       // third leg 
+    //let initialGuess' =  Vector.Create (-20.0, 50.0 ,  0.0,  30.0 , 1.0,  // first leg with constant times 
+    //                                   -20.0, 25.0 , 0.1  , 18.0,  1.5,  // second leg
+    //                                   -8.0 , 12.0 , 0.3  , 2.5  )       // third leg 
+
+    let initialGuess =  Vector.Create (-30.0, 0.0 ,  0.0,  0.0 ,  30.0,  // first leg with constant times 
+                                        -10.0, 0.0 , 5.0  , 00.0,   31.5,  // second leg
+                                        -25.0 , 0.0 , 1.3  , 32.5  )       // third leg 
+
 
 
     try 
-        let testn = getOptimalSolutioForThisMission  simParams   targetDepth  initialGuess  None
+        let testn = getOptimalSolutionForThisMission  simParams   targetDepth  initialGuess  None
         printfn "%A" testn
          
     with 
