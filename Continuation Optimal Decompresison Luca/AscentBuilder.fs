@@ -256,3 +256,34 @@ let createThreeLegAscentWithTheseBCs (  initState:State<LEStatus>) (targetDepth:
     seqOfLegs
     |> Seq.concat 
     |> Seq.map snd 
+
+
+let ascentWithOneStep (  initState:State<LEStatus>) (targetDepth:float) (integrationTime:float) (myParams :Vector<float>)    = 
+    
+    let leStatus2BCInit initState = 
+        let initDepth = leStatus2Depth initState
+        let initTimeNDepth =  seq{ leStatus2ModelTime initState,  initDepth }
+        (0 , initTimeNDepth), initDepth 
+
+    let numberOfCurves = 2
+    let initBC , initDepth  = leStatus2BCInit initState
+     
+    let threeAscentComptPipeline: seq<seq<SegmentDefiner>> = seq{straightLineSectionGen ; tanhSectionGen }
+                                                             |> Seq.map ( defineSegmentDefiner  integrationTime )
+                                                             |> createComputationPipeLine numberOfCurves
+   
+    
+    let depthsIndices = [|1;3;6 |]
+    let paramsCompleted = addFinalDepthToParams myParams targetDepth
+    let paramsCompletedTransformed = positionDepthsAccordingToConstraints depthsIndices initDepth  targetDepth   paramsCompleted 
+
+    let folderWithTheseParams = folderForMultipleFunctions paramsCompletedTransformed 
+
+        
+    let seqOfLegs  = Seq.scan folderWithTheseParams initBC  threeAscentComptPipeline
+                     |> Seq.map snd 
+    
+
+    seqOfLegs
+    |> Seq.concat 
+    |> Seq.map snd 

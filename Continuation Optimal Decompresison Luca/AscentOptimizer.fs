@@ -45,7 +45,7 @@ let timeNResidualRiskToCost (timeNResidualRisk : Vector<float>) =
     let output = weigthedSquaredComponents.Sum()
     output 
 
-let estimateCostToGo ( costToGoToEndMissionApprox: Option<State<LEStatus> -> float   -> (Vector<float> * seq<float>) >) lastNode residualRisk    simulateSteadyStateAtTargetDepth   = 
+let estimateCostToGo ( costToGoToEndMissionApprox: Option<State<LEStatus> -> float   -> (Vector<float> * seq<float>) >) lastNode residualRisk    simulateSteadyStateAtTargetDepth   =  
     
     match costToGoToEndMissionApprox with 
     | Some costToGoFcn  -> costToGoFcn lastNode residualRisk 
@@ -69,7 +69,10 @@ let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTim
 
     let objectiveFunction (functionParams:Vector<float>) = 
           
-         let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime functionParams
+         //let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime functionParams
+         
+         let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
+
          let simulateFromInitStateWithThisAscent = simulateAscent env None 
          let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
          let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
@@ -89,7 +92,40 @@ let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTim
          cost
          
     Func<_,_> objectiveFunction
-    
+
+let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    (maxPDCS:float) costToGoApproximator  = 
+   
+    let maxRisk = -log(1.0-maxPDCS  )   // maxPDCS is fractional  (e.g. 3.2% is indicated with 0.032) ; same goes for maximum risk 
+
+    let costToGoToEndApproximator = estimateCostToGo costToGoApproximator
+
+    let expressRiskInTermsOfResidualRisk   (maxRisk: float ) (totalRawCostComponents:Vector<float>) = 
+        let netCost  = totalRawCostComponents.Clone()
+        netCost.[1] <- maxRisk - totalRawCostComponents.[1] 
+        netCost
+
+    let objectiveFunction (functionParams:Vector<float>) = 
+          
+         let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
+         let simulateFromInitStateWithThisAscent = simulateAscent env None 
+         let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
+         let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
+
+         let lastNodeState = arrayOfAscentNodes |> Array.last |> (fun (x,_,_,_) -> x )
+         let residualRisk = maxRisk - accruedRiskNTimeToTargetDepth.[1]
+          
+         // this estimates time for cost to go and gives us the optimal sequence of absence from targetDepth to surface 
+         let costToGoTermsToSurface , optimalAscentFromTargetDepthToSurface  = costToGoToEndApproximator lastNodeState  residualRisk (simulateFromInitStateWithThisAscent) 
+      
+         let totalCostComponents = accruedRiskNTimeToTargetDepth + costToGoTermsToSurface
+                                   |> expressRiskInTermsOfResidualRisk  maxRisk
+           
+         let cost = totalCostComponents |> timeNResidualRiskToCost
+         printfn "Components Cost %A "  totalCostComponents
+         printfn "Total Cost %A " cost 
+         cost
+         
+    Func<_,_> objectiveFunction
 
 let addLinearConstraints ( nlp: NonlinearProgram ) (startDepth:float) (targetDepth:float) =
     
@@ -118,7 +154,11 @@ let getOptimalSolutionForThisMission  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTi
     let controlTime = integrationTime * (controlToIntegration |> float) // TO BE CHECKED
     let initAscentStateAndEnv = initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
      
+    // THIS HAS TO BE ABSTRACTED OUT (with automatic identification of number of params)
+    //let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
     let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
+
+    
     let (gradient: Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  objectiveFunction
     
     // Start optimization
