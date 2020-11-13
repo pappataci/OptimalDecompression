@@ -179,13 +179,6 @@ let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit
     let oneLegAscent = oneLegComputation segmetDefiner  actualSubParams  bcVector 
     (paramsIdxInit + 1  ,  oneLegAscent   )  
 
-//let mapRealValueToDepth realValue minDepth maxDepth = 
-//    let buffer = 0.01
-//    let delta  = maxDepth - minDepth - 2.0* buffer 
-//    let linearFactor = tanh(exp(realValue * 0.1))  
-//    minDepth + linearFactor * delta 
-
-
 let mapRealValueToDepth minDepth maxDepth realValue      = 
     
    let buffer = 0.01
@@ -201,7 +194,6 @@ let mapRealValueToDepth minDepth maxDepth realValue      =
 let getDepthsVectorFromParams (depthsIndices:int[])  (myParams:Vector<float>) = 
     depthsIndices
     |> Seq.map (fun index -> myParams.[index])
-
 
 let positionDepthsAccordingToConstraints  (depthsIndices:int[]) (maxDepth:float) (targetDepth:float)   (originalParams:Vector<float>)   =
     
@@ -285,5 +277,5 @@ let ascentWithOneStep (  initState:State<LEStatus>) (targetDepth:float) (integra
     
 
     seqOfLegs
-    |> Seq.concat 
-    |> Seq.map snd 
+    //|> Seq.concat 
+    //|> Seq.map snd 

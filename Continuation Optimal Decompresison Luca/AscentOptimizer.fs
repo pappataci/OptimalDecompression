@@ -19,17 +19,25 @@ let initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegratio
                   |> ( fun (state , _ , _ , _)  -> state ) 
     leState , myEnv
 
+let getLastNodeIfNotReachedSurface arrayOfStates firstNodeAtSurface = 
+    match firstNodeAtSurface with 
+    | Some node -> node 
+    | None -> arrayOfStates |> Array.last  
+
 let evaluateCostOfThisSequenceOfStates (arrayOfAscentNodes: (State<LEStatus> * float * bool * float)[] ) =
     let arrayOfStates = arrayOfAscentNodes
                         |> Array.map (fun (  state,_,_,_) -> state)
-
+    
     let firstState , lastState = arrayOfStates |> Array.head , arrayOfStates |> Array.last 
-    //printfn "%A" lastState 
+    printfn "%A" ( firstState , lastState ) 
+    
     let getNodeAtSurfaceLevel = leStatus2Depth 
                                      >> IsAtSurfaceLevel
     
-    let firstNodeAtSurface = arrayOfStates |> Array.find getNodeAtSurfaceLevel 
+    let firstNodeAtSurface' = arrayOfStates |> Array.tryFind getNodeAtSurfaceLevel 
     
+    let firstNodeAtSurface = getLastNodeIfNotReachedSurface arrayOfStates firstNodeAtSurface' 
+
     let accruedRisk = [|firstState ; lastState |]
                       |> Array.map  leStatus2Risk 
                       |> (fun x -> x.[1] - x.[0])
@@ -74,45 +82,46 @@ let estimateCostToGo ( costToGoToEndMissionApprox: Option<State<LEStatus> -> flo
                evaluateCostOfThisSequenceOfStates simulationNodesAtTarget , sequenceOfDepths
                
 // costToGoApproximator is fed with actual state and target depth and spits out time and risk (to target depth from current node)
-let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTime:float)    (maxPDCS:float) costToGoApproximator  = 
+//let defineThreeLegObjectiveFunction (initState   , env ) targetDepth (controlTime:float)    (maxPDCS:float) costToGoApproximator  = 
    
-    let maxRisk = -log(1.0-maxPDCS  )   // maxPDCS is fractional  (e.g. 3.2% is indicated with 0.032) ; same goes for maximum risk 
+//    let maxRisk = -log(1.0-maxPDCS  )   // maxPDCS is fractional  (e.g. 3.2% is indicated with 0.032) ; same goes for maximum risk 
 
-    let costToGoToEndApproximator = estimateCostToGo costToGoApproximator
+//    let costToGoToEndApproximator = estimateCostToGo costToGoApproximator
 
-    let expressRiskInTermsOfResidualRisk   (maxRisk: float ) (totalRawCostComponents:Vector<float>) = 
-        let netCost  = totalRawCostComponents.Clone()
-        netCost.[1] <- maxRisk - totalRawCostComponents.[1] 
-        netCost
+//    let expressRiskInTermsOfResidualRisk   (maxRisk: float ) (totalRawCostComponents:Vector<float>) = 
+//        let netCost  = totalRawCostComponents.Clone()
+//        netCost.[1] <- maxRisk - totalRawCostComponents.[1] 
+//        netCost
 
-    let objectiveFunction (functionParams:Vector<float>) = 
+//    let objectiveFunction (functionParams:Vector<float>) = 
           
-         //let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime functionParams
+//         //let ascentPath  = createThreeLegAscentWithTheseBCs initState targetDepth  controlTime functionParams
          
-         let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
+//         let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
 
-         let simulateFromInitStateWithThisAscent = simulateAscent env None 
-         let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
-         let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
+//         let simulateFromInitStateWithThisAscent = simulateAscent env None 
+//         let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
+//         printfn "arrayOfState %A" arrayOfAscentNodes
+//         let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
 
-         let lastNodeState = arrayOfAscentNodes |> Array.last |> (fun (x,_,_,_) -> x )
-         let residualRisk = maxRisk - accruedRiskNTimeToTargetDepth.[1]
+//         let lastNodeState = arrayOfAscentNodes |> Array.last |> (fun (x,_,_,_) -> x )
+//         let residualRisk = maxRisk - accruedRiskNTimeToTargetDepth.[1]
           
-         // this estimates time for cost to go and gives us the optimal sequence of absence from targetDepth to surface 
-         let costToGoTermsToSurface , optimalAscentFromTargetDepthToSurface  = costToGoToEndApproximator lastNodeState  residualRisk (simulateFromInitStateWithThisAscent) 
+//         // this estimates time for cost to go and gives us the optimal sequence of absence from targetDepth to surface 
+//         let costToGoTermsToSurface , optimalAscentFromTargetDepthToSurface  = costToGoToEndApproximator lastNodeState  residualRisk (simulateFromInitStateWithThisAscent) 
       
-         let totalCostComponents = accruedRiskNTimeToTargetDepth + costToGoTermsToSurface
-                                   |> expressRiskInTermsOfResidualRisk  maxRisk
+//         let totalCostComponents = accruedRiskNTimeToTargetDepth + costToGoTermsToSurface
+//                                   |> expressRiskInTermsOfResidualRisk  maxRisk
            
-         let cost = totalCostComponents |> timeNResidualRiskToCost
-         printfn "Components Cost %A "  totalCostComponents
-         printfn "Total Cost %A " cost 
-         cost
+//         let cost = totalCostComponents |> timeNResidualRiskToCost
+//         //printfn "Components Cost %A "  totalCostComponents
+//         //printfn "Total Cost %A " cost 
+//         cost
          
-    Func<_,_> objectiveFunction
+//    Func<_,_> objectiveFunction
 
 let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    (maxPDCS:float) costToGoApproximator  = 
-   
+     
     let maxRisk = -log(1.0-maxPDCS  )   // maxPDCS is fractional  (e.g. 3.2% is indicated with 0.032) ; same goes for maximum risk 
 
     let costToGoToEndApproximator = estimateCostToGo costToGoApproximator
@@ -124,12 +133,25 @@ let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    
 
     let objectiveFunction (functionParams:Vector<float>) = 
          
-         let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
+         let ascentPath'  = ascentWithOneStep initState targetDepth  controlTime functionParams
+         
+         let ascentPath = ascentPath' |> Seq.concat  |> Seq.map snd  |> Seq.skip 1 
          let simulateFromInitStateWithThisAscent = simulateAscent env None 
+
+         printfn "ASCENT PATH first- last %A" (ascentPath |> Seq.head , ascentPath |> Seq.last )
+
          let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
+
+         printfn "array of nodesfirst- last %A" (arrayOfAscentNodes |> Seq.head , arrayOfAscentNodes |> Seq.last )
+         
          let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
 
+         //printfn "ACCRUED RISK %A" (accruedRiskNTimeToTargetDepth)
+
          let lastNodeState = arrayOfAscentNodes |> Array.last |> (fun (x,_,_,_) -> x )
+
+         //printfn "%A THIS IS THE LAST NODE" lastNodeState
+
          let residualRisk = maxRisk - accruedRiskNTimeToTargetDepth.[1]
           
          // this estimates time for cost to go and gives us the optimal sequence of absence from targetDepth to surface 
