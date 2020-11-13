@@ -138,6 +138,9 @@ module LEModel  =
     let leStatus2Risk ( State { Risk = leRiskInfo}) = 
         leRiskInfo.AccruedRisk
 
+    let IsAtSurfaceLevel depth =
+        abs(depth) < 0.1 
+
     let areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualAmbientPressure  (leParams: SingleLEModelParam[] ) (actualTissueTensions:float[])  = 
         actualTissueTensions 
         |> Array.map2 (fun leParam  tissueTension  ->  tissueTension < actualAmbientPressure +  leParam.Threshold - dPFVG  )   leParams
@@ -150,7 +153,7 @@ module LEModel  =
                                              |> leStatus2TissueTension 
                                              |> areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualAmbientPressure leParams
         
-        let weAreAtSurfaceLevel = abs(actualDepth) < 0.1 // ft
+        let weAreAtSurfaceLevel = actualDepth  |> IsAtSurfaceLevel // ft
 
         tissueTensionsAreNotRiskSource && weAreAtSurfaceLevel
     

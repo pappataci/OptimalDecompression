@@ -5,7 +5,6 @@
 #load "PredefinedDescent.fs"
 #load "Gas.fs"
 #load "LEModel.fs"
-
 #load "OptimalAscentLearning.fs"
 #load "InputDefinition.fs"
 #load "EnvironmentToPython.fs"
@@ -13,186 +12,15 @@
 #load "AscentSimulator.fs"
 #load "TwoLegAscent.fs"
 #load "Result2CSV.fs"
+#load "AscentBuilder.fs"
+#load "AscentOptimizer.fs"
 
 open ReinforcementLearning
-open InitDescent
 open LEModel
 open Extreme.Mathematics
-open  Extreme.DataAnalysis.Linq 
-
-type SegmentDefiner =    ( Vector<float> -> seq<float*float> ) 
-
-let atanh = Extreme.Mathematics.Elementary.Atanh
-let concat (x:Vector<'T> )  y  =  LinqExtensions.Concat(x,y)
-
-let outputNotExceeding maxTarget (_:float , y) = 
-    y  >= maxTarget - tolerance
-
-let evaluateFcnBetweenMinMax increment fcn initValue (computationBound: float*float -> bool) = 
-    let generator x =  
-        let y = fcn x 
-        match ( computationBound(x,y) ) with 
-        | true  -> ( (x, y)   , x + increment  ) |> Some 
-        | false -> None
-    
-    initValue
-    |> Seq.unfold generator
-
-let straightLineEqGen( myParams:Vector<float> )   =
-    let slope = myParams.[0]
-    let initTime  = myParams.[1]
-    let initDepth = myParams.[2]  
-    let bias = initDepth - slope * initTime
-    (fun x -> slope * x + bias )
-
-let tanhEqGen ( myParams:Vector<float> )   =
-    let initDerivative = myParams.[0]     
-    let initDepth = myParams.[1]          
-    let alpha = myParams.[2]             
-    let targetDepth = myParams.[3]       
-    let initTime = myParams.[5]  // BC    
-
-    let deltaF = initDepth - targetDepth
-    let rho = -initDerivative/(alpha*deltaF)
-    let beta =  atanh (rho - 1.0) - alpha * initTime
-    let delta = tanh (alpha * initTime + beta)
-    let A = deltaF / (delta - 1.0)
-    let B = targetDepth - A 
-    (fun x -> let xHat = alpha * x + beta 
-              A * tanh(xHat) + B  ) 
+open AscentBuilder
+open AscentOptimizer
      
-let addTargetPointToOutput (actualOutput:seq<float*float>)  increment targetDepth = 
-    let actualDepth, actualValue  = actualOutput |> Seq.head 
-    let target = actualDepth + increment , targetDepth 
-    seq { yield! actualOutput 
-          yield  target  }
-
-let straightLineSectionGen increment ( curveParams:Vector<float> )   = 
-     
-    // curveParams ordering: 
-    // 0 r  - Ramp Slope
-    // 1 Ft - Target Depth  
-    // 4 Tr - Time Ramp (Time Start)
-    // 5 Fs - Function Start 
-    let targetDepth = curveParams.[1]
-    let initTime = curveParams.[5]
-    let straightLineFcn = concat (curveParams.GetSlice(0,0)) ( curveParams.GetSlice(5,6) )
-                          |> straightLineEqGen  
-    let output =  evaluateFcnBetweenMinMax increment straightLineFcn initTime (outputNotExceeding targetDepth)
-    
-    match ( (output |> Seq.length ) = 1 ) with 
-                    |   true    ->  
-                                addTargetPointToOutput output increment curveParams.[1]
-                    |   false   ->  output 
-     
-let addTargetNodeIfEmpty  (initTime,   increment)  (functionStart, approximateTarget ) (tanhPart:seq<float*float>) =
-    match tanhPart |> Seq.isEmpty with
-    | true -> let out = seq{(initTime , functionStart) ; 
-                            (initTime + increment, approximateTarget ) }
-             // printfn "PASSED"
-           //   printfn "INSIDE ADD %A" out 
-              out 
-    | false ->    //  printfn "PASSED FALSE"
-                    //printfn "INSIDE FALSE  %A" tanhPart
-                    tanhPart 
-    
-let tanhSectionGen  increment ( curveParams:Vector<float> ) = 
-     
-    // curveParams ordering: 
-    // 0 r      - Init Function Derivative Value
-    // 1 Fs     - Function Start
-    // 2 alpha  - Tanh Param
-    // 3 Ft     - Function Target
-    // 4 Tr     - Time Tanh (Time Start)
-    
-    let percentTolerance  , maxAbsoluteTolerance = 5.0e-3 , 1.0
-    let initTime = curveParams.[5] // CORRECT 
-    let targetDepth = curveParams.[3] // CORRECT 
-    let targetIncrementTolerance =  (max (targetDepth * percentTolerance) increment )  
-                                    |> min maxAbsoluteTolerance 
-
-    let approximateTarget = targetDepth  + targetIncrementTolerance  //CORRECT 
-    let functionStart = curveParams.[1]
-    //printfn "%A Fs, Ft , approxTarget " (functionStart , curveParams.[3] , approximateTarget) 
-
-    let tanhFcn = tanhEqGen (curveParams)
-    let tanhPart = (evaluateFcnBetweenMinMax increment tanhFcn initTime (outputNotExceeding approximateTarget)  )
-                   |>  addTargetNodeIfEmpty  (initTime,   increment)   (functionStart, approximateTarget )
-
-    let getLastTime = Seq.last >> fst 
-
-    let  lastTime  = getLastTime tanhPart 
-
-    let extraTime = curveParams.[4]  // minutes 
-     
-    let constantLegDeltaTime =  seq{0.0 .. increment .. extraTime}
-    
-    let constantLeg = constantLegDeltaTime
-                      |> Seq.map (fun deltaT ->  let x = lastTime + deltaT 
-                                                 let y =  tanhFcn  x 
-                                                 x , y    )
-                      |> Seq.skip 1 
-
-    let output = seq{   yield! tanhPart
-                        yield! constantLeg   }
-    
-    output 
-
-let getNumberofCurves degreesOfFreedom =
-    // four parameters define one line-tanh curve (the last one is missing)
-    (degreesOfFreedom + 1) / 5  
-
-let createComputationPipeLine numberOfLegs oneLegComputation  = 
-    oneLegComputation
-    |> Seq.replicate numberOfLegs
-
-let computeCriticalAlpha (myParamsSection:Vector<float>) = 
-    let slope = myParamsSection.[0]
-    let initValue = myParamsSection.[1]
-    let targetValue = myParamsSection.[3]
-    -0.5 * slope / (initValue - targetValue)
-
-let param2AlphaValue (myParamsSection:Vector<float>) =  
-    let alphaParam =  min (  max myParamsSection.[2]  -20.0 ) 30.0   
-    let alphaComputed = exp(alphaParam) + (  computeCriticalAlpha myParamsSection )
-    let returnVec = Vector.Create (myParamsSection.ToArray())
-    returnVec.[2] <- alphaComputed
-    returnVec
-
-let oneLegComputation computationSeq myParams (bc:Vector<float>)    = 
-
-    let initSeqState = seq{bc.[0] , bc.[1]} 
-    let myParamsWithAlpha = param2AlphaValue myParams
-     
-    let folderFcn (state: seq<float*float>)  (genFcn) = 
-        let bcTime, bcDepth = state |> Seq.last 
-        let bc =  Vector.Create(bcTime, bcDepth )
-        concat myParamsWithAlpha  bc
-        |> genFcn
-
-    Seq.scan folderFcn initSeqState  computationSeq
-    |> Seq.map (Seq.skip 1) 
-    |> Seq.concat
- 
-let defineSegmentDefiner (integrationTime:float)  sectionGenerator  =
-    sectionGenerator integrationTime
-
-let addFinalDepthToParams (myParams:Vector<float>) targetDepth = 
-    let numOfParams = myParams |> Seq.length
-    let returnVecArray = Vector.Create<float> (numOfParams + 1 )   
-    returnVecArray.[Range(0, numOfParams - 2  )] <- myParams.GetSlice(0, numOfParams - 2 )
-    returnVecArray.[numOfParams] <- myParams.[numOfParams - 1 ] 
-    returnVecArray.[numOfParams - 1 ] <- targetDepth
-    returnVecArray 
-    :> Vector<float>
-
-let  folderForMultipleFunctions (paramsCompleted:Vector<float>)   (paramsIdxInit:int  , previousLegSequence:seq<float*float>  )   (segmetDefiner:seq<SegmentDefiner>)   = 
-    let actualSubParams = paramsCompleted.GetSlice(5*paramsIdxInit, 5* paramsIdxInit + 4) // included constant segment 
-
-    let bcTime, bcDepth = previousLegSequence |> Seq.last 
-    let bcVector = Vector.Create( bcTime, bcDepth)
-    let oneLegAscent = oneLegComputation segmetDefiner  actualSubParams  bcVector 
-    (paramsIdxInit + 1  ,  oneLegAscent   )  
 
 
 let mapRealValueToDepth minDepth maxDepth realValue      = 
@@ -300,29 +128,73 @@ let ascentWithOneStep (  initState:State<LEStatus>) (targetDepth:float) (integra
 
 let integrationTime = 0.1
 let initTime = 120.0  // mins
-
 let maxDepth = 60.0 // ft
 let targetDepth = 0.0
-
 let controlTime = integrationTime * 10.0
-
 let initState = createFictitiouStateFromDepthTime (initTime, maxDepth) 
 
 
-let mapRealValueToDepthForThisTarget = mapRealValueToDepth targetDepth
+
+// DEBUGGING OBJECTIVE FUNCTION (CHECK)
+let maxPDCS , maxSimTime = 0.032 , 50000.0
+let controlToIntegration = 10 
+let maximumDepth = 60.0 
+let bottomTime = 120.0
+let initAscentStateAndEnv = initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
+ 
+let costToGoApproximator = None 
+
+// THIS HAS TO BE ABSTRACTED OUT (with automatic identification of number of params)
+//let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
+let  objectiveFunction : System.Func<Vector<float>, float>  = defineOneStepObjFcn initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
+
+
+let x0 = Vector.Create (-5.0, -19.5 , 0.0,  0.0 , 26.0,  -5.0, 0.0 , 0.0,    5.0 )  :> Vector<float> 
+
+let (gradient: System.Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  objectiveFunction
+
+let y = x0.Clone()
+ 
+
+let perturb (dt:float)   i = 
+    let t = Vector.Create<float>( x0|> Seq.length )
+    t.[i] <- dt
+    t
+
+let gr x0= 
+    let dt = 0.01
+    [|0 ..  ( (x0|> Seq.length) - 1 )  |]
+    |> Array.map ( fun idx -> let k = perturb dt idx 
+                              let perturbed = k + x0 
+                              let refValue = objectiveFunction.Invoke(x0)
+                              (objectiveFunction.Invoke(perturbed) - refValue) / dt )
+                              |> Vector.Create :> Vector<float>
 
 
 
-let initialGuess =  Vector.Create (-10.0, 0.0 ,  -10.0,  15.0 , 25.0,  // first leg with constant times 
-                                   -5.0, 10.0 , 0.0,    5.0 ) 
 
-//let initialGuess' = Vector.Create (-1.0, 10.0 , 0.0,    5.0 )  // first leg with constant times 
+let sgd x0 (eta:float) (epsilon:float) =
+    let rec desc x = 
+        let g = gr x   
+        if g.Norm() < epsilon then   x else  printfn "f , g %A , "  ( ( objectiveFunction.Invoke(x0) ) , ( x0|> Seq.toArray ) ); desc  ( x - eta * g )
+    desc x0
+
+let out = sgd x0 0.0003 0.00001
+
+let test = Vector.Create([|-5.711321627; -19.34735327; -0.008394359101; 0.07975548012; 26.0; -4.975883364;0.01974830003; -0.1006232377; 5.0|])
+
+objectiveFunction.Invoke(test)
+gr(test)
+
+let actual = Vector.Create([|-5.102223817; -19.98396963; -0.02151706647; 5.909616754; 26.0; -11.3107369;-0.3610388302; -3.281399114; 5.0|])
+objectiveFunction.Invoke(actual)
+gr(actual) |> Seq.toArray
 
 
+let out2 = sgd actual 0.01 0.00001
 
-let simpleAscentPath = ascentWithOneStep initState 0.0 0.1 initialGuess
-                       |> Seq.toArray 
-
-simpleAscentPath 
+actual
+|> ascentWithOneStep initState 0.0 0.1 
+|> Seq.toArray 
 |> Seq.map snd 
-|>  writeArrayToDisk "testSimple.csv" None 
+|>  writeArrayToDisk "ascentOpt.csv" None 

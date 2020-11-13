@@ -26,13 +26,13 @@ let main argv =
     //                                   -20.0, 25.0 , 0.1  , 18.0,  1.5,  // second leg
     //                                   -8.0 , 12.0 , 0.3  , 2.5  )       // third leg 
 
-    let initialGuess' =  Vector.Create (-30.0, 0.0 ,  0.0,  0.0 ,  30.0,  // first leg with constant times 
-                                        -10.0, 0.0 , 5.0  , 00.0,   31.5,  // second leg
-                                        -25.0 , 0.0 , 1.3  , 32.5  )       // third leg 
+    //let initialGuess' =  Vector.Create (-30.0, 0.0 ,  0.0,  0.0 ,  30.0,  // first leg with constant times 
+    //                                    -10.0, 0.0 , 5.0  , 00.0,   31.5,  // second leg
+    //                                    -25.0 , 0.0 , 1.3  , 32.5  )       // third leg 
 
 
-    let initialGuess = Vector.Create (-10.0, 0.0 ,  -10.0,  15.0 , 25.0,  // first leg with constant times 
-                                      -5.0, 10.0 , 0.0,    5.0 ) 
+    let initialGuess = Vector.Create (-10.0, 0.0 ,   0.0,  0.0 , 150.0,  // first leg with constant times 
+                                      -5.0, 0.0 , 0.0,    5.0 ) 
 
 
     try 

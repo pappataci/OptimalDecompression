@@ -24,20 +24,38 @@ let evaluateCostOfThisSequenceOfStates (arrayOfAscentNodes: (State<LEStatus> * f
                         |> Array.map (fun (  state,_,_,_) -> state)
 
     let firstState , lastState = arrayOfStates |> Array.head , arrayOfStates |> Array.last 
+    //printfn "%A" lastState 
+    let getNodeAtSurfaceLevel = leStatus2Depth 
+                                     >> IsAtSurfaceLevel
     
-    let getTimeAndAccruedRisk ( leStatus:State<LEStatus>) =
-        [|leStatus2ModelTime ; leStatus2Risk|]
-        |> Array.map (fun f -> f leStatus)
+    let firstNodeAtSurface = arrayOfStates |> Array.find getNodeAtSurfaceLevel 
+    
+    let accruedRisk = [|firstState ; lastState |]
+                      |> Array.map  leStatus2Risk 
+                      |> (fun x -> x.[1] - x.[0])
 
-    let firstNodeTimeAndRisk =  getTimeAndAccruedRisk firstState   |>  Vector.Create
-    let lastNodeTimeAndRisk  =  getTimeAndAccruedRisk lastState    |>  Vector.Create
-    lastNodeTimeAndRisk - firstNodeTimeAndRisk
+    
+    let timeToSurface = [|firstState ; firstNodeAtSurface    |]
+                        |> Array.map  leStatus2ModelTime 
+                        |> (fun x -> x.[1] - x.[0])
+
+    Vector.Create([|timeToSurface ; accruedRisk|])
+    :> Vector<float> 
+
+    //let getTimeAndAccruedRisk ( leStatus:State<LEStatus>) =
+    //    [|leStatus2ModelTime ; leStatus2Risk|]
+    //    |> Array.map (fun f -> f leStatus)
+
+    //let firstNodeTimeAndRisk =  getTimeAndAccruedRisk firstState   |>  Vector.Create
+    //let lastNodeTimeAndRisk  =  getTimeAndAccruedRisk lastState    |>  Vector.Create
+
+    //lastNodeTimeAndRisk - firstNodeTimeAndRisk
 
 // DEBUGGED 
 let timeNResidualRiskToCost (timeNResidualRisk : Vector<float>) = 
     // first component is time; second component is residualRisk
-    let gain:Vector<float>   = Vector.Create(1.0e-2, // time gain
-                                         1.0e2)  // residual risk gain 
+    let gain:Vector<float>   = Vector.Create(1.0e-1, // time gain
+                                         1.0e3)  // residual risk gain 
                                          :> Vector<float>
    
     let weigthedCostComponents = timeNResidualRisk.ElementwiseMultiplyInPlace(gain)
@@ -105,7 +123,7 @@ let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    
         netCost
 
     let objectiveFunction (functionParams:Vector<float>) = 
-          
+         
          let ascentPath  = ascentWithOneStep initState targetDepth  controlTime functionParams
          let simulateFromInitStateWithThisAscent = simulateAscent env None 
          let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
@@ -122,7 +140,7 @@ let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    
            
          let cost = totalCostComponents |> timeNResidualRiskToCost
          printfn "Components Cost %A "  totalCostComponents
-         printfn "Total Cost %A " cost 
+         //printfn "Total Cost %A " cost 
          cost
          
     Func<_,_> objectiveFunction
@@ -156,7 +174,7 @@ let getOptimalSolutionForThisMission  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTi
      
     // THIS HAS TO BE ABSTRACTED OUT (with automatic identification of number of params)
     //let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
-    let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
+    let  objectiveFunction  = defineOneStepObjFcn initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
 
     
     let (gradient: Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  objectiveFunction
