@@ -58,21 +58,6 @@ let gr x0 =
 
 
 
-
-//let sgd x0 (eta:float) (epsilon:float)  maxIteration =
-//    let rec desc x iteration = 
-//        let g = gr x   
-
-//        match g.Norm() < epsilon || (iteration > maxIteration )  with
-//        | true -> 0.0
-//        | false -> 1.0
-
-
-//        if g.Norm() < epsilon then   x else  printfn "f , g %A , "  ( ( objectiveFunction.Invoke(x0) ) , ( x0|> Seq.toArray ) ); desc  ( x - eta * g )
-//    desc x0 iteration + 1 
-
-
-
 //let evaluateFcnBetweenMinMax increment fcn initValue (computationBound: float*float -> bool) = 
 //    let generator x =  
 //        let y = fcn x 
@@ -82,35 +67,71 @@ let gr x0 =
 
 //let actual = Vector.Create([|-5.102223817; -19.98396963; -0.02151706647; 5.909616754; 26.0; -11.3107369;-0.3610388302; -3.281399114; 5.0|])
 
-let actual = Vector.Create([|-25.102223817; 3.5 ; 0.0; 2.909616754; 12.0; -1.3107369;-0.3610388302; -3.281399114; 5.0|])
-
+let actual = Vector.Create([|-25.102223817; 3.5 ; 0.0; 2.909616754; 12.0; 
+                             -1.3107369;-0.3610388302; -3.281399114 ; 5.0|])
 
 objectiveFunction.Invoke(actual)
-//gr(actual) |> Seq.toArray
 
 
 let sgd x0 (eta:float) (epsilon:float) maxIteration = 
     let optHistory  = (x0 , 0 ) 
-                      |> Seq.unfold (fun (actualPoint , iteration)  ->  let gradientValue = (gr actualPoint) 
+                      |> Seq.unfold (fun (actualPoint , iteration)  ->  printfn "%A" (actualPoint |> Seq.toArray)
+                                                                        let gradientValue = (gr actualPoint) 
                                                                         match (gradientValue.Norm() > epsilon &&  iteration < maxIteration)  with 
                                                                         | true ->  let nextPoint = x0 - eta  * gradientValue  
                                                                                    ((nextPoint , iteration + 1), (nextPoint , iteration + 1) ) |> Some 
-                                                                        | false ->  printfn "passed falses" ; None  )
+                                                                        | false ->  None  )
     match optHistory |> Seq.isEmpty with 
     | true -> seq{(x0,0)}
     | false -> optHistory
 
-////let out2 = sgd actual 0.01 0.00001 1
-////           |> Seq.last
-////           |> fst
-////           |> Seq.toArray
+
+
+let  out2= sgd actual 0.001 0.00001 10
+
+//let last = out2
+//           |> Seq.last
+//           |> fst
+//           |> Seq.toArray
 
 ////objectiveFunction.Invoke(actual)
+let problInitCondition = Vector.Create( [|-25.10299173; -1.082971087; 0.00792394897; -1.924453258; 12.0; -8.051674144; -23.88947656; -13.25137446; 5.0|] )  :> Vector<float> 
+
+problInitCondition
+|> ascentWithOneStep initState targetDepth controlTime
+|> Seq.concat 
+|> Seq.map snd 
+|> Seq.toArray 
+|>  writeArrayToDisk "ascentDebug.csv" None 
+
+// Try with constraints using library
 
 
-//actual
-//|> ascentWithOneStep initState targetDepth controlTime
-//|> Seq.concat 
-//|> Seq.map snd 
-//|> Seq.toArray 
-//|>  writeArrayToDisk "ascentDebug.csv" None 
+let gradientForOpt (x:Vector<float> ) (y:Vector<float>) = 
+    let y = gr x 
+    y
+
+
+
+
+//let nlp = new Extreme.Mathematics.Optimization.NonlinearProgram(objectiveFunction , Func<_,_,_>(gradientForOpt) )
+
+
+let nlp = new Extreme.Mathematics.Optimization.NonlinearProgram()
+nlp.ObjectiveFunction <- objectiveFunction
+nlp.ObjectiveGradient <-  System.Func<_,_,_>(gradientForOpt)
+
+nlp.AddLinearConstraint("s1u", [| 1.0; 0.0; 0.0 ; 0.0; 0.0 ; 0.0 ; 0.0 ; 0.0 ; 0.0   |] , Optimization.ConstraintType.LessThanOrEqual, -0.5 ) |> ignore
+nlp.AddLinearConstraint("s1l", [| 1.0; 0.0; 0.0 ; 0.0; 0.0 ; 0.0 ; 0.0 ; 0.0 ; 0.0   |] , Optimization.ConstraintType.GreaterThanOrEqual, -30.0 ) |> ignore
+
+nlp.AddLinearConstraint("t1l", [| 0.0; 0.0; 0.0 ; 0.0; 1.0 ; 0.0 ; 0.0 ; 0.0 ; 0.0   |] , Optimization.ConstraintType.GreaterThanOrEqual, 0.0 ) |> ignore
+
+nlp.AddLinearConstraint("s2u", [| 0.0; 0.0; 0.0 ; 0.0; 0.0 ; 1.0 ; 0.0 ; 0.0 ; 0.0   |] , Optimization.ConstraintType.LessThanOrEqual, -0.5 ) |> ignore
+nlp.AddLinearConstraint("s2l", [| 0.0; 0.0; 0.0 ; 0.0; 0.0 ; 1.0 ; 0.0 ; 0.0 ; 0.0   |] ,  Optimization.ConstraintType.GreaterThanOrEqual, -30.0 ) |> ignore
+
+nlp.InitialGuess <- actual 
+
+let solution = nlp.Solve()
+nlp.ExtremumType <- Optimization.ExtremumType.Minimum
+
+nlp.SolutionReport

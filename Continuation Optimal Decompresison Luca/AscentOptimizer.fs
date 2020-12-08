@@ -1,8 +1,6 @@
 ﻿[<AutoOpen>]
 module AscentOptimizer
-
 open ReinforcementLearning
-open InitDescent
 open LEModel
 open System
 open Extreme.Mathematics
@@ -29,8 +27,7 @@ let evaluateCostOfThisSequenceOfStates (arrayOfAscentNodes: (State<LEStatus> * f
                         |> Array.map (fun (  state,_,_,_) -> state)
     
     let firstState , lastState = arrayOfStates |> Array.head , arrayOfStates |> Array.last 
-    printfn "%A" ( firstState , lastState ) 
-    
+     
     let getNodeAtSurfaceLevel = leStatus2Depth 
                                      >> IsAtSurfaceLevel
     
@@ -63,7 +60,7 @@ let evaluateCostOfThisSequenceOfStates (arrayOfAscentNodes: (State<LEStatus> * f
 let timeNResidualRiskToCost (timeNResidualRisk : Vector<float>) = 
     // first component is time; second component is residualRisk
     let gain:Vector<float>   = Vector.Create(1.0e-1, // time gain
-                                         1.0e3)  // residual risk gain 
+                                         1.0e5)  // residual risk gain 
                                          :> Vector<float>
    
     let weigthedCostComponents = timeNResidualRisk.ElementwiseMultiplyInPlace(gain)
@@ -138,11 +135,11 @@ let defineOneStepObjFcn (initState   , env ) targetDepth (controlTime:float)    
          let ascentPath = ascentPath' |> Seq.concat  |> Seq.map snd  |> Seq.skip 1 
          let simulateFromInitStateWithThisAscent = simulateAscent env None 
 
-         printfn "ASCENT PATH first- last %A" (ascentPath |> Seq.head , ascentPath |> Seq.last )
+         //printfn "ASCENT PATH first- last %A" (ascentPath |> Seq.head , ascentPath |> Seq.last )
 
          let arrayOfAscentNodes = simulateFromInitStateWithThisAscent initState  ascentPath
 
-         printfn "array of nodesfirst- last %A" (arrayOfAscentNodes |> Seq.head , arrayOfAscentNodes |> Seq.last )
+         //printfn "array of nodesfirst- last %A" (arrayOfAscentNodes |> Seq.head , arrayOfAscentNodes |> Seq.last )
          
          let accruedRiskNTimeToTargetDepth = evaluateCostOfThisSequenceOfStates arrayOfAscentNodes 
 

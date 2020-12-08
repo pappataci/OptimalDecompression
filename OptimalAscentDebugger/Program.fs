@@ -2,7 +2,6 @@
 // See the 'F# Tutorial' project for more help.
 
 open InitDescent
-open System
 open Extreme.Mathematics
 open AscentSimulator
 open AscentOptimizer

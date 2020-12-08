@@ -286,11 +286,11 @@ namespace Continuation_Optimal_Deco
             pw.InitialGuess = initialGuess;
             pw.ObjectiveFunction =  ObjectiveFunction;
             pw.FindExtremum ( );
-
+            MessageBox.Show(  pw.SolutionReport.ToString()  ); 
             MessageBox.Show ( "Optimization complete" );
             
         }
-        private double ObjectiveFunction (Vector<float> x)
+        private double ObjectiveFunction (Vector<double> x)
         {
 
             model.ResetInformation ( );
