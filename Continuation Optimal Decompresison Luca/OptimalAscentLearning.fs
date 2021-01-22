@@ -131,7 +131,7 @@ module FinalStateIdentification =
         let maximumTolerableRisk = envParams.RewardParameters.MaximumRiskBound
         let maximumSimulationTime = envParams.TimeParams.MaximumFinalTime
 
-        let isFinalStatePredicate (    actualState: State<LEStatus> ) : bool = 
+        let isFinalStatePredicate ( actualState: State<LEStatus> ) : bool = 
             let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure modelParams.LEParams
             let simulationTime = leStatus2ModelTime actualState 
             let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime

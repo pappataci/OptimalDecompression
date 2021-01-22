@@ -69,8 +69,8 @@ content |> Array.take 4
 
 
 
-grouppedResults
-|> writeResultsToDisk "completeResults60.csv" None
+//grouppedResults
+//|> writeResultsToDisk "completeResults60.csv" None
 
 
 
