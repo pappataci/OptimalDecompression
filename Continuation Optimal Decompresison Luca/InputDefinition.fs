@@ -21,11 +21,11 @@ module ModelParams =
 [<AutoOpen>]
 module EnvironmentSetup = 
     let modelsDefinition = defEnvironmentModels |> ModelDefiner
-    
+     
     // default is shortTermRewardOnTimeDifference
     let shortTermRewardEstimator = defineShortTermRewardEstimator shortTermReward  finalRewardComputation
     let terminalStatePredicate = StatePredicate defineFinalStatePredicate
-    let infoLogger = nullLogger 
+    let infoLogger = nullLogger  
 
     let initialStateCreator =   defInitStateCreatorFcn getInitialStateWithTheseParams 
     let ascentLimiterFcn =  (params2InternalComputationFcn  , computeMaxPositiveRateFcn )

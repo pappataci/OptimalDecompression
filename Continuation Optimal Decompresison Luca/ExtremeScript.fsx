@@ -121,13 +121,6 @@ let getOptimalSolutioForThisMission  {MaxPDCS = maxPDCS ; MaxSimTime = maxSimTim
     let  objectiveFunction  = defineThreeLegObjectiveFunction initAscentStateAndEnv targetDepth controlTime  maxPDCS costToGoApproximator
     //let (gradient: Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  objectiveFunction
     
-    // Start optimization
-    //let powellOpt = new PowellOptimizer()
-    
-    //powellOpt.ExtremumType <- ExtremumType.Minimum
-    //powellOpt.Dimensions <- 14 
-    //powellOpt.ObjectiveFunction <- objectiveFunction
-
 
     let nm = new  PowellOptimizer()
     nm.ExtremumType <- ExtremumType.Minimum
@@ -162,9 +155,9 @@ let simParams = { MaxPDCS = maxPDCS ; MaxSimTime = maxSimTime; PenaltyForExceedi
 let testn = getOptimalSolutioForThisMission  simParams   targetDepth    None
 
 
+let nm, solution = testn
 
 //let initAscentStateAndEnv = initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
 
 
 // DEBUGGING START 
-

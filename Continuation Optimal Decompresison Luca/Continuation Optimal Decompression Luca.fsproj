@@ -101,6 +101,7 @@
     <None Include="Scratch.fsx" />
     <None Include="AscentBuilderQuick.fsx" />
     <None Include="OptimalAscentDebuggerScript.fsx" />
+    <None Include="OneLegScript.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">
