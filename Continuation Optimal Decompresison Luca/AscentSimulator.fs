@@ -18,10 +18,12 @@ type AscentStrategy = |Ascent of seq<float>
 type StrategyInput = StrategyInput of  SimulationParameters*AscentStrategy
 
 let simulateAscent  env ascentLimiter initState (sequenceOfDepths:seq<float>)  =   
-    sequenceOfDepths 
-    |> Seq.scan ( fun ( nextState, rew, isTerminal, _ )  depth -> getNextEnvResponseAndBoundForNextAction(env, nextState , depth , ascentLimiter)  ) (  initState, 0.0 , false, 0.0)  
-    |> SeqExtension.takeWhileWithLast (fun (_ , _, isTerminalState, _) ->  not isTerminalState)
-    |> Seq.toArray
+    //sequenceOfDepths has to be provided in terms of control time 
+     sequenceOfDepths 
+                 |> Seq.scan ( fun ( nextState, _ , _ , _ )  depth -> getNextEnvResponseAndBoundForNextAction(env, nextState , depth , ascentLimiter)  ) (  initState, 0.0 , false, 0.0)  
+                 |> SeqExtension.takeWhileWithLast (fun (_ , _, isTerminalState, _) ->  not isTerminalState)
+                 |> Seq.toArray
+   
 
 type StrategyOutput = | Output of (State<LEStatus> * float *bool *float) [] 
 
