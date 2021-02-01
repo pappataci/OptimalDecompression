@@ -57,9 +57,9 @@ let getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:fl
 
    Seq.zip  times depths 
   
-let breakEvenCoeff = 0.7
-let initSlope = -10.0
-let linearPartSeq = getSeqOfDepthsForLinearAscentSection  (0.0, maximumDepth)  initSlope breakEvenCoeff controlTime
+let breakEvenCoeff = 0.2
+let linearSlope = -10.0
+let linearPartSeq = getSeqOfDepthsForLinearAscentSection  (0.0, maximumDepth)  linearSlope breakEvenCoeff controlTime
 
 let getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:float, initDepth:float )  =
     //tay parameter belongs to (-1.0, 0.0]
@@ -86,5 +86,17 @@ let tay = 0.0
 // testing TanhSection
 linearPartSeq
 |> Seq.last
-|> getArrayOfDepthsForTanhAscentSection controlTime initSlope tay
-|> SeqExtension.takeWhileWithLast ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
+|> getArrayOfDepthsForTanhAscentSection controlTime linearSlope tay
+|> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
+
+
+let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakEvenCoeff) tay = 
+    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakEvenCoeff controlTime
+    let initTanhPart = linearPart
+                       |> Seq.last 
+                       |> getArrayOfDepthsForTanhAscentSection controlTime linearSlope tay
+                       |> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
+    match (initTanhPart |> Seq.isEmpty) with 
+    | true  -> linearPart
+    | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
+    |> Seq.map snd 
