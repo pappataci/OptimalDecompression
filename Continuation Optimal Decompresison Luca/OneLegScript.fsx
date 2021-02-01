@@ -76,15 +76,15 @@ let getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:
     
     let outputSequence = Seq.zip times depths 
     outputSequence
-    |> Seq.skip 1 
+    
 
 //let getOneLegAscent 
 
 let tay = 0.0
-let maxTimeSim = 
+ 
 
 // testing TanhSection
 linearPartSeq
 |> Seq.last
 |> getArrayOfDepthsForTanhAscentSection controlTime initSlope tay
-|> SeqExtension.takeWhileWithLast ( fun (_, depth ) -> depth >=  )
+|> SeqExtension.takeWhileWithLast ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
