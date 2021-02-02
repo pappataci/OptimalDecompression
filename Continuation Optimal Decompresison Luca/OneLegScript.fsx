@@ -29,8 +29,6 @@ let initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegratio
     leState , myEnv
 
 
-
-
  // input example
 
 let integrationTime, controlToIntegration = 0.1 , 1
@@ -89,7 +87,6 @@ linearPartSeq
 |> getArrayOfDepthsForTanhAscentSection controlTime linearSlope tay
 |> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
 
-
 let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakEvenCoeff) tay = 
     let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakEvenCoeff controlTime
     let initTanhPart = linearPart
@@ -100,3 +97,21 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     | true  -> linearPart
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
     |> Seq.map snd 
+
+let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth) (linearSlope, 0.3 ) 0.0
+
+let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
+
+let ascentStrategyExample   = depthExample
+                              |> Seq.map Control 
+
+//maxPDCS
+//myEnv 
+let upToSurfaceFolder   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
+    (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
+    
+let computeUpToSurface leInitState  ascentStrategy  = 
+    ascentStrategy
+    |> Seq.scan (upToSurfaceFolder  myEnv) leInitState
+
+leStatus2IsEmergedAndNotAccruingRisk
