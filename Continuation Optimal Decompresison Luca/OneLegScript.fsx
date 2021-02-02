@@ -33,11 +33,11 @@ let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)  
 
 let integrationTime, controlToIntegration = 0.1 , 1
 let controlTime = integrationTime * (float controlToIntegration)
-let  maxSimTime = 3000.0
+let  maxSimTime = 15000.0
 
 // inputs specific to mission 
-let maximumDepth = 96.0 // ft
-let bottomTime   = 40.0 // minutes
+let maximumDepth = 200.0 // ft
+let bottomTime   = 100.0 // minutes
 let maxPDCS = 3.3e-2
 
 // small test
@@ -87,21 +87,17 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
     |> Seq.map snd 
 
-let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, 0.7 ) 0.0
-
-
+let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, 0.3 ) 0.0
 
 let ascentStrategyExample   = depthExample
                               |> Seq.map Control 
 
-//maxPDCS
-//myEnv 
 let executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
     
-let computeUpToSurface leInitState  ascentStrategy  = 
+let computeUpToSurface leInitState  ascentStrategy environment = 
     ascentStrategy
-    |> Seq.scan (executeThisStrategy  myEnv) leInitState
+    |> Seq.scan (executeThisStrategy  environment) leInitState
 
 let simulateStrategyUntilZeroRisk initStateAtSurface =
     let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
@@ -109,9 +105,31 @@ let simulateStrategyUntilZeroRisk initStateAtSurface =
     |> Seq.scan (executeThisStrategy myEnv) initStateAtSurface
     |> SeqExtension.takeWhileWithLast (fun leStatus -> leStatus2IsEmergedAndNotAccruingRisk leStatus ModelParams.threshold
                                                        |> not ) 
+    |> Seq.skip 1  // skip the initial state which is just initStateAtSurface, so if sequences are merged it is not computed twice
 
-let upToSurfaceHistory = computeUpToSurface leInitState ascentStrategyExample
-let upToZeroRisk = simulateStrategyUntilZeroRisk (upToSurfaceHistory |> Seq.last ) 
-
+// small testing with the two branches (up to surface and at surface)
+let upToSurfaceHistory = computeUpToSurface leInitState ascentStrategyExample myEnv
 let initStateAtSurface = upToSurfaceHistory |> Seq.last 
-leStatus2IsEmergedAndNotAccruingRisk initStateAtSurface ModelParams.threshold
+let upToZeroRisk = simulateStrategyUntilZeroRisk initStateAtSurface
+
+type StrategyResults = {AscentTime  : float 
+                        AscentRisk  : float 
+                        SurfaceRisk : float
+                        InitTimeAtSurface : float 
+                        AscentHistory : Option<seq<float>>}
+
+let getTimeAndAccruedRiskForThisStrategy leInitState ascentStrategy environment =
+    let upToSurfaceHistory  = computeUpToSurface leInitState ascentStrategy environment
+    let initStateAtSurface  = upToSurfaceHistory |> Seq.last 
+    let upToZeroRiskHistory = simulateStrategyUntilZeroRisk initStateAtSurface 
+    let initTimeAtSurface = initStateAtSurface |> leStatus2ModelTime
+    let ascentTime = initTimeAtSurface - (leInitState |> leStatus2ModelTime)
+    let ascentRisk = initStateAtSurface |> leStatus2Risk
+    let surfaceRisk = ( upToZeroRiskHistory 
+                            |> Seq.last 
+                            |> leStatus2Risk ) - ascentRisk 
+    {AscentTime = ascentTime
+     AscentRisk = ascentRisk
+     SurfaceRisk = surfaceRisk 
+     InitTimeAtSurface = initTimeAtSurface
+     AscentHistory = None}
