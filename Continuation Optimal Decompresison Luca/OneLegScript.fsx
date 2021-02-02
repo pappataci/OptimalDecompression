@@ -14,13 +14,14 @@
 open ReinforcementLearning
 open InitDescent
 open LEModel
+open InputDefinition
 open System
 open Extreme.Mathematics
 open Extreme.Mathematics.Optimization
 open AscentSimulator
 open AscentBuilder
 
-let initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime  = 
+let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime  = 
     let strategyOutput, myEnv = getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, integrationTime ) (Some maxSimTime) 1   maximumDepth  bottomTime maximumDepth 
     let (Output initialConditionAfterDescent) = strategyOutput 
     let leState = initialConditionAfterDescent
@@ -41,7 +42,7 @@ let bottomTime   = 40.0 // minutes
 let maxPDCS = 3.3e-2
 
 // small test
-let leInitState, myEnv =  initStateAndEnvAfterAscent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
+let leInitState, myEnv =  initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
 
 let getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakEvenCoeff:float) controlTime  = 
    // output is seq of depths 
@@ -75,17 +76,7 @@ let getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:
     let outputSequence = Seq.zip times depths 
     outputSequence
     
-
-//let getOneLegAscent 
-
 let tay = 0.0
- 
-
-// testing TanhSection
-linearPartSeq
-|> Seq.last
-|> getArrayOfDepthsForTanhAscentSection controlTime linearSlope tay
-|> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
 
 let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakEvenCoeff) tay = 
     let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakEvenCoeff controlTime
@@ -98,7 +89,7 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
     |> Seq.map snd 
 
-let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth) (linearSlope, 0.3 ) 0.0
+let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, 0.3 ) 0.0
 
 let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
 
@@ -115,3 +106,4 @@ let computeUpToSurface leInitState  ascentStrategy  =
     |> Seq.scan (upToSurfaceFolder  myEnv) leInitState
 
 leStatus2IsEmergedAndNotAccruingRisk
+
