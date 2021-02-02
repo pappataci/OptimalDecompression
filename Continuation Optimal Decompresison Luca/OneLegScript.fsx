@@ -29,7 +29,6 @@ let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)  
                   |> ( fun (state , _ , _ , _)  -> state ) 
     leState , myEnv
 
-
  // input example
 
 let integrationTime, controlToIntegration = 0.1 , 1
@@ -44,9 +43,9 @@ let maxPDCS = 3.3e-2
 // small test
 let leInitState, myEnv =  initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
 
-let getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakEvenCoeff:float) controlTime  = 
+let getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakOut:float) controlTime  = 
    // output is seq of depths 
-   let targetDepth = breakEvenCoeff * initDepth
+   let targetDepth = breakOut * initDepth
    let increment = controlTime * slope
    let depths = [|initDepth + increment .. increment .. targetDepth  |]
                 |> Seq.ofArray
@@ -56,9 +55,9 @@ let getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:fl
 
    Seq.zip  times depths 
   
-let breakEvenCoeff = 0.2
+let breakOut = 0.2
 let linearSlope = -10.0
-let linearPartSeq = getSeqOfDepthsForLinearAscentSection  (0.0, maximumDepth)  linearSlope breakEvenCoeff controlTime
+let linearPartSeq = getSeqOfDepthsForLinearAscentSection  (0.0, maximumDepth)  linearSlope breakOut controlTime
 
 let getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:float, initDepth:float )  =
     //tay parameter belongs to (-1.0, 0.0]
@@ -76,10 +75,9 @@ let getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:
     let outputSequence = Seq.zip times depths 
     outputSequence
     
-let tay = 0.0
 
-let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakEvenCoeff) tay = 
-    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakEvenCoeff controlTime
+let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut) tay = 
+    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakOut controlTime
     let initTanhPart = linearPart
                        |> Seq.last 
                        |> getArrayOfDepthsForTanhAscentSection controlTime linearSlope tay
@@ -89,21 +87,31 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
     |> Seq.map snd 
 
-let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, 0.3 ) 0.0
+let depthExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, 0.7 ) 0.0
 
-let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
+
 
 let ascentStrategyExample   = depthExample
                               |> Seq.map Control 
 
 //maxPDCS
 //myEnv 
-let upToSurfaceFolder   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
+let executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
     
 let computeUpToSurface leInitState  ascentStrategy  = 
     ascentStrategy
-    |> Seq.scan (upToSurfaceFolder  myEnv) leInitState
+    |> Seq.scan (executeThisStrategy  myEnv) leInitState
 
-leStatus2IsEmergedAndNotAccruingRisk
+let simulateStrategyUntilZeroRisk initStateAtSurface =
+    let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
+    infiniteSequenceOfZeroDepth
+    |> Seq.scan (executeThisStrategy myEnv) initStateAtSurface
+    |> SeqExtension.takeWhileWithLast (fun leStatus -> leStatus2IsEmergedAndNotAccruingRisk leStatus ModelParams.threshold
+                                                       |> not ) 
 
+let upToSurfaceHistory = computeUpToSurface leInitState ascentStrategyExample
+let upToZeroRisk = simulateStrategyUntilZeroRisk (upToSurfaceHistory |> Seq.last ) 
+
+let initStateAtSurface = upToSurfaceHistory |> Seq.last 
+leStatus2IsEmergedAndNotAccruingRisk initStateAtSurface ModelParams.threshold
