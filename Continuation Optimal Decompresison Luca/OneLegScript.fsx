@@ -12,15 +12,15 @@
 #load "AscentBuilder.fs"
 #load "OneLegStrategy.fs"
 
-open ReinforcementLearning
-open InitDescent
-open LEModel
-open InputDefinition
-open System
-open Extreme.Mathematics
-open Extreme.Mathematics.Optimization
-open AscentSimulator
-open AscentBuilder
+//open ReinforcementLearning
+//open InitDescent
+//open LEModel
+//open InputDefinition
+//open System
+//open Extreme.Mathematics
+//open Extreme.Mathematics.Optimization
+//open AscentSimulator
+//open AscentBuilder
 open OneLegStrategy
 
  // input example
@@ -37,19 +37,14 @@ let maxPDCS = 3.3e-2
 // small test
 let leInitState, myEnv =  initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime
   
-let breakOut = 0.8
-let linearSlope = -10.0
-let tay = -0.9
-
-let ascentStrategyExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, breakOut ) tay
+let breakOut = 0.99
+let linearSlope = -0.001
+let tay , tanhInitDerivative = -0.97 , -30.0
 
 
-
-// small testing with the two branches (up to surface and at surface)
-let upToSurfaceHistory = computeUpToSurface leInitState ascentStrategyExample myEnv
-let initStateAtSurface = upToSurfaceHistory |> Seq.last 
-let upToZeroRisk = simulateStrategyUntilZeroRisk initStateAtSurface myEnv
+let ascentStrategyExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, breakOut ) (tay , tanhInitDerivative)
 
 
+let out = getTimeAndAccruedRiskForThisStrategy leInitState  ascentStrategyExample myEnv
 
 
