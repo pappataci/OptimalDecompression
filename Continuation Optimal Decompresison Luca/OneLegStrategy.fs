@@ -56,7 +56,7 @@ let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (i
     let outputSequence = Seq.zip times depths 
     outputSequence
 
-let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut) (tay,tanhInitDerivative) = 
+let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
     let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakOut controlTime
     let initTanhPart = linearPart
                        |> Seq.last 
@@ -65,9 +65,7 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     match (initTanhPart |> Seq.isEmpty) with 
     | true  -> linearPart
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
-    |> Seq.map snd 
-    |> Seq.map Control 
-
+    
 let private   executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
 
@@ -83,7 +81,8 @@ let   simulateStrategyUntilZeroRisk initStateAtSurface  environment=
                                                        |> not ) 
     |> Seq.skip 1  // skip the initial state which is just initStateAtSurface, so if sequences are merged it is not computed twice
 
-let getTimeAndAccruedRiskForThisStrategy leInitState ascentStrategy environment =
+let getTimeAndAccruedRiskForThisStrategy leInitState (ascentTrajectory:seq<float*float>) environment =
+    let ascentStrategy = ascentTrajectory |> Seq.map (snd >> Control )
     let upToSurfaceHistory  = computeUpToSurface leInitState ascentStrategy environment
     let initStateAtSurface  = upToSurfaceHistory |> Seq.last 
     let upToZeroRiskHistory = simulateStrategyUntilZeroRisk initStateAtSurface  environment
