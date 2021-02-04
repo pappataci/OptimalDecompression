@@ -75,9 +75,7 @@ let actualStrategyInputs  = seq { for linearSlope in linearSlopeValues do
 
 let createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs =
     actualStrategyInputs
-    |> Seq.mapi  (fun i x  -> 
-                              printf "%A " i
-                              (createAscentTrajectory controlTime ( bottomTime, maximumDepth ) x ) )
+    |> Seq.map (createAscentTrajectory controlTime ( bottomTime, maximumDepth )  )
 
 
 let getStrategyTime (aStrategy:seq<float*float>)  controlTime  =
@@ -95,17 +93,11 @@ let getStrategyTime (aStrategy:seq<float*float>)  controlTime  =
 let allStrategies = createStrategiesForAllInputs controlTime (bottomTime, maximumDepth )  actualStrategyInputs
                     |> Seq.toArray
 
+//getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakOut:float) controlTime 
 
 //let computeSurfaceTimeForThisStrategy controlTime ( bottomTime, maximumDepth ) ( linearSlope, breakOut  , tay , tanhInitDerivative) =
     
 
-
 //let createStrategiesForThisInitCondition controlTime (bottomTim, maximumDepth) (linearSlopes: seq<float> ,   breakoutValues: seq<float> , tayValues: seq<float> ) = 
     
     
-    
-
-
-//    let t = actualStrategyInputs
-//            |> Seq.map (createAscentTrajectory controlTime (bottomTime, maximumDepth) ) 
-            

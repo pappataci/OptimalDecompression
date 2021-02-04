@@ -58,8 +58,13 @@ let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (i
 
 let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
     let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakOut controlTime
-    let initTanhPart = linearPart
-                       |> Seq.last 
+    
+    let initTime , initDepth = match  ( linearPart |> Seq.isEmpty) with 
+                               | true  -> (bottomTime, maximumDepth)
+                               | false -> linearPart
+                                          |> Seq.last
+
+    let initTanhPart =  (initTime , initDepth )
                        |> getArrayOfDepthsForTanhAscentSection controlTime tanhInitDerivative tay
                        |> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
     match (initTanhPart |> Seq.isEmpty) with 
