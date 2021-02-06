@@ -31,8 +31,8 @@ let controlTime = integrationTime * (float controlToIntegration)
 let  maxSimTime = 15000.0
 
 // inputs specific to mission 
-let maximumDepth = 30.0 // ft
-let bottomTime   = 30.0 // minutes
+let maximumDepth = 120.0 // ft
+let bottomTime   = 60.0 // minutes
 let maxPDCS = 3.3e-2
 
 // small test
@@ -43,11 +43,7 @@ let linearSlope = -30.0
 let tay , tanhInitDerivative = -0.97 , -30.0
 
 
-let ascentStrategyExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, breakOut  , tay , tanhInitDerivative)
-
-
-
-let out = getTimeAndAccruedRiskForThisStrategy leInitState  ascentStrategyExample myEnv
+//let ascentStrategyExample = createAscentTrajectory controlTime ( bottomTime, maximumDepth ) ( linearSlope, breakOut  , tay , tanhInitDerivative)
 
 
 // idea is: precreate sequence of strategies and then ordere them according to final time; then see which one does not violate current risk bound
@@ -58,9 +54,9 @@ let out = getTimeAndAccruedRiskForThisStrategy leInitState  ascentStrategyExampl
 //3) spit out results to CSV 
 
 
-let linearSlopeStep = -1.0 // ft/min 
-let breakoutStep , maxBreakOut = 0.05 , 0.99
-let minTay , tayStep , maxTay = -0.9 , 0.05 , 0.0
+let linearSlopeStep = -5.0 // ft/min 
+let breakoutStep , maxBreakOut = 0.1 , 0.99
+let minTay , tayStep , maxTay = -0.9 , 0.1 , 0.0
 
 let linearSlopeValues =   [-0.01 ..  linearSlopeStep .. MissionConstraints.ascentRateLimit ] @ [ MissionConstraints.ascentRateLimit ]
                           |> Seq.ofList 
@@ -71,14 +67,14 @@ let tayValues = [minTay .. tayStep .. maxTay ] @ [maxTay ] |> Seq.ofList
 
 let actualStrategyInputs  = seq { for linearSlope in linearSlopeValues do 
                                         for breakOut in breakoutValues do 
-                                            for tay in tayValues -> (linearSlope, breakOut, tay, linearSlope) }
+                                            for tay in tayValues -> (linearSlope, breakOut, tay, linearSlope) } |> Seq.toArray 
 
 let createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs =
     actualStrategyInputs
-    |> Seq.map (createAscentTrajectory controlTime ( bottomTime, maximumDepth )  )
+    |>  Array.Parallel.map (createAscentTrajectory controlTime ( bottomTime, maximumDepth )  )
 
 
-let getStrategyTime (aStrategy:seq<float*float>)  controlTime  =
+let getStrategyTime   (aStrategy:seq<float*float>)    =
     
     let initTime = aStrategy                
                    |> Seq.head
@@ -90,8 +86,22 @@ let getStrategyTime (aStrategy:seq<float*float>)  controlTime  =
 
     lastTime - initTime + controlTime 
 
-let allStrategies = createStrategiesForAllInputs controlTime (bottomTime, maximumDepth )  actualStrategyInputs
-                    |> Seq.toArray
+let allStrategies =  createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs
+
+let strategiesLengths = allStrategies
+                          |> Array.map Seq.length
+  
+let order = [| 0 .. ( ( strategiesLengths |> Array.length )  - 1 ) |]
+
+let actualStrategiesWithLengths = Array.zip allStrategies strategiesLengths
+                                  |> Array.zip order
+
+let orderedStrategies = actualStrategiesWithLengths |> Array.sortBy ( fun  (_, ( _, length) ) ->  length )
+                        
+let numInputStrategy = orderedStrategies 
+                       |> Seq.map (fun (idNum, (strat , _) ) -> (idNum, strat ) ) 
+
+
 
 //getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakOut:float) controlTime 
 
@@ -100,4 +110,26 @@ let allStrategies = createStrategiesForAllInputs controlTime (bottomTime, maximu
 
 //let createStrategiesForThisInitCondition controlTime (bottomTim, maximumDepth) (linearSlopes: seq<float> ,   breakoutValues: seq<float> , tayValues: seq<float> ) = 
     
+//let stratResults = getTimeAndAccruedRiskForThisStrategy leInitState  ascentStrategyExample myEnv   
+
+// Test For finding optimal strategy
+
+let riskBoundIsViolated pDCS  (strategyResults : StrategyResults)  =
+    let initResidualRisk = -log(1.0 - pDCS)
+    (strategyResults.TotalRisk ) > initResidualRisk
+
+let optStrat = numInputStrategy
+              |> SeqExtension.takeWhileWithLast ( fun (idNum , strategy ) ->  printf "%A " idNum
+                                                                              strategy
+                                                                              |> getTimeAndAccruedRiskForThisStrategy myEnv leInitState 
+                                                                              |> riskBoundIsViolated maxPDCS ) 
+   
+//optStrat |> Seq.find ( )
     
+//this part is only for testing 
+
+let offendingInput = actualStrategyInputs |> Seq.item 10 
+
+let offendingStrategy = allStrategies |> Seq.item 10 
+
+// check whether this is the offending strategy 

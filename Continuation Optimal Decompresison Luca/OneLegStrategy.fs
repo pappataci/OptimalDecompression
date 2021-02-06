@@ -86,14 +86,16 @@ let   simulateStrategyUntilZeroRisk initStateAtSurface  environment=
                                                        |> not ) 
     |> Seq.skip 1  // skip the initial state which is just initStateAtSurface, so if sequences are merged it is not computed twice
 
-let getTimeAndAccruedRiskForThisStrategy leInitState (ascentTrajectory:seq<float*float>) environment =
+let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajectory:seq<float*float>)  =
     let ascentStrategy = ascentTrajectory |> Seq.map (snd >> Control )
     let upToSurfaceHistory  = computeUpToSurface leInitState ascentStrategy environment
+    
     let initStateAtSurface  = upToSurfaceHistory |> Seq.last 
     let upToZeroRiskHistory = simulateStrategyUntilZeroRisk initStateAtSurface  environment
     let initTimeAtSurface = initStateAtSurface |> leStatus2ModelTime
     let ascentTime = initTimeAtSurface - (leInitState |> leStatus2ModelTime)
     let ascentRisk = initStateAtSurface |> leStatus2Risk
+
     let totalRisk = ( upToZeroRiskHistory 
                       |> Seq.last 
                       |> leStatus2Risk ) 
