@@ -13,7 +13,7 @@
 #load "OneLegStrategy.fs"
 
 //open ReinforcementLearning
-open InitDescent
+//open InitDescent
 //open LEModel
 //open InputDefinition
 //open System
@@ -54,12 +54,12 @@ let tay , tanhInitDerivative = -0.97 , -30.0
 //3) spit out results to CSV 
 
 
-let linearSlopeStep = -5.0 // ft/min 
+//let linearSlopeStep = -5.0 // ft/min 
 let breakoutStep , maxBreakOut = 0.1 , 0.99
 let minTay , tayStep , maxTay = -0.9 , 0.1 , 0.0
 
-let linearSlopeValues =   [-0.01 ..  linearSlopeStep .. MissionConstraints.ascentRateLimit ] @ [ MissionConstraints.ascentRateLimit ]
-                          |> Seq.ofList 
+let linearSlopeValues =   [-0.01; -0.02; -0.03;    -0.1; -0.2;  -1.0;  -3.0 ;  -5.01; -10.01; -15.01; -20.01; -25.01; -30.0] 
+                          |> Seq.ofList
 
 let breakoutValues = [ 0.0 .. breakoutStep .. maxBreakOut] |> Seq.ofList
 
@@ -67,7 +67,7 @@ let tayValues = [minTay .. tayStep .. maxTay ] @ [maxTay ] |> Seq.ofList
 
 let actualStrategyInputs  = seq { for linearSlope in linearSlopeValues do 
                                         for breakOut in breakoutValues do 
-                                            for tay in tayValues -> (linearSlope, breakOut, tay, linearSlope) } |> Seq.toArray 
+                                            for tay in tayValues -> (linearSlope, breakOut, Some tay, linearSlope) } |> Seq.toArray 
 
 let createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs =
     actualStrategyInputs
@@ -119,17 +119,32 @@ let riskBoundIsViolated pDCS  (strategyResults : StrategyResults)  =
     (strategyResults.TotalRisk ) > initResidualRisk
 
 let optStrat = numInputStrategy
-              |> SeqExtension.takeWhileWithLast ( fun (idNum , strategy ) ->  printf "%A " idNum
-                                                                              strategy
+              |> SeqExtension.takeWhileWithLast ( fun (idNum , strategy ) ->   strategy
                                                                               |> getTimeAndAccruedRiskForThisStrategy myEnv leInitState 
                                                                               |> riskBoundIsViolated maxPDCS ) 
    
+let result = optStrat |> Seq.last 
 //optStrat |> Seq.find ( )
     
 //this part is only for testing 
 
-let offendingInput = actualStrategyInputs |> Seq.item 10 
+//let offendingInput = actualStrategyInputs |> Seq.item 10 
 
-let offendingStrategy = allStrategies |> Seq.item 10 
+//let offendingStrategy = allStrategies |> Seq.item 10 
 
-// check whether this is the offending strategy 
+//// check whether this is the offending strategy 
+//offendingStrategy
+//|> getTimeAndAccruedRiskForThisStrategy myEnv leInitState 
+
+//let ascentStrategy = offendingStrategy |> Seq.map (snd >> Control )
+//let upToSurfaceHistory  = computeUpToSurface leInitState ascentStrategy myEnv
+//let initStateAtSurface  = upToSurfaceHistory |> Seq.last 
+//open LEModel
+//let upToZeroRiskHistory = simulateStrategyUntilZeroRisk initStateAtSurface  myEnv
+//let initTimeAtSurface = initStateAtSurface |> leStatus2ModelTime
+//let ascentTime = initTimeAtSurface - (leInitState |> leStatus2ModelTime)
+//let ascentRisk = initStateAtSurface |> leStatus2Risk
+
+//let totalRisk = ( upToZeroRiskHistory 
+//                    |> Seq.last 
+//                    |> leStatus2Risk ) 

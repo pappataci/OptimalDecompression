@@ -1,16 +1,11 @@
 ﻿[<AutoOpen>]
 module OneLegStrategy
 
-
 open ReinforcementLearning
 open InitDescent
 open LEModel
 open InputDefinition
-open System
-open Extreme.Mathematics
-open Extreme.Mathematics.Optimization
 open AscentSimulator
-open AscentBuilder
 
 type StrategyResults = {AscentTime  : float 
                         AscentRisk  : float 
@@ -28,9 +23,8 @@ let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)  
                   |> ( fun (state , _ , _ , _)  -> state ) 
     leState , myEnv
 
-let private getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (breakOut:float) controlTime  = 
+let private getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (targetDepth:float) controlTime  = 
    // output is seq of depths 
-   let targetDepth = breakOut * initDepth
    let increment = controlTime * slope
    let depths = [|initDepth + increment .. increment .. targetDepth  |]
                 |> Seq.ofArray
@@ -40,9 +34,13 @@ let private getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (
 
    Seq.zip  times depths 
 
-let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (initTime:float, initDepth:float )  =
+let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  (tay':Option<float>)   (initTime:float, initDepth:float )  =
     //tay parameter belongs to (-1.0, 0.0]
     
+    let tay = match tay' with 
+              | Some tay -> tay 
+              | None -> 0.0
+
     let b = tanh tay
     let a = initDepth / (tay + 1.0 )
     let k = initSlope / ( initDepth * ( tay - 1.0 ) )
@@ -57,7 +55,7 @@ let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  tay   (i
     outputSequence
 
 let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
-    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope breakOut controlTime
+    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope (breakOut*maximumDepth) controlTime
     
     let initTime , initDepth = match  ( linearPart |> Seq.isEmpty) with 
                                | true  -> (bottomTime, maximumDepth)
@@ -78,13 +76,26 @@ let   computeUpToSurface leInitState  ascentStrategy environment =
     ascentStrategy
     |> Seq.scan (executeThisStrategy  environment) leInitState
 
-let   simulateStrategyUntilZeroRisk initStateAtSurface  environment=
+let simulateStrategyUntilZeroRisk initStateAtSurface  environment =
     let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
     infiniteSequenceOfZeroDepth
     |> Seq.scan (executeThisStrategy environment) initStateAtSurface
     |> SeqExtension.takeWhileWithLast (fun leStatus -> leStatus2IsEmergedAndNotAccruingRisk leStatus ModelParams.threshold
                                                        |> not ) 
     |> Seq.skip 1  // skip the initial state which is just initStateAtSurface, so if sequences are merged it is not computed twice
+
+
+let getTotalRisk ascentRisk (upToZeroRiskHistory:seq<State<LEStatus>>)   =
+    match (upToZeroRiskHistory |> Seq.isEmpty) with
+    | true -> ascentRisk
+    | false -> upToZeroRiskHistory 
+                |> Seq.last 
+                |> leStatus2Risk 
+
+let createAscentHistory (upToSurfaceHistory:seq<State<LEStatus>>) upToZeroRiskHistory =
+    match  (upToZeroRiskHistory |> Seq.isEmpty) with
+    | true -> seq { upToSurfaceHistory  } 
+    | false -> seq {upToSurfaceHistory ; upToZeroRiskHistory} 
 
 let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajectory:seq<float*float>)  =
     let ascentStrategy = ascentTrajectory |> Seq.map (snd >> Control )
@@ -96,12 +107,12 @@ let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajecto
     let ascentTime = initTimeAtSurface - (leInitState |> leStatus2ModelTime)
     let ascentRisk = initStateAtSurface |> leStatus2Risk
 
-    let totalRisk = ( upToZeroRiskHistory 
-                      |> Seq.last 
-                      |> leStatus2Risk ) 
+    let totalRisk = upToZeroRiskHistory 
+                    |> getTotalRisk ascentRisk
+                    
     let surfaceRisk = totalRisk  - ascentRisk 
 
-    let ascentHistory = seq { upToSurfaceHistory ; upToZeroRiskHistory }
+    let ascentHistory = createAscentHistory upToSurfaceHistory  upToZeroRiskHistory 
     
     {AscentTime    = ascentTime
      AscentRisk    = ascentRisk
