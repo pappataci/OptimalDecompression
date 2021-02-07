@@ -54,7 +54,30 @@ let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  (tay':Op
     let outputSequence = Seq.zip times depths 
     outputSequence
 
-let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
+
+type GeneralAscentParams = { LinearSlope                    : float 
+                             BreakFraction                  : float 
+                             HoldingTimeInSamplingTimeUnits : Option<int>
+                             Tay                            : Option<float>
+                             TanhInitDerivative             : Option<float> }
+
+let setOptionArgToDefaultIfNone  optionalValue defaultValue =
+    match optionalValue with
+    | Some value -> value
+    | None -> defaultValue 
+
+let createAscentGeneralTrajectory controlTime (bottomTime, maximumDepth) (generalAscentParams: GeneralAscentParams) =
+    let {LinearSlope = linearSlope 
+         BreakFraction = breakFraction
+         HoldingTimeInSamplingTimeUnits = holdingTime
+         Tay = tay 
+         TanhInitDerivative = tanhInitDerivative } = generalAscentParams
+    
+
+
+    0.0
+
+let createAscentSimpleTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
     let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope (breakOut*maximumDepth) controlTime
     
     let initTime , initDepth = match  ( linearPart |> Seq.isEmpty) with 
@@ -68,7 +91,7 @@ let createAscentTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, 
     match (initTanhPart |> Seq.isEmpty) with 
     | true  -> linearPart
     | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
-    
+
 let private   executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
 

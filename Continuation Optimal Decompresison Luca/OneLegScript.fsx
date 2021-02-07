@@ -71,7 +71,7 @@ let actualStrategyInputs  = seq { for linearSlope in linearSlopeValues do
 
 let createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs =
     actualStrategyInputs
-    |>  Array.Parallel.map (createAscentTrajectory controlTime ( bottomTime, maximumDepth )  )
+    |>  Array.Parallel.map (createAscentSimpleTrajectory controlTime ( bottomTime, maximumDepth )  )
 
 
 let getStrategyTime   (aStrategy:seq<float*float>)    =
