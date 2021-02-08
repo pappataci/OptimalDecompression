@@ -23,7 +23,7 @@ let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)  
                   |> ( fun (state , _ , _ , _)  -> state ) 
     leState , myEnv
 
-let private getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (targetDepth:float) controlTime  = 
+let  getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (slope:float) (targetDepth:float) controlTime  = 
    // output is seq of depths 
    let increment = controlTime * slope
    let depths = [|initDepth + increment .. increment .. targetDepth  |]
@@ -34,12 +34,35 @@ let private getSeqOfDepthsForLinearAscentSection  (initTime:float , initDepth) (
 
    Seq.zip  times depths 
 
-let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  (tay':Option<float>)   (initTime:float, initDepth:float )  =
-    //tay parameter belongs to (-1.0, 0.0]
-    
-    let tay = match tay' with 
-              | Some tay -> tay 
-              | None -> 0.0
+type GeneralAscentParams = { LinearSlope                    : float 
+                             BreakFraction                  : float 
+                             WaitingTime                    : Option<int>
+                             Tay                            : Option<float>
+                             TanhInitDerivative             : Option<float> }
+
+let setOptionArgToDefaultIfNone  optionalValue defaultValue =
+    match optionalValue with
+    | Some value -> value
+    | None -> defaultValue 
+
+let ifEmptySeqTakeThisElementOtherwiseTakeLast strategyAscent (initTime:float, initDepth:float) = 
+    match  ( strategyAscent |> Seq.isEmpty) with 
+    | true  -> (initTime, initDepth)
+    | false -> strategyAscent
+               |> Seq.last
+
+let getLinearAscentLeg (initTime,  initDepth) linearSlope targetDepth controlTime =
+    let linearPart = getSeqOfDepthsForLinearAscentSection  (initTime, initDepth)  linearSlope targetDepth controlTime
+    let nextTimeAndDepth = ifEmptySeqTakeThisElementOtherwiseTakeLast linearPart (initTime,  initDepth)
+    linearPart , nextTimeAndDepth
+
+let getConstantDepthLeg ( initTime, initDepth ) nTimeStepsToKeepDepth controlTime = 
+    let constantLeg = Seq.init nTimeStepsToKeepDepth (fun kIndex -> float(kIndex + 1) * controlTime , initDepth )
+    let nextTimeAndDepth = ifEmptySeqTakeThisElementOtherwiseTakeLast  constantLeg  ( initTime, initDepth )
+    constantLeg , nextTimeAndDepth
+
+let private getTanhAscentLeg  (initTime:float, initDepth:float ) initSlope  (tay: float ) targetDepth controlTime     =
+    //tay parameter belongs to (-0.9, 0.0]: 0.0 being fastest, -0.9 slowest
 
     let b = tanh tay
     let a = initDepth / (tay + 1.0 )
@@ -51,46 +74,52 @@ let private getArrayOfDepthsForTanhAscentSection controlTime initSlope  (tay':Op
     let times =  Seq.initInfinite ( fun sampleNumber ->  initTime + (float(sampleNumber + 1 ))* controlTime)
     let depths = times |> Seq.map tanhLeg
     
-    let outputSequence = Seq.zip times depths 
-    outputSequence
+    let tanhLeg = depths 
+                         |> Seq.zip times     
+                         |> Seq.takeWhile ( fun (_, depth ) -> depth >=  targetDepth + MissionConstraints.depthTolerance)
 
+    let nextTimeAndDepth = ifEmptySeqTakeThisElementOtherwiseTakeLast  tanhLeg  ( initTime, initDepth )
+    tanhLeg , nextTimeAndDepth
 
-type GeneralAscentParams = { LinearSlope                    : float 
-                             BreakFraction                  : float 
-                             HoldingTimeInSamplingTimeUnits : Option<int>
-                             Tay                            : Option<float>
-                             TanhInitDerivative             : Option<float> }
-
-let setOptionArgToDefaultIfNone  optionalValue defaultValue =
-    match optionalValue with
-    | Some value -> value
-    | None -> defaultValue 
-
-let createAscentGeneralTrajectory controlTime (bottomTime, maximumDepth) (generalAscentParams: GeneralAscentParams) =
+let createAscentGeneralTrajectory controlTime (initTime, initDepth, targetDepth' : Option<float> ) (generalAscentParams: GeneralAscentParams) =
     let {LinearSlope = linearSlope 
          BreakFraction = breakFraction
-         HoldingTimeInSamplingTimeUnits = holdingTime
-         Tay = tay 
-         TanhInitDerivative = tanhInitDerivative } = generalAscentParams
+         WaitingTime = holdingTime'
+         Tay = tay' 
+         TanhInitDerivative = tanhInitDerivative' } = generalAscentParams
     
+    let targetDepth             = setOptionArgToDefaultIfNone targetDepth' 0.0
+    let holdingTime             = setOptionArgToDefaultIfNone holdingTime' 0
+    let tay                     = setOptionArgToDefaultIfNone tay' 0.0
+    let tanhInitDerivative      = setOptionArgToDefaultIfNone tay' linearSlope
 
+    // First leg: linear part
+    let targetLinearPart = (initDepth - targetDepth) * breakFraction + targetDepth
+    let linearAscent, lastNodeForLinearAscent = getLinearAscentLeg  (initTime, initDepth)  linearSlope targetLinearPart controlTime
 
-    0.0
+    // Second leg: constant depth 
+    let constantDepth, lastNodeForConstantDepth = getConstantDepthLeg (lastNodeForLinearAscent) holdingTime controlTime
 
-let createAscentSimpleTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakOut, tay,tanhInitDerivative) = 
-    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope (breakOut*maximumDepth) controlTime
+    // Third leg: tanh ascent 
+    let tanhDepth , _       = getTanhAscentLeg lastNodeForConstantDepth  tanhInitDerivative tay targetDepth controlTime 
+
+    seq{ yield! linearAscent 
+         yield! constantDepth
+         yield! tanhDepth}
+
+let createAscentSimpleTrajectory controlTime (bottomTime, maximumDepth) (linearSlope, breakFraction, tay,tanhInitDerivative) = 
+    let linearPart = getSeqOfDepthsForLinearAscentSection  (bottomTime, maximumDepth)  linearSlope (breakFraction*maximumDepth) controlTime
     
     let initTime , initDepth = match  ( linearPart |> Seq.isEmpty) with 
                                | true  -> (bottomTime, maximumDepth)
                                | false -> linearPart
                                           |> Seq.last
 
-    let initTanhPart =  (initTime , initDepth )
-                       |> getArrayOfDepthsForTanhAscentSection controlTime tanhInitDerivative tay
-                       |> Seq.takeWhile ( fun (_, depth ) -> depth >=  MissionConstraints.depthTolerance)
+    let initTanhPart , _  =  getTanhAscentLeg (initTime , initDepth )  tanhInitDerivative tay 0.0 controlTime
+                        
     match (initTanhPart |> Seq.isEmpty) with 
     | true  -> linearPart
-    | _     -> (Seq.concat ( seq{ linearPart ; initTanhPart} ) ) 
+    | _     -> ( seq{ yield! linearPart ; yield! initTanhPart}   ) 
 
 let private   executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState

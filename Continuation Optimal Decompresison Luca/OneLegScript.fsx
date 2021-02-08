@@ -67,7 +67,7 @@ let tayValues = [minTay .. tayStep .. maxTay ] @ [maxTay ] |> Seq.ofList
 
 let actualStrategyInputs  = seq { for linearSlope in linearSlopeValues do 
                                         for breakOut in breakoutValues do 
-                                            for tay in tayValues -> (linearSlope, breakOut, Some tay, linearSlope) } |> Seq.toArray 
+                                            for tay in tayValues -> (linearSlope, breakOut,   tay, linearSlope) } |> Seq.toArray 
 
 let createStrategiesForAllInputs controlTime ( bottomTime, maximumDepth )  actualStrategyInputs =
     actualStrategyInputs
