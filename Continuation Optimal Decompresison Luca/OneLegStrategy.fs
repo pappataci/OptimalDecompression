@@ -7,6 +7,9 @@ open LEModel
 open InputDefinition
 open AscentSimulator
 
+open Extreme.Mathematics.EquationSolvers
+open Extreme.Mathematics
+
 type StrategyResults = {AscentTime  : float 
                         AscentRisk  : float 
                         SurfaceRisk : float
@@ -91,7 +94,7 @@ let createAscentGeneralTrajectory controlTime (initTime, initDepth, targetDepth'
     let targetDepth             = setOptionArgToDefaultIfNone targetDepth' 0.0
     let holdingTime             = setOptionArgToDefaultIfNone holdingTime' 0
     let tay                     = setOptionArgToDefaultIfNone tay' 0.0
-    let tanhInitDerivative      = setOptionArgToDefaultIfNone tay' linearSlope
+    let tanhInitDerivative      = setOptionArgToDefaultIfNone tanhInitDerivative' linearSlope
 
     // First leg: linear part
     let targetLinearPart = (initDepth - targetDepth) * breakFraction + targetDepth
@@ -172,3 +175,15 @@ let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajecto
      TotalRisk     =  totalRisk
      InitTimeAtSurface = initTimeAtSurface
      AscentHistory = Some ascentHistory }
+
+// given all parameters solve for the current ascent (using bisection solver)
+
+
+
+
+//let solver = BisectionSolver()
+//solver.LowerBound <- 0.0
+//solver.UpperBound <- 2.0
+
+//solver.TargetFunction <- System.Func<_,_> (Math.Cos)
+//let result = solver.Solve()

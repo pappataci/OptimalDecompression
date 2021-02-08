@@ -1,5 +1,6 @@
 ﻿#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
 #r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Microsoft.ML.Probabilistic.0.3.1912.403\lib\netstandard2.0\Microsoft.ML.Probabilistic.dll"
+#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\FSharp.Data.3.3.3\lib\net45\FSharp.Data.dll"
 #load "ReinforcementLearning.fs"
 #load "PredefinedDescent.fs"
 #load "Gas.fs"
@@ -11,6 +12,7 @@
 #load "AscentSimulator.fs"
 #load "AscentBuilder.fs"
 #load "OneLegStrategy.fs"
+#load "Result2CSV.fs"
 
 //open ReinforcementLearning
 //open InitDescent
@@ -32,7 +34,7 @@ let  maxSimTime = 15000.0
 
 // inputs specific to mission 
 let maximumDepth = 120.0 // ft
-let bottomTime   = 60.0 // minutes
+let bottomTime   = 30.0 // minutes
 let maxPDCS = 3.3e-2
 
 // small test
@@ -148,3 +150,15 @@ let result = optStrat |> Seq.last
 //let totalRisk = ( upToZeroRiskHistory 
 //                    |> Seq.last 
 //                    |> leStatus2Risk ) 
+
+//C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults
+
+let result2OnlyDepth (idNum: int, seqOfTimeDepths:seq<float*float>) =
+    seqOfTimeDepths
+    |> Seq.map snd
+
+result
+|> result2OnlyDepth
+|> writeArrayToDisk "Asc120_30_P3_3.txt" (Some @"\Documents\Duke\Research\OptimalAscent\NetResults") 
+
+//result
