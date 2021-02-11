@@ -64,7 +64,7 @@ let getConstantDepthLeg ( initTime, initDepth ) nTimeStepsToKeepDepth controlTim
     let nextTimeAndDepth = ifEmptySeqTakeThisElementOtherwiseTakeLast  constantLeg  ( initTime, initDepth )
     constantLeg , nextTimeAndDepth
 
-let private getTanhAscentLeg  (initTime:float, initDepth:float ) initSlope  (tay: float ) targetDepth controlTime     =
+let  getTanhAscentLeg  (initTime:float, initDepth:float ) initSlope  (tay: float ) targetDepth controlTime     =
     //tay parameter belongs to (-0.9, 0.0]: 0.0 being fastest, -0.9 slowest
 
     let b = tanh tay

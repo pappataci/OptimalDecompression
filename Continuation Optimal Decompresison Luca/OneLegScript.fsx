@@ -34,7 +34,7 @@ let  maxSimTime = 15000.0
 
 // inputs specific to mission 
 let maximumDepth = 120.0 // ft
-let bottomTime   = 30.0 // minutes
+let bottomTime   = 4.0 // minutes
 let maxPDCS = 3.3e-2
 
 // small test
@@ -153,12 +153,14 @@ let result = optStrat |> Seq.last
 
 //C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults
 
-let result2OnlyDepth (idNum: int, seqOfTimeDepths:seq<float*float>) =
-    seqOfTimeDepths
-    |> Seq.map snd
+//let result2OnlyDepth (idNum: int, seqOfTimeDepths:seq<float*float>) =
+//    seqOfTimeDepths
+//    |> Seq.map snd
 
-result
-|> result2OnlyDepth
-|> writeArrayToDisk "Asc120_30_P3_3.txt" (Some @"\Documents\Duke\Research\OptimalAscent\NetResults") 
+//exStrat
+//|>   Seq.map snd
+//|> writeArrayToDisk "Asc120_30_P3_34.txt" (Some @"\Documents\Duke\Research\OptimalAscent\NetResults") 
 
-//result
+////result
+
+//getTanhAscentLeg  (15.0, 12.46 ) -25.0  (-0.7) 0.0 0.1  

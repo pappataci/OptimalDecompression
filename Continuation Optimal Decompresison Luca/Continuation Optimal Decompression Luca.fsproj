@@ -103,6 +103,7 @@
     <None Include="AscentBuilderQuick.fsx" />
     <None Include="OptimalAscentDebuggerScript.fsx" />
     <None Include="OneLegScript.fsx" />
+    <None Include="DynamicProgramming.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">
