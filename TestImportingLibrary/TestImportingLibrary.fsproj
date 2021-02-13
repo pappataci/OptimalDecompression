@@ -59,11 +59,6 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
-    <ProjectReference Include="..\TestLibraryFramework\TestLibraryFramework.fsproj">
-      <Name>TestLibraryFramework</Name>
-      <Project>{ad5dd4e7-d2e2-452d-b305-391389f1ddeb}</Project>
-      <Private>True</Private>
-    </ProjectReference>
     <Reference Include="System.ValueTuple">
       <Private>True</Private>
     </Reference>

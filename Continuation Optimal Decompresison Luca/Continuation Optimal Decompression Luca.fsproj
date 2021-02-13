@@ -87,6 +87,7 @@
     <Compile Include="AscentBuilder.fs" />
     <Compile Include="AscentOptimizer.fs" />
     <Compile Include="Result2CSV.fs" />
+    <Compile Include="OneLegStrategy.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />
@@ -102,6 +103,7 @@
     <None Include="AscentBuilderQuick.fsx" />
     <None Include="OptimalAscentDebuggerScript.fsx" />
     <None Include="OneLegScript.fsx" />
+    <None Include="DynamicProgramming.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">

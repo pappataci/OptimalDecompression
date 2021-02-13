@@ -139,19 +139,19 @@ module LEModel  =
         leRiskInfo.AccruedRisk
 
     let IsAtSurfaceLevel depth =
-        abs(depth) < 0.1 
+        abs(depth) <  MissionConstraints.depthTolerance
 
-    let areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualAmbientPressure  (leParams: SingleLEModelParam[] ) (actualTissueTensions:float[])  = 
+    let areAllTissueTensionsAtMostEqualToAmbientN2Press  actualAmbientPressure  (leParamsThresholds: float[] ) (actualTissueTensions:float[])  = 
         actualTissueTensions 
-        |> Array.map2 (fun leParam  tissueTension  ->  tissueTension < actualAmbientPressure +  leParam.Threshold - dPFVG  )   leParams
+        |> Array.map2 (fun tissueTensionThreshold  tissueTension  ->  tissueTension < actualAmbientPressure +  tissueTensionThreshold - dPFVG  )   leParamsThresholds
         |> Array.reduce (&&)
 
-    let leStatus2IsEmergedAndNotAccruingRisk ( actualState: State<LEStatus> ) surfaceN2Tension  (leParams: SingleLEModelParam[] ) = 
+    let leStatus2IsEmergedAndNotAccruingRisk ( actualState: State<LEStatus> )    (leParamsThresholds: float[] ) = 
         let actualDepth = actualState |>  leStatus2Depth
         let actualAmbientPressure = actualDepth |> depth2AmbientPressure
         let tissueTensionsAreNotRiskSource = actualState 
                                              |> leStatus2TissueTension 
-                                             |> areAllTissueTensionsAtMostEqualToAmbientN2Press surfaceN2Tension actualAmbientPressure leParams
+                                             |> areAllTissueTensionsAtMostEqualToAmbientN2Press   actualAmbientPressure leParamsThresholds
         
         let weAreAtSurfaceLevel = actualDepth  |> IsAtSurfaceLevel // ft
 
@@ -233,3 +233,5 @@ module USN93_EXP =
 
     let setThalmanHypothesis thalmanHyp (modelParams:LEModelParams)  = 
         {modelParams with ThalmanErrorHypothesis = thalmanHyp} 
+
+    

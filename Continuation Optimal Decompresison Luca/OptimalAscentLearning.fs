@@ -1,6 +1,5 @@
 ﻿[<AutoOpen>]
 module OptimalAscentLearning
-
 open Gas
 open ReinforcementLearning
 open LEModel
@@ -123,34 +122,18 @@ module RewardDefinition =
 module FinalStateIdentification = 
     
     // original final state definition
-    let defineFinalStatePredicate' (Parameters envParams : EnvironmentParameters<LEModelEnvParams>)  =
+    let defineFinalStatePredicate  (Parameters envParams : EnvironmentParameters<LEModelEnvParams>)  =
         
         let modelParams  = envParams.TimeParams.IntegrationTime |> envParams.LEParamsGeneratorFcn
         let surfaceDepth = 0.0
-        let surfaceN2Pressure = surfaceDepth 
-                                |> depth2N2Pressure modelParams.ThalmanErrorHypothesis modelParams.FractionO2 
+        //let surfaceN2Pressure = surfaceDepth 
+        //                        |> depth2N2Pressure modelParams.ThalmanErrorHypothesis modelParams.FractionO2 
         let maximumTolerableRisk = envParams.RewardParameters.MaximumRiskBound
         let maximumSimulationTime = envParams.TimeParams.MaximumFinalTime
 
         let isFinalStatePredicate ( actualState: State<LEStatus> ) : bool = 
-            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure modelParams.LEParams
-            let simulationTime = leStatus2ModelTime actualState 
-            let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
-            let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
-            ( isEmergedAndNotAccruingRisk ||  hasExceededMaximumTime || hasExceededMaximumRisk ) 
-        isFinalStatePredicate
-
-    let defineFinalStatePredicate (Parameters envParams : EnvironmentParameters<LEModelEnvParams>)  =
-        
-        let modelParams  = envParams.TimeParams.IntegrationTime |> envParams.LEParamsGeneratorFcn
-        let surfaceDepth = 0.0
-        let surfaceN2Pressure = surfaceDepth 
-                                |> depth2N2Pressure modelParams.ThalmanErrorHypothesis modelParams.FractionO2 
-        let maximumTolerableRisk = envParams.RewardParameters.MaximumRiskBound
-        let maximumSimulationTime = envParams.TimeParams.MaximumFinalTime
-
-        let isFinalStatePredicate ( actualState: State<LEStatus> ) : bool = 
-            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState surfaceN2Pressure modelParams.LEParams
+            let supersaturationThresholds =    modelParams.LEParams |> Array.map (fun leModelParam -> leModelParam.Threshold)
+            let isEmergedAndNotAccruingRisk = leStatus2IsEmergedAndNotAccruingRisk actualState supersaturationThresholds
             let simulationTime = leStatus2ModelTime actualState 
             let hasExceededMaximumTime = simulationTime >=  maximumSimulationTime
             let hasExceededMaximumRisk = (leStatus2Risk actualState) >= maximumTolerableRisk
