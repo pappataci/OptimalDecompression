@@ -55,7 +55,7 @@ let tay , tanhInitDerivative = -0.97 , -30.0
 //2) create a seq.while function which is executed until current residual risk bound is respected
 //3) spit out results to CSV 
 
-
+ 
 //let linearSlopeStep = -5.0 // ft/min 
 let breakoutStep , maxBreakOut = 0.1 , 0.99
 let minTay , tayStep , maxTay = -0.9 , 0.1 , 0.0

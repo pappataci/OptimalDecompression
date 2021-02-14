@@ -56,9 +56,6 @@
     <Reference Include="FSharp.Core">
       <HintPath>..\packages\FSharp.Core.4.7.2\lib\net45\FSharp.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Keras">
-      <HintPath>..\packages\Keras.NET.3.6.1.12\lib\netstandard2.0\Keras.dll</HintPath>
-    </Reference>
     <Reference Include="mscorlib" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
