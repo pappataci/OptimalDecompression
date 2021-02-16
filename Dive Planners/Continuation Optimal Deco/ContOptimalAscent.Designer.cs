@@ -55,6 +55,7 @@
             this.checkBoxSaveData = new System.Windows.Forms.CheckBox();
             this.buttonEvaluate = new System.Windows.Forms.Button();
             this.buttonBoundary = new System.Windows.Forms.Button();
+            this.stressTest = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // textBoxMaxDepth
@@ -262,7 +263,6 @@
             this.buttonIntersection.TabIndex = 23;
             this.buttonIntersection.Text = "Intersection";
             this.buttonIntersection.UseVisualStyleBackColor = true;
-            //this.buttonIntersection.Click += new System.EventHandler(this.buttonIntersection_Click);
             // 
             // checkBoxSaveData
             // 
@@ -293,13 +293,23 @@
             this.buttonBoundary.TabIndex = 26;
             this.buttonBoundary.Text = "Boundary";
             this.buttonBoundary.UseVisualStyleBackColor = true;
-            //this.buttonBoundary.Click += new System.EventHandler(this.buttonBoundary_Click);
+            // 
+            // stressTest
+            // 
+            this.stressTest.Location = new System.Drawing.Point(647, 151);
+            this.stressTest.Name = "stressTest";
+            this.stressTest.Size = new System.Drawing.Size(75, 23);
+            this.stressTest.TabIndex = 27;
+            this.stressTest.Text = "Stress Test";
+            this.stressTest.UseVisualStyleBackColor = true;
+            this.stressTest.Click += new System.EventHandler(this.button1_Click);
             // 
             // ContOptimalDeco
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(734, 463);
+            this.Controls.Add(this.stressTest);
             this.Controls.Add(this.buttonBoundary);
             this.Controls.Add(this.buttonEvaluate);
             this.Controls.Add(this.checkBoxSaveData);
@@ -313,7 +323,6 @@
             this.Controls.Add(this.buttonCalculate);
             this.Controls.Add(this.labelActualPDCS);
             this.Controls.Add(this.textBoxActualPDCS);
-            //this.Controls.Add(this.labelClearTlime);
             this.Controls.Add(this.textBoxClearTime);
             this.Controls.Add(this.labelTargetPDCS);
             this.Controls.Add(this.textBoxTargetPDCS);
@@ -363,6 +372,7 @@
         private System.Windows.Forms.CheckBox checkBoxSaveData;
         private System.Windows.Forms.Button buttonEvaluate;
         private System.Windows.Forms.Button buttonBoundary;
+        private System.Windows.Forms.Button stressTest;
     }
 }
 

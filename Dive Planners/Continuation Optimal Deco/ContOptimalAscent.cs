@@ -286,10 +286,40 @@ namespace Continuation_Optimal_Deco
             pw.InitialGuess = initialGuess;
             pw.ObjectiveFunction =  ObjectiveFunction;
             pw.FindExtremum ( );
-            MessageBox.Show(  pw.SolutionReport.ToString()  ); 
-            MessageBox.Show ( "Optimization complete" );
-            
+            MessageBox.Show(pw.SolutionReport.ToString());
+            MessageBox.Show("Optimization complete");
+
         }
+
+        private PowellOptimizer OptimizeSurfaceTimeWithOutput()
+        {
+
+            model.ResetInformation();
+            this.ReadInformationFromGUI();
+
+            // Powell's method is a conjugate gradient method that
+            // does not require the derivative of the objective function.
+            // It is implemented by the PowellOptimizer class:
+            PowellOptimizer pw = new PowellOptimizer();
+            pw.ExtremumType = ExtremumType.Minimum;
+            pw.Dimensions = 2;
+
+            // Create the initial guess
+            // The first element is the exponent and the second
+            // element is the break fraction.  
+            var initialGuess = Vector.Create(0.0, 0.0);
+            initialGuess[0] = 10.0 * exponent;
+            initialGuess[1] = 10.0 * breakFraction;
+
+            // Powell's method does not use derivatives:
+            pw.InitialGuess = initialGuess;
+            pw.ObjectiveFunction = ObjectiveFunction;
+            pw.MaxEvaluations = 50; 
+            pw.FindExtremum();
+            return pw;
+
+        }
+
         private double ObjectiveFunction (Vector<double> x)
         {
 
@@ -315,9 +345,134 @@ namespace Continuation_Optimal_Deco
 
         #endregion
 
+        #region Luca's added code for stress test
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // for now parameters values are hard typed in this function
+            // take advantage of extreme optimization package 
+
+            var bottomTimes = Vector.Create<double>(10, i => 10.0 + i * 20.0); // 10 
+
+            double[] surfaceValues = { 100.0  , 150.0  }; // ,   100.0,   150.0
+            var surfaceTimes = Vector.Create(surfaceValues);
+
+            var maxDepths = Vector.Create<double>( 5 , i => 60.0 + i * 30.0);  //5 
+
+            var exponents = Vector.Create<double>(5, i => 1.0 + 2*i); //5 
+
+            var breakFractions = Vector.Create<double>(5, i => 0.4 + i * 0.1); //8 
+             
+
+            //model = new USN93_EXP(fractionO2);
+            //model.Pressure.MaximumAscentRate = ascentRate;
+            var outputString = new List<string>();
+
+            outputString.Add(CreateHeader());
+             
+            foreach (double actualBottomTime in bottomTimes)
+            {
+                //idx++;
+                foreach (double actSurfValue in surfaceValues)
+                {
+                    foreach (double actMaxDepth in maxDepths)
+                    {
+                        foreach (double actExp in exponents)
+                        {
+                            foreach (double actBreakFract in breakFractions)
+                            {
+                                //MessageBox.Show(bottomTime.ToString() + " " + surfaceValue.ToString() + "  " + idx.ToString() ); 
+                                SendActualInputsToTheGUI(actualBottomTime, actSurfValue, actMaxDepth, actExp, actBreakFract);
+                                ReadInformationFromGUI();
+
+                                model = new USN93_EXP(fractionO2);
+                                model.Pressure.MaximumAscentRate = ascentRate;
+                                var optimizer = OptimizeSurfaceTimeWithOutput();
+                                outputString.Add( CreateSolutionDescriptor(actualBottomTime, actSurfValue, actMaxDepth, actExp, actBreakFract, optimizer) ) ;
+                               
+                            }
+                        }
+                    }
+                }
+            }
+
+            DumpOutputStringToFile("stressOutput.csv", outputString);
+
+        }
+
+        private string CreateHeader()
+        {
+            string s = "BottomTime, SurfaceInit, MaxDepth, InitExp, InitBreakFract , FinalPDCS, OptimizerStatus, OptExp, OptBreakFrac , ActualSurfaceTime";
+            return s ;
+        }
+
+
+        private string CreateSolutionDescriptor(double bottomTime, double surfaceValue, double maxDepth, double exponent, double breakFraction , PowellOptimizer pw)
+        {
+
+            string s = bottomTime.ToString("F6") + "," + surfaceValue.ToString("F6") + "," + maxDepth.ToString("F6") + "," + exponent.ToString("F6") + "," + breakFraction.ToString("F6");
+
+            s += "," +  model.FinalPDCS().ToString("F6");
+            
+
+            s += GetOptimizerOutputs(pw); 
+            
+            return s;
+        }
+
+        private string GetOptimizerOutputs(PowellOptimizer pw)
+        {
+            string s = "," + pw.Status;
+
+            if (String.Equals(pw.Status.ToString(), "Converged") )
+            {
+              
+                s += "," + pw.Result[0].ToString("F6") + "," + pw.Result[1].ToString("F6") + "," + surfaceTime.ToString("F6");
+            }
+            else
+            {
+                s += "," +  "nan, nan, nan";
+            }
+
+            return s; 
+        
+        }
+
+        private void DumpOutputStringToFile(string fileName, List<string> outputString)
+        {
+            string completePath = @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults\" + fileName;
+            var fs = new FileStream(completePath, FileMode.Create);
+            var sw = new StreamWriter(fs);
+ 
+
+
+
+            foreach (string entry in outputString)
+            {
+                sw.WriteLine(entry);
+            }
+            sw.Close();
+            fs.Close();
+
+        }
+
+        private void SendActualInputsToTheGUI(double bottomTime, double surfaceValue, double maxDepth, double exponent, double breakFraction)
+        {
+            textBoxMaxDepth.Text = maxDepth.ToString("F9");
+            textBoxBottomTime.Text = bottomTime.ToString("F9");
+            textBoxSurfaceTime.Text = surfaceValue.ToString("F9");
+            textBoxExponent.Text = exponent.ToString("F9");
+            textBoxBreakFraction.Text = breakFraction.ToString("F9");
+        }
+
+
+        #endregion
     }
 
-    public class USN93_EXP
+
+
+
+        public class USN93_EXP
     {
 
         // NBN1x3g.out parameters for USN93
@@ -429,7 +584,7 @@ namespace Continuation_Optimal_Deco
             //FolderBrowserDialog fbd = new FolderBrowserDialog();
             //if (fbd.ShowDialog() != DialogResult.OK)
             //    return;
-            string dir = "C:\\Users\\glddm\\Desktop" ;
+            string dir = @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent" ; 
             var fileName = dir + "\\" + aFileName + ".csv";  
 
             FileStream fs = new FileStream(fileName, FileMode.Create);
