@@ -352,50 +352,107 @@ namespace Continuation_Optimal_Deco
             // for now parameters values are hard typed in this function
             // take advantage of extreme optimization package 
 
-            var bottomTimes = Vector.Create<double>(10, i => 10.0 + i * 10.0);
+            var bottomTimes = Vector.Create<double>(10, i => 10.0 + i * 20.0); // 10 
 
-            double[] surfaceValues = { 50.0, 75.0, 100.0, 125.0 , 150.0 };
+            double[] surfaceValues = { 100.0  , 150.0  }; // ,   100.0,   150.0
             var surfaceTimes = Vector.Create(surfaceValues);
 
-            var maxDepths = Vector.Create<double>(5, i => 60.0 + i * 30.0);
+            var maxDepths = Vector.Create<double>( 5 , i => 60.0 + i * 30.0);  //5 
 
-            var exponents = Vector.Create<double>(6, i =>  1 + i);
+            var exponents = Vector.Create<double>(5, i => 1.0 + 2*i); //5 
 
-            var breakFractions = Vector.Create<double>(8, i =>  0.15  +  i * 0.1);
-
+            var breakFractions = Vector.Create<double>(5, i => 0.4 + i * 0.1); //8 
+             
 
             //model = new USN93_EXP(fractionO2);
             //model.Pressure.MaximumAscentRate = ascentRate;
-            var index = 1; 
-            foreach (double bottomTime in bottomTimes)
+            var outputString = new List<string>();
+
+            outputString.Add(CreateHeader());
+             
+            foreach (double actualBottomTime in bottomTimes)
             {
-                foreach (double surfaceValue in surfaceValues)
+                //idx++;
+                foreach (double actSurfValue in surfaceValues)
                 {
-                    foreach (double maxDepth in maxDepths)
+                    foreach (double actMaxDepth in maxDepths)
                     {
-                        foreach (double exponent in exponents)
+                        foreach (double actExp in exponents)
                         {
-                            foreach (double breakFraction in breakFractions)
+                            foreach (double actBreakFract in breakFractions)
                             {
-                                if (index == 1)
-                                {
-                                    SendActualInputsToTheGUI(bottomTime, surfaceValue, maxDepth, exponent, breakFraction);
-                                    this.ReadInformationFromGUI();
+                                //MessageBox.Show(bottomTime.ToString() + " " + surfaceValue.ToString() + "  " + idx.ToString() ); 
+                                SendActualInputsToTheGUI(actualBottomTime, actSurfValue, actMaxDepth, actExp, actBreakFract);
+                                ReadInformationFromGUI();
 
-                                    model = new USN93_EXP(fractionO2);
-                                    model.Pressure.MaximumAscentRate = ascentRate;
-                                    var optimizer = OptimizeSurfaceTimeWithOutput();
-                                    MessageBox.Show(optimizer.Status.ToString());
-                                    //MessageBox.Show(optimizer.Result.ToString() + " " + optimizer.Status.ToString());
-
-
-                                }
-                                index++;
+                                model = new USN93_EXP(fractionO2);
+                                model.Pressure.MaximumAscentRate = ascentRate;
+                                var optimizer = OptimizeSurfaceTimeWithOutput();
+                                outputString.Add( CreateSolutionDescriptor(actualBottomTime, actSurfValue, actMaxDepth, actExp, actBreakFract, optimizer) ) ;
+                               
                             }
                         }
                     }
                 }
             }
+
+            DumpOutputStringToFile("stressOutput.csv", outputString);
+
+        }
+
+        private string CreateHeader()
+        {
+            string s = "BottomTime, SurfaceInit, MaxDepth, InitExp, InitBreakFract , FinalPDCS, OptimizerStatus, OptExp, OptBreakFrac , ActualSurfaceTime";
+            return s ;
+        }
+
+
+        private string CreateSolutionDescriptor(double bottomTime, double surfaceValue, double maxDepth, double exponent, double breakFraction , PowellOptimizer pw)
+        {
+
+            string s = bottomTime.ToString("F6") + "," + surfaceValue.ToString("F6") + "," + maxDepth.ToString("F6") + "," + exponent.ToString("F6") + "," + breakFraction.ToString("F6");
+
+            s += "," +  model.FinalPDCS().ToString("F6");
+            
+
+            s += GetOptimizerOutputs(pw); 
+            
+            return s;
+        }
+
+        private string GetOptimizerOutputs(PowellOptimizer pw)
+        {
+            string s = "," + pw.Status;
+
+            if (String.Equals(pw.Status.ToString(), "Converged") )
+            {
+              
+                s += "," + pw.Result[0].ToString("F6") + "," + pw.Result[1].ToString("F6") + "," + surfaceTime.ToString("F6");
+            }
+            else
+            {
+                s += "," +  "nan, nan, nan";
+            }
+
+            return s; 
+        
+        }
+
+        private void DumpOutputStringToFile(string fileName, List<string> outputString)
+        {
+            string completePath = @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults\" + fileName;
+            var fs = new FileStream(completePath, FileMode.Create);
+            var sw = new StreamWriter(fs);
+ 
+
+
+
+            foreach (string entry in outputString)
+            {
+                sw.WriteLine(entry);
+            }
+            sw.Close();
+            fs.Close();
 
         }
 
