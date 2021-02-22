@@ -10,7 +10,6 @@
 open InitDescent
 open Extreme.Mathematics
 open  Extreme.DataAnalysis.Linq 
-open SeqExtension
 open LEModel
 
 let atanh = Extreme.Mathematics.Elementary.Atanh

@@ -104,6 +104,7 @@
     <None Include="OptimalAscentDebuggerScript.fsx" />
     <None Include="OneLegScript.fsx" />
     <None Include="DynamicProgramming.fsx" />
+    <None Include="LarsAlgorithm.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">

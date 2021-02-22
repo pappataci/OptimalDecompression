@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
   <PropertyGroup>
@@ -58,10 +58,6 @@
     <ProjectReference Include="..\Continuation Optimal Decompresison Luca\Continuation Optimal Decompression Luca.fsproj">
       <Project>{57815096-3d6b-44ce-aee7-106055c347fc}</Project>
       <Name>Continuation Optimal Decompression Luca</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\TestLibraryFramework\TestLibraryFramework.fsproj">
-      <Project>{ad5dd4e7-d2e2-452d-b305-391389f1ddeb}</Project>
-      <Name>TestLibraryFramework</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
