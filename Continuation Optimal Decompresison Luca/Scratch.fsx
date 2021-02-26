@@ -383,3 +383,10 @@
 //    seqOfLegs
 //    |> Seq.concat 
 //    //|> Seq.map snd 
+
+//let mutable globalVar = 1.0
+
+//let initFcn x = 
+//    globalVar <- x
+//    x
+
