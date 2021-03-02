@@ -145,7 +145,6 @@ let optimizeAscentForThisInitState  residualRiskBound  myEnv  initialGuess contr
     optimalParams, solutionReport
 
 
-
 //let findOptimalAscentForThisDiveWithPenalty residualRiskBound myEnv initialGuess controlTime initState = 
     
 let getOptimizationParams (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  getInitialGuess = 
