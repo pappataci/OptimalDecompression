@@ -193,13 +193,16 @@ open TwoStepsSolution
 
 
 
-let pDCS = 5.0e-2
+let pDCS = 5.0e-3
 
 let bottomTime = 30.0
 let maximumDepth = 120.0
 let integrationTime, controlToIntegration = 0.1 , 1 
 
+let initialGuesss = ConstantInitGuess (0.2, 0.3)
 
 
-let out = findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
+let solution, report  =   initialGuesss
+                          |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
 
+lastOptimalSurfaceTime

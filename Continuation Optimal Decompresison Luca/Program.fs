@@ -13,11 +13,12 @@ let main argv =
     let integrationTime, controlToIntegration = 0.1 , 1 
     
     
-    let initGuess = ConstantInitGuess (0.3,0.3)
+    let initGuess = ConstantInitGuess (0.3 , 0.3)
 
     let out = findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initGuess
     
     printfn "%A" out 
+    printfn "%A" lastOptimalSurfaceTime
     Console.Read() |> ignore 
 
     0

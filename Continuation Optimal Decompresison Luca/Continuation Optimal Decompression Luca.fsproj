@@ -89,6 +89,7 @@
     <Compile Include="Result2CSV.fs" />
     <Compile Include="OneLegStrategy.fs" />
     <Compile Include="TwoStepsSolution.fs" />
+    <Compile Include="Program.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />
@@ -106,7 +107,6 @@
     <None Include="OneLegScript.fsx" />
     <None Include="DynamicProgramming.fsx" />
     <None Include="LarsAlgorithm.fsx" />
-    <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">
