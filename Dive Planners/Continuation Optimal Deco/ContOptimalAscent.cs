@@ -44,6 +44,7 @@ namespace Continuation_Optimal_Deco
             this.ReadInformationFromGUI ( );
 
             model                            = new USN93_EXP ( fractionO2 );
+             
             model.Pressure.MaximumAscentRate = ascentRate;
 
             // this.PowerLawAscentFromBreak ( );

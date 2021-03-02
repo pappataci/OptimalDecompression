@@ -39,12 +39,19 @@ let writeArrayToDisk fileName (finalSubFolder:option<string>) (results:seq<float
                          | Some v -> (v + @"\")
       
     let subFolder =  @"C:\Users\glddm\" + finalSubFolder 
-
     let table = new OnlyAscentNode(Seq.map (fun x -> OnlyAscentNode.Row(x)  ) results ) 
-
     table.Save (subFolder + fileName )
 
 
-    //results
-    //|> myCsvBuildTable
-    //|> saveToCsv ( subFolder + fileName) 
+type AscentNodeAndTime = CsvProvider<"Time, Depth", Schema = "float , float" , HasHeaders = true>
+
+let strategyToDisk fileName (finalSubFolder:option<string>) (results:seq<float * float>)  = 
+    
+    let finalSubFolder = match finalSubFolder with
+                         | None -> @"Documents\Duke\Research\OptimalAscent\NetResults\"
+                         | Some v -> (v + @"\")
+      
+    let subFolder =  @"C:\Users\glddm\" + finalSubFolder 
+    let table = new AscentNodeAndTime(Seq.map (fun x -> AscentNodeAndTime.Row(x)  ) results ) 
+    table.Save (subFolder + fileName )
+

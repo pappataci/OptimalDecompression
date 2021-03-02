@@ -19,11 +19,7 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "KerasNet", "KerasNet\KerasN
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonInteropFromCSharp", "PythonInteropFromCSharp\PythonInteropFromCSharp.csproj", "{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestLibraryFramework", "TestLibraryFramework\TestLibraryFramework.fsproj", "{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpWrapperToPython", "CSharpWrapperToPython\CSharpWrapperToPython.csproj", "{967DF3F7-4059-4750-85E1-7B5AFC52B98E}"
-EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestImportingLibrary", "TestImportingLibrary\TestImportingLibrary.fsproj", "{D66F2BCC-1041-40C4-983C-68859740AB62}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LEEnvironmentConsoleTesting", "LEEnvironmentConsoleTesting\LEEnvironmentConsoleTesting.fsproj", "{C4890114-F7F2-4182-993C-A7BD7585D12F}"
 EndProject
@@ -101,14 +97,6 @@ Global
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|Any CPU.Build.0 = Release|Any CPU
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|x64.ActiveCfg = Release|Any CPU
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|x64.Build.0 = Release|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Debug|x64.Build.0 = Debug|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Release|x64.ActiveCfg = Release|Any CPU
-		{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}.Release|x64.Build.0 = Release|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -117,14 +105,6 @@ Global
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.ActiveCfg = Release|Any CPU
 		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.Build.0 = Release|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Debug|x64.Build.0 = Debug|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|x64.ActiveCfg = Release|Any CPU
-		{D66F2BCC-1041-40C4-983C-68859740AB62}.Release|x64.Build.0 = Release|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|x64.ActiveCfg = Debug|Any CPU

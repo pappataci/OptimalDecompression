@@ -6,7 +6,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>57815096-3d6b-44ce-aee7-106055c347fc</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <OutputType>Exe</OutputType>
     <RootNamespace>Continuation_Optimal_Decompresison_Luca</RootNamespace>
     <AssemblyName>Continuation_Optimal_Decompression_Luca</AssemblyName>
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
@@ -88,6 +88,8 @@
     <Compile Include="AscentOptimizer.fs" />
     <Compile Include="Result2CSV.fs" />
     <Compile Include="OneLegStrategy.fs" />
+    <Compile Include="TwoStepsSolution.fs" />
+    <Compile Include="Program.fs" />
     <None Include="RLScript.fsx" />
     <None Include="App.config" />
     <Content Include="packages.config" />
@@ -104,6 +106,7 @@
     <None Include="OptimalAscentDebuggerScript.fsx" />
     <None Include="OneLegScript.fsx" />
     <None Include="DynamicProgramming.fsx" />
+    <None Include="LarsAlgorithm.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">
