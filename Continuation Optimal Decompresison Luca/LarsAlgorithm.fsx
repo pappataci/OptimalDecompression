@@ -18,7 +18,7 @@
 //open System
 //open InitDescent
 //open LEModel
-//open Extreme.Mathematics
+open Extreme.Mathematics
 //open Extreme.Mathematics.Optimization
 //open Extreme.Mathematics.LinearAlgebra
 //open Extreme.Mathematics.EquationSolvers
@@ -27,15 +27,14 @@
 open TwoStepsSolution
 
 
-
 let pDCS = 8.0e-3
 
 let bottomTime = 30.0
 let maximumDepth = 120.0
 let integrationTime, controlToIntegration = 0.1 , 1 
 
-let initialGuesss = ConstantInitGuess (0.3, 0.8)
-
+let initialGuesss =    Vector.Create(1.0 , 0.3)
+                       |>  ConstantInitGuess
 
 let solution, report  =   initialGuesss
                           |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
