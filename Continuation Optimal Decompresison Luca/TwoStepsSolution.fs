@@ -15,6 +15,12 @@ type InitialGuess = | ConstantInitGuess of DenseVector<float>
 let maximumAscentTime = 2000.0
 let maxSimTime = 5.0e4  // this is irrelevant
 
+
+let initState2TimeAndDepth initState = 
+    let bottomTime = initState |> leStatus2ModelTime
+    let maximumDepth = initState |> leStatus2Depth
+    bottomTime, maximumDepth
+
 let mutable (lastOptimalSurfaceTime:Result<float,float>) = 0.0 |> Ok  // this is ugly, but necessary for now 
 
 let getExponentialPart linearAscent deltaTimeToSurface  exponent (bottomTime:float, maximumDepth:float ) controlTime =
@@ -41,14 +47,12 @@ let getExponentialPart linearAscent deltaTimeToSurface  exponent (bottomTime:flo
                                         let actualDepth =  max   (linearPath idx)   (exponentialPath idx )
                                         actualTime   , actualDepth )
 
-
 let generateAscentStrategy (initState:State<LEStatus>) (solutionParams:Vector<double>) deltaTimeToSurface controlTime = 
-    let bottomTime = initState |> leStatus2ModelTime
-    let maximumDepth = initState |> leStatus2Depth
+    let bottomTime , maximumDepth =  initState2TimeAndDepth initState
     
-    let actualValue = solutionParams.[0]
+    let breakFractionUnconstrained = solutionParams.[0]
 
-    let breakFraction =  max ( min  actualValue   1.0) 0.0 
+    let breakFraction =  max ( min  breakFractionUnconstrained   1.0) 0.0 
     
     let exponent = solutionParams.[1]
 
@@ -58,6 +62,12 @@ let generateAscentStrategy (initState:State<LEStatus>) (solutionParams:Vector<do
     seq { yield! linearAscent 
           yield! exponentialPart}
 
+let generateBounceDive (initState:State<LEStatus>) (_:Vector<double>) _ controlTime = 
+    let initDepthTime =  initState2TimeAndDepth initState
+    let atSurfaceDepth = 0.0
+
+    controlTime
+    |> getSeqOfDepthsForLinearAscentSection  initDepthTime  MissionConstraints.ascentRateLimit atSurfaceDepth
 
 let generateTargetFcn initState environment residualRiskBound solutionParams controlTime  = 
     let computeActualPDCSOfThisAscent deltaTimeToSurface =
