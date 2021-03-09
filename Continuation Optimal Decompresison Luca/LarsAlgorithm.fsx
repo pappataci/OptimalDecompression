@@ -18,7 +18,7 @@
 //open System
 //open InitDescent
 //open LEModel
-//open Extreme.Mathematics
+open Extreme.Mathematics
 //open Extreme.Mathematics.Optimization
 //open Extreme.Mathematics.LinearAlgebra
 //open Extreme.Mathematics.EquationSolvers
@@ -27,17 +27,38 @@
 open TwoStepsSolution
 
 
+let pDCS = 3.2e-2
 
-let pDCS = 8.0e-3
 
-let bottomTime = 30.0
 let maximumDepth = 120.0
 let integrationTime, controlToIntegration = 0.1 , 1 
 
-let initialGuesss = ConstantInitGuess (0.3, 0.8)
+let initialGuesss =    Vector.Create(0.6 , 0.3 ,  1.5 )
+                       |>  ConstantInitGuess
+
+//let solution, report  =   initialGuesss
+//                          |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
+
+//let bottomTimes = [|30.0 .. 5.0 .. 100.0|]
 
 
-let solution, report  =   initialGuesss
-                          |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
+//let solutionsAtDifferentTimes  = bottomTimes 
+//                                 |> Array.mapi (fun i  bottomTime -> printfn "%A" i    
+//                                                                     findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss )
 
-lastOptimalSurfaceTime
+
+let bottomTime = 100.0
+let result =  findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss 
+
+result
+ 
+let getOptimizer result  = match result with        
+                           | Bounce x -> new   Extreme.Mathematics.Optimization.PowellOptimizer()
+                           | Optimized (_ , opt ) -> opt
+
+let opt = getOptimizer result 
+
+let otherVec = Vector.Create(0.6,0.3, 175.0)
+
+opt.ObjectiveFunction.Invoke(opt.Extremum )
+opt.ObjectiveFunction.Invoke(otherVec )
