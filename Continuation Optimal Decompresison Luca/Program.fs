@@ -2,23 +2,30 @@
 open TwoStepsSolution
 
 open System
+open Extreme.Mathematics
 
 [<EntryPoint>]
 let main argv =
     
-    let pDCS = 5.0e-2
+    let pDCS = 3.2e-2
     
     let bottomTime = 30.0
     let maximumDepth = 120.0
     let integrationTime, controlToIntegration = 0.1 , 1 
     
+    let initialGuesss =    Vector.Create(1.0 , 0.3 ,  300.0 )
+                           |>  ConstantInitGuess
     
-    let initGuess = ConstantInitGuess (0.3 , 0.3)
-
-    let out = findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initGuess
+    //let solution, report  =   initialGuesss
+    //                          |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
     
-    printfn "%A" out 
-    printfn "%A" lastOptimalSurfaceTime
-    Console.Read() |> ignore 
-
+    //let bottomTimes = [|30.0 .. 5.0 .. 100.0|]
+    
+    
+    //let solutionsAtDifferentTimes  = bottomTimes 
+    //                                 |> Array.mapi (fun i  bottomTime -> printfn "%A" i    
+    //                                                                     findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss )
+    let bottomTime = 100.0
+    let result =  findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss 
+    
     0

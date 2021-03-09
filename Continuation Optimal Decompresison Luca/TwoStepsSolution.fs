@@ -62,7 +62,7 @@ let generateAscentStrategy (initState:State<LEStatus>) (solutionParams:Vector<do
     seq { yield! linearAscent 
           yield! exponentialPart}
 
-let generateBounceDive (initState:State<LEStatus>) (_:Vector<double>) _ controlTime = 
+let generateBounceDiveStrategy (initState:State<LEStatus>) (_:Vector<double>) _ controlTime = 
     let initDepthTime =  initState2TimeAndDepth initState
     let atSurfaceDepth = 0.0
 
@@ -126,30 +126,32 @@ let defineSurfaceTimeFcn initState myEnv residualRiskBound controlTime =
 
     Func<_,_> timeToSurfaceFcn
 
-let setUpOptimizationProblem(initGuess:DenseVector<float>)  computeSurfaceTime   = 
-   
-   //let bfgs = QuasiNewtonOptimizer(QuasiNewtonMethod.Bfgs)
-   //let (gradient: Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  computeSurfaceTime
-   //bfgs.InitialGuess <- initGuess
-   //bfgs.ExtremumType <- ExtremumType.Minimum
-   //bfgs.ObjectiveFunction <- computeSurfaceTime
-   //bfgs.FastGradientFunction <- gradient
-   //bfgs
 
+
+let getPowellOptimizer(initGuess:DenseVector<float>)  objectiveFunction   = 
+   
    let pw = PowellOptimizer()
    pw.ExtremumType  <- ExtremumType.Minimum
    pw.Dimensions <- initGuess.Length
    pw.InitialGuess <- initGuess
-   pw.ObjectiveFunction <- computeSurfaceTime
-   
+   pw.ObjectiveFunction <- objectiveFunction
    pw
+
+let getQuasiNewtonOptimizer (initGuess:DenseVector<float>)  objectiveFunction = 
+    let bfgs = QuasiNewtonOptimizer(QuasiNewtonMethod.Bfgs)
+    let (gradient: Func<Vector<float>,Vector<float>, Vector<float>> )  = FunctionMath.GetNumericalGradient  objectiveFunction
+    bfgs.InitialGuess <- initGuess
+    bfgs.ExtremumType <- ExtremumType.Minimum
+    bfgs.ObjectiveFunction <- objectiveFunction
+    bfgs.FastGradientFunction <- gradient
+    bfgs
 
 let optimizeAscentForThisInitState  residualRiskBound  myEnv  initialGuess controlTime initState   =
     let computeSurfaceTime = defineSurfaceTimeFcn initState myEnv  residualRiskBound controlTime
 
-    let pw = setUpOptimizationProblem initialGuess computeSurfaceTime   
-    let optimalParams  =  pw.FindExtremum()
-    let solutionReport = pw.SolutionReport
+    let optimizer = getQuasiNewtonOptimizer initialGuess computeSurfaceTime   
+    let optimalParams  =  optimizer.FindExtremum()
+    let solutionReport = optimizer.SolutionReport
     optimalParams, solutionReport
     
 let getOptimizationParams (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  getInitialGuess = 
@@ -182,30 +184,86 @@ let findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (botto
     |>  optimizeAscentForThisInitState residualRiskBound  myEnv initialGuess controlTime
 
 
+let getAnalyticalCostForThisStrategy  myEnv initState residualRiskBound = 
+    (getTimeAndAccruedRiskForThisStrategy myEnv initState)
+    >> (fun strategyResults ->  strategyResults.TotalRisk - residualRiskBound)
 
-let surfaceWithPenaltyFcn initState myEnv residualRiskBound controlTime =
+let optimParamsToAscentStrategy initState   (solutionParams':Vector<double>) controlTime = 
+    let solutionParams  = solutionParams'.[Range(0,1)]
+    let deltaTimeToSurface = solutionParams'.[2] * 100.0
+    controlTime
+    |> generateAscentStrategy initState solutionParams deltaTimeToSurface 
 
-    let timeToSurfaceFcnWithPenalty (solutionParams : Vector<float>) = 
-        let bisectionSolver = setupResidualRiskProblem initState myEnv residualRiskBound solutionParams controlTime 
-        let bisectionSolverSolution = findSolutionWithSolver(bisectionSolver)
 
-        // dump solution to global var
-        lastOptimalSurfaceTime <- bisectionSolverSolution // necessary for solution report        
-        getSurfaceTimeFromBisectionSolution bisectionSolverSolution
+let getAnalyticalCostForThisDive  initState myEnv residualRiskBound controlTime  (solutionParams:Vector<double>) =  
+    let deltaTimeToSurface = solutionParams.[2]
+    let ascentStrategyForGivenParams = optimParamsToAscentStrategy initState   solutionParams controlTime  
+    let strategyResults = getTimeAndAccruedRiskForThisStrategy myEnv initState ascentStrategyForGivenParams
+    let residualRisk = residualRiskBound - strategyResults.TotalRisk 
+    (deltaTimeToSurface, residualRisk , ascentStrategyForGivenParams)
 
-    Func<_,_> timeToSurfaceFcnWithPenalty
-
-let optimizeAscentLagrangian residualRiskBound  myEnv (initialGuess:Vector<float>) controlTime initState = 
-    let pw = PowellOptimizer()
-    pw.ExtremumType  <- ExtremumType.Minimum
-    pw.Dimensions <- initialGuess.Length
-    pw.InitialGuess <- initialGuess
-
-    let timeToSurfaceWithPenalty = surfaceWithPenaltyFcn initState myEnv residualRiskBound controlTime
-
-    pw.ObjectiveFunction <- timeToSurfaceWithPenalty
+let surfaceWithPenaltyFcn initState myEnv residualRiskBound controlTime = 
     
-    pw
+    let penaltyWeight = 1.0e3
+    let getRiskPenalty residualRisk  = 
+        if residualRisk > 0.0 then
+            0.0
+        else
+            (residualRisk * 100.0 ) ** 2.0 
+            |> (*) penaltyWeight
+
+    let actualFcn (solutionParams:Vector<float>) = 
+        
+        let timeToSurf, residualRisk , _  = getAnalyticalCostForThisDive  initState myEnv residualRiskBound controlTime solutionParams
+        let riskPenalty = getRiskPenalty residualRisk  
+
+        printfn "VALUE FUNCTION: %A" (timeToSurf , riskPenalty)
+        
+        timeToSurf + riskPenalty
+        
+    Func<_,_> actualFcn 
+
+let getAscentDuration (ascentStrategy:seq<float*float>) = 
+    let getTime itemCollector = ascentStrategy 
+                                |> itemCollector 
+                                |> fst
+    
+    let initTime = getTime Seq.head
+    let lastTime = getTime Seq.last 
+    lastTime - initTime
+
+
+type StrategyMetrics  = {AscentDuration :  float 
+                         ResidualRisk   :  float 
+                         AscentHistory  :  seq<float*float> }
+
+type OptimizationInfo = | Bounce of StrategyMetrics
+                        | Optimized of (StrategyMetrics *  PowellOptimizer )
+
+let optimizeAscentLagrangian riskBound  myEnv (initialGuess:DenseVector<float>) controlTime initState = 
+    
+    let bounceDive = generateBounceDiveStrategy  initState initialGuess None controlTime
+    let strategyResults = getTimeAndAccruedRiskForThisStrategy myEnv initState bounceDive
+    let residualRiskBounceDive =  riskBound - strategyResults.TotalRisk 
+    
+    if residualRiskBounceDive > 0.0 then 
+                        {AscentDuration = getAscentDuration bounceDive 
+                         ResidualRisk   = residualRiskBounceDive
+                         AscentHistory  = bounceDive } |> Bounce 
+
+    else
+        let timeToSurfaceWithPenalty = surfaceWithPenaltyFcn initState myEnv riskBound controlTime
+        let optimizer = getPowellOptimizer initialGuess  timeToSurfaceWithPenalty 
+        printfn "%A" optimizer.InitialGuess
+        
+        let extremum  = optimizer.FindExtremum() 
+
+        let timeToSurf, residualRisk , optimalAscent  = getAnalyticalCostForThisDive  initState myEnv riskBound controlTime optimizer.Extremum
+
+        ({AscentDuration = timeToSurf
+          ResidualRisk   = residualRisk
+          AscentHistory  = optimalAscent } , optimizer) |> Optimized 
+           
 
 let findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  getInitialGuess = 
     
