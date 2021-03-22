@@ -33,6 +33,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ILNumerics.Computing, Version=5.5.0.0, Culture=neutral, PublicKeyToken=8d9bf50ef854734d" />
+    <Reference Include="ILNumerics.Core, Version=5.5.0.0, Culture=neutral, PublicKeyToken=9651adc37f12bb00" />
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
@@ -43,6 +45,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Computing Module1.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
