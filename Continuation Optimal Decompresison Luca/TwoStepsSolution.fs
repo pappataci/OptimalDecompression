@@ -108,7 +108,6 @@ let findSolutionWithSolver (solver:BisectionSolver) =
                else 
                     Error solver.LowerBound
 
-
 let getSurfaceTimeFromBisectionSolution   = 
     function  
     | Ok okValue -> (okValue:float)
@@ -125,8 +124,6 @@ let defineSurfaceTimeFcn initState myEnv residualRiskBound controlTime =
         getSurfaceTimeFromBisectionSolution bisectionSolverSolution
 
     Func<_,_> timeToSurfaceFcn
-
-
 
 let getPowellOptimizer(initGuess:DenseVector<float>)  objectiveFunction   = 
    
@@ -216,8 +213,6 @@ let surfaceWithPenaltyFcn initState myEnv residualRiskBound controlTime =
         
         let timeToSurf, residualRisk , _  = getAnalyticalCostForThisDive  initState myEnv residualRiskBound controlTime solutionParams
         let riskPenalty = getRiskPenalty residualRisk  
-
-        printfn "VALUE FUNCTION: %A" (timeToSurf , riskPenalty)
         
         timeToSurf + riskPenalty
         
