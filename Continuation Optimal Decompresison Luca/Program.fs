@@ -1,31 +1,47 @@
-﻿
-open TwoStepsSolution
+﻿open Result2CSV
+open TwoStepsSolIl
 
-open System
-open Extreme.Mathematics
 
 [<EntryPoint>]
 let main argv =
+    let integrationTime, controlToIntegration = 0.1 , 1 
     
     let pDCS = 3.2e-2
     
-    let bottomTime = 30.0
     let maximumDepth = 120.0
-    let integrationTime, controlToIntegration = 0.1 , 1 
+
+    let bottomTimes = [|30.0 .. 30.0 .. 150.0|] |> Array.toSeq
+    let maxDepths = [|60.0 .. 30.0 .. 300.0|] |> Array.toSeq
+    let probsBound = [|3.2e-2; 4.0e-2; 5.0e-2|] |> Array.toSeq
     
-    let initialGuesss =    Vector.Create(1.0 , 0.3 ,  300.0 )
-                           |>  ConstantInitGuess
+    let initConditionsGrid = createInputForSim bottomTimes maxDepths probsBound
     
-    //let solution, report  =   initialGuesss
-    //                          |> findOptimalAscentForThisDive (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS ) 
-    
-    //let bottomTimes = [|30.0 .. 5.0 .. 100.0|]
-    
-    
-    //let solutionsAtDifferentTimes  = bottomTimes 
-    //                                 |> Array.mapi (fun i  bottomTime -> printfn "%A" i    
-    //                                                                     findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss )
-    let bottomTime = 100.0
-    let result =  findOptimalAscent3DProblem (integrationTime, controlToIntegration)  (bottomTime, maximumDepth , pDCS )  initialGuesss 
-    
+    // parameter definition for brute force solution
+    let breakFracSeq = [ 0.01 .. 0.15 .. 0.99 ]@[ 0.99 ]
+                       |> List.toSeq   
+    let exponents = [ -3.0 .. 0.5 .. 2.0 ] |> List.toSeq
+    let deltaTimeSurface =  [1.0] @ [ 5.0 .. 50.0  .. 1000.0]
+    let paramsGrid = createInputForSim breakFracSeq exponents deltaTimeSurface
+
+    let solveAscentProblemWithTheseGrids (paramsGrid:float[][]) (initCondGrid:float[][]) (integrationTime, controlToIntegration) = 
+        let toTuple (x:float[]) = 
+            x.[0], x.[1], x.[2]
+
+        let createOutputName (x:float[]) = 
+            let bt, maxDepth, probBound = toTuple x 
+            printfn "solving %A" x
+            "BT_" +  (sprintf "%i" (int bt) ) + "_" + "MD_"  
+            + (sprintf "%i" (int maxDepth) ) + "PB" + sprintf "%.1f" (probBound*100.0) + ".csv"
+        
+        initCondGrid
+        |> Array.map  ( fun initCond -> let outputName = createOutputName initCond
+                                        initCond
+                                        |> toTuple   
+                                        |> getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) 
+                                        |>  bruteForceToDisk outputName   )
+           
+    //let example = initConditionsGrid |> Array.take 2
+    solveAscentProblemWithTheseGrids  paramsGrid  initConditionsGrid  (integrationTime, controlToIntegration)
+    |> ignore
+ 
     0
