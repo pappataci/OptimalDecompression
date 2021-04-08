@@ -59,7 +59,7 @@ module LEModel  =
     let private getIntegratedRiskForThisDeltaT deltaT pressures modelConsts updatedTissueTension  = 
         pressures
         |> getInstantaneousRisk modelConsts updatedTissueTension
-        |> max 0.0
+        |> Operators.max 0.0
         |> (*) deltaT
 
     let private updateTissueTension  deltaT pressures  modelConsts actualTension =
@@ -139,7 +139,7 @@ module LEModel  =
         leRiskInfo.AccruedRisk
 
     let IsAtSurfaceLevel depth =
-        abs(depth) <  MissionConstraints.depthTolerance
+        Operators.abs(depth) <  MissionConstraints.depthTolerance
 
     let areAllTissueTensionsAtMostEqualToAmbientN2Press  actualAmbientPressure  (leParamsThresholds: float[] ) (actualTissueTensions:float[])  = 
         actualTissueTensions 
