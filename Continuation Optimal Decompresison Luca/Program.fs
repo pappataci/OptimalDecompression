@@ -6,22 +6,22 @@ open TwoStepsSolIl
 let main argv =
     let integrationTime, controlToIntegration = 0.1 , 1 
     
-    let pDCS = 3.2e-2
+    let pDCS = 3.3e-2
     
     let maximumDepth = 120.0
 
     let bottomTimes = [|30.0 .. 30.0 .. 150.0|] |> Array.toSeq
     let maxDepths = [|60.0 .. 30.0 .. 300.0|] |> Array.toSeq
-    let probsBound = [|3.2e-2; 4.0e-2; 5.0e-2|] |> Array.toSeq
+    let probsBound = [|3.2e-2|] |> Array.toSeq // for now just solve for the desired probability
     
-    let initConditionsGrid = createInputForSim bottomTimes maxDepths probsBound
+    let initConditionsGrid = create3DGrid bottomTimes maxDepths probsBound
     
     // parameter definition for brute force solution
     let breakFracSeq = [ 0.01 .. 0.15 .. 0.99 ]@[ 0.99 ]
                        |> List.toSeq   
     let exponents = [ -3.0 .. 0.5 .. 2.0 ] |> List.toSeq
     let deltaTimeSurface =  [1.0] @ [ 5.0 .. 50.0  .. 1000.0]
-    let paramsGrid = createInputForSim breakFracSeq exponents deltaTimeSurface
+    let paramsGrid = create3DGrid breakFracSeq exponents deltaTimeSurface
 
     let solveAscentProblemWithTheseGrids (paramsGrid:float[][]) (initCondGrid:float[][]) (integrationTime, controlToIntegration) = 
         let toTuple (x:float[]) = 

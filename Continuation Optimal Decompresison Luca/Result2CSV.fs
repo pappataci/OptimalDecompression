@@ -62,3 +62,4 @@ let bruteForceToDisk (fileName:string) resultForThisInitCondition =
     let table = new BruteForceOutput(Seq.map (fun x -> BruteForceOutput.Row(x) )  resultForThisInitCondition  )
     let subfolder =  @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults\BruteForce\"
     table.Save (subfolder + fileName)
+

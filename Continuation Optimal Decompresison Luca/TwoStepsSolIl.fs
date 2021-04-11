@@ -145,10 +145,15 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (bottomTime,
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
     getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
 
-let createInputForSim (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
+let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
     seq{ for breakFraction in seqBreakFractions do
             for exponent in seqExponents do
                 for deltaTimeToSurface in seqDeltaTimeToSurface -> [|breakFraction ; exponent; deltaTimeToSurface|] }
+    |> Seq.toArray
+
+let create2DGrid (breakFracSeq:seq<float>)  (seqExponents :seq<float>)  = 
+    seq { for breakFraction in breakFracSeq do
+            for exponent in seqExponents  -> [|breakFraction ; exponent|] }
     |> Seq.toArray
 
 let getSolutions (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)  = 

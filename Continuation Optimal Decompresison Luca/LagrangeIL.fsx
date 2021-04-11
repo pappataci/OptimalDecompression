@@ -38,7 +38,7 @@ let deltaTimeSurface =  [1.0] @ [ 5.0 .. 10.0  .. 200.0]
 
 let allInputs = createInputForSim breakFracSeq exponents deltaTimeSurface
 
-let pDCS = 3.2e-2
+let pDCS = 3.3e-2
 let maximumDepth = 120.0
 
 let integrationTime, controlToIntegration = 0.1 , 1 
@@ -57,3 +57,5 @@ let bottomTime = 60.0
 //    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
 //    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
 //    |> Array.map resultsToArray
+
+let test = allInputs |> Array.groupBy ( fun x -> x.[2])
