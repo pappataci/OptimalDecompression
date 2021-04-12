@@ -1,47 +1,52 @@
 ﻿open Result2CSV
 open TwoStepsSolIl
-
+open System.Diagnostics
+open InputDefinition
 
 [<EntryPoint>]
 let main argv =
+    
     let integrationTime, controlToIntegration = 0.1 , 1 
     
     let pDCS = 3.3e-2
-    
+    let bottomTime = 60.0
     let maximumDepth = 120.0
 
-    let bottomTimes = [|30.0 .. 30.0 .. 150.0|] |> Array.toSeq
-    let maxDepths = [|60.0 .. 30.0 .. 300.0|] |> Array.toSeq
-    let probsBound = [|3.2e-2|] |> Array.toSeq // for now just solve for the desired probability
+    //let bottomTimes = [|30.0 .. 30.0 .. 150.0|] |> Array.toSeq
+    //let maxDepths = [|60.0 .. 30.0 .. 300.0|] |> Array.toSeq
+    //let probsBound = [|3.2e-2|] |> Array.toSeq // for now just solve for the desired probability
     
-    let initConditionsGrid = create3DGrid bottomTimes maxDepths probsBound
+    //let initConditionsGrid = create3DGrid bottomTimes maxDepths probsBound
     
-    // parameter definition for brute force solution
-    let breakFracSeq = [ 0.01 .. 0.15 .. 0.99 ]@[ 0.99 ]
-                       |> List.toSeq   
-    let exponents = [ -3.0 .. 0.5 .. 2.0 ] |> List.toSeq
+
+
+    let initCondition = [|bottomTime; maximumDepth; pDCS|]
+    let integrationTimeSettings = integrationTime, controlToIntegration
+
     let deltaTimeSurface =  [1.0] @ [ 5.0 .. 50.0  .. 1000.0]
-    let paramsGrid = create3DGrid breakFracSeq exponents deltaTimeSurface
 
-    let solveAscentProblemWithTheseGrids (paramsGrid:float[][]) (initCondGrid:float[][]) (integrationTime, controlToIntegration) = 
-        let toTuple (x:float[]) = 
-            x.[0], x.[1], x.[2]
+    // parameter definition for brute force solution
+    let breakFracSeq = [ 0.01 .. 0.25 .. 0.99 ]@[ 0.99 ]
+                       |> List.toSeq   
+    let exponents = [ -2.0 .. 0.5 .. 2.0 ] |> List.toSeq
+    let paramsGrid = create2DGrid breakFracSeq exponents 
 
-        let createOutputName (x:float[]) = 
-            let bt, maxDepth, probBound = toTuple x 
-            printfn "solving %A" x
-            "BT_" +  (sprintf "%i" (int bt) ) + "_" + "MD_"  
-            + (sprintf "%i" (int maxDepth) ) + "PB" + sprintf "%.1f" (probBound*100.0) + ".csv"
-        
-        initCondGrid
-        |> Array.map  ( fun initCond -> let outputName = createOutputName initCond
-                                        initCond
-                                        |> toTuple   
-                                        |> getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) 
-                                        |>  bruteForceToDisk outputName   )
-           
-    //let example = initConditionsGrid |> Array.take 2
-    solveAscentProblemWithTheseGrids  paramsGrid  initConditionsGrid  (integrationTime, controlToIntegration)
-    |> ignore
+    let solveForThisSurfaceTime integrationTimeSettings optimizationParams  maxAllowedRisk initCondition (timeToSurface:float) =
+        optimizationParams
+        |> Seq.map  (simulateStratWithParams integrationTimeSettings  initCondition  timeToSurface) 
+        |> SeqExtension.takeWhileWithLast ( hasExceededMaxRisk maxAllowedRisk )
+        |> Seq.tryLast
+        |> getLastIfValid maxAllowedRisk
+
+    // FIRST COMPUTATION: Seq.whileLast (all lazy):
+    // compute until risk bound is satisfied in a lazy way
+    let solveProblemFcn integrationTimeSettings optimizationParams (initCondition:float[])  =  
+        let maxAllowedRisk = pDCSToRisk initCondition.[2]
+        optimizationParams 
+        |> Seq.map (simulateStratWithParams integrationTimeSettings  initCondition  timeSurface) 
+        |> Seq.toArray
+        |> SeqExtension.takeWhileWithLast ( hasExceededMaxRisk maxAllowedRisk )
+        |> Seq.tryLast
+        |> getLastIfValid maxAllowedRisk
  
     0

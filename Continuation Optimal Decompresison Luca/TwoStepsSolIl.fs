@@ -140,8 +140,12 @@ let findOptimalAscentGen (integrationTime, controlToIntegration) (bottomTime, ma
                                   |> getTimeAndAccruedRiskForThisStrategy myEnv initState
         optimizedDiveResult , Some optimalParams
     
-let simulateStratWithParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) (simParams:double[])=
-    let initState, residualRiskBound, myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:float[]) deltaTimeToSurface  (breakFractExpVec:float[])    =
+    let bottomTime = initCond.[0]
+    let maximumDepth = initCond.[1]
+    let pDCS = initCond.[2]
+    let simParams = Array.append breakFractExpVec [|deltaTimeToSurface|]
+    let initState, _ , myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
     getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
 
@@ -154,26 +158,34 @@ let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDe
 let create2DGrid (breakFracSeq:seq<float>)  (seqExponents :seq<float>)  = 
     seq { for breakFraction in breakFracSeq do
             for exponent in seqExponents  -> [|breakFraction ; exponent|] }
-    |> Seq.toArray
-
-let getSolutions (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)  = 
-    simulateStratWithParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
-
-let getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) (allParams:float[][])  = 
-    let simulator = getSolutions (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) 
-    allParams
-    |> Array.Parallel.map  simulator
-
 
 let resultsToArray (inputVec:float[], result:StrategyResults) =
     (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
      result.TotalRisk, result.InitTimeAtSurface)
 
-let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
-    let maxAllowedRisk = pDCSToRisk pDCS
-    paramsGrid
-    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
-    |> Array.zip paramsGrid 
-    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
-    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
-    |> Array.map resultsToArray
+let hasExceededMaxRisk maxAllowedRisk (s:StrategyResults)  = 
+    s.TotalRisk > maxAllowedRisk 
+
+let getLastIfValid maxAllowedRisk (strategyRes : Option<StrategyResults> )  = 
+    match strategyRes with
+    | None -> None
+    | Some s -> if ( s |> (hasExceededMaxRisk maxAllowedRisk) ) then
+                    None
+                else
+                    Some s
+
+//let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
+//    let maxAllowedRisk = pDCSToRisk pDCS
+//    paramsGrid
+//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+//    |> Array.zip paramsGrid 
+//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
+//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
+//    |> Array.map resultsToArray
+
+//breakParmas is the grid of internal params (break , exp) 
+
+//  let initCondition = [| bottomTime; maximumDepth; pDCS|] 
+
+//(fun (x:StrategyResults) -> x.TotalRisk <= maxAllowedRisk) )
+
