@@ -147,7 +147,11 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:fl
     let simParams = Array.append breakFractExpVec [|deltaTimeToSurface|]
     let initState, _ , myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
-    getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
+    //let strategyResult = 
+    {AscentResults = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy 
+     AscentParams = { BreakFraction = breakFractExpVec.[0]
+                      Exponent      = breakFractExpVec.[1]
+                      TimeToSurface = deltaTimeToSurface}
 
 let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
     seq{ for breakFraction in seqBreakFractions do

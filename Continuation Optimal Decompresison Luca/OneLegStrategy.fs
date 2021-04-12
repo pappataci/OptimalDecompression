@@ -21,7 +21,7 @@ type AscentParams = { BreakFraction : float
                       Exponent      : float 
                       TimeToSurface : float }
 
-type SimulationResults = { AscentResult : StrategyResults 
+type SimulationResults = { AscentResults : StrategyResults 
                            AscentParams : AscentParams }
 
 
