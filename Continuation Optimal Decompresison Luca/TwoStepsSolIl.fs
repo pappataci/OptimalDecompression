@@ -151,7 +151,7 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:fl
     {AscentResults = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy 
      AscentParams = { BreakFraction = breakFractExpVec.[0]
                       Exponent      = breakFractExpVec.[1]
-                      TimeToSurface = deltaTimeToSurface}
+                      TimeToSurface = deltaTimeToSurface} }
 
 let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
     seq{ for breakFraction in seqBreakFractions do
@@ -167,10 +167,10 @@ let resultsToArray (inputVec:float[], result:StrategyResults) =
     (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
      result.TotalRisk, result.InitTimeAtSurface)
 
-let hasExceededMaxRisk maxAllowedRisk (s:StrategyResults)  = 
-    s.TotalRisk > maxAllowedRisk 
+let hasExceededMaxRisk maxAllowedRisk (s:SimulationResults)  = 
+    s.AscentResults.TotalRisk > maxAllowedRisk 
 
-let getLastIfValid maxAllowedRisk (strategyRes : Option<StrategyResults> )  = 
+let getLastIfValid maxAllowedRisk (strategyRes : Option<SimulationResults> )  = 
     match strategyRes with
     | None -> None
     | Some s -> if ( s |> (hasExceededMaxRisk maxAllowedRisk) ) then

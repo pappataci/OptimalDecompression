@@ -38,8 +38,8 @@ let main argv =
         |> Seq.tryLast
         |> getLastIfValid maxAllowedRisk
 
-    // FIRST COMPUTATION: Seq.whileLast (all lazy):
-    // compute until risk bound is satisfied in a lazy way
+     //FIRST COMPUTATION: Seq.whileLast (all lazy):
+     //compute until risk bound is satisfied in a lazy way
     //let solveProblemFcn integrationTimeSettings optimizationParams (initCondition:float[])  =  
         //let maxAllowedRisk = pDCSToRisk initCondition.[2]
         //optimizationParams 
