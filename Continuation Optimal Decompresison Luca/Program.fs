@@ -40,13 +40,13 @@ let main argv =
 
     // FIRST COMPUTATION: Seq.whileLast (all lazy):
     // compute until risk bound is satisfied in a lazy way
-    let solveProblemFcn integrationTimeSettings optimizationParams (initCondition:float[])  =  
-        let maxAllowedRisk = pDCSToRisk initCondition.[2]
-        optimizationParams 
-        |> Seq.map (simulateStratWithParams integrationTimeSettings  initCondition  timeSurface) 
-        |> Seq.toArray
-        |> SeqExtension.takeWhileWithLast ( hasExceededMaxRisk maxAllowedRisk )
-        |> Seq.tryLast
-        |> getLastIfValid maxAllowedRisk
+    //let solveProblemFcn integrationTimeSettings optimizationParams (initCondition:float[])  =  
+        //let maxAllowedRisk = pDCSToRisk initCondition.[2]
+        //optimizationParams 
+        //|> Seq.map (simulateStratWithParams integrationTimeSettings  initCondition  timeSurface) 
+        //|> Seq.toArray
+        //|> SeqExtension.takeWhileWithLast ( hasExceededMaxRisk maxAllowedRisk )
+        //|> Seq.tryLast
+        //|> getLastIfValid maxAllowedRisk
  
     0
