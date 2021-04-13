@@ -90,15 +90,6 @@ let getSolutionWithTheseParams (integrationTime, controlToIntegration )  initCon
 
   
 
-let getLastIfValid maxAllowedRisk (strategyRes : Option<StrategyResults> )  = 
-    match strategyRes with
-    | None -> None
-    | Some s -> if ( s |> (hasExceededMaxRisk maxAllowedRisk) ) then
-                    None
-                else
-                    Some s
-
-
 let optimizationParams = create2DGrid breakFracSeq exponents|> Seq.toArray
 
 

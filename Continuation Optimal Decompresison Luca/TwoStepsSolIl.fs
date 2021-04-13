@@ -146,9 +146,11 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:fl
     let pDCS = initCond.[2]
     let simParams = Array.append breakFractExpVec [|deltaTimeToSurface|]
     let initState, _ , myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+    //printfn "%A" breakFractExpVec
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
-    //let strategyResult = 
-    {AscentResults = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy 
+    let strategyResult = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
+    //printfn "%A" strategyResult
+    {AscentResults =  strategyResult
      AscentParams = { BreakFraction = breakFractExpVec.[0]
                       Exponent      = breakFractExpVec.[1]
                       TimeToSurface = deltaTimeToSurface} }
@@ -170,10 +172,10 @@ let resultsToArray (inputVec:float[], result:StrategyResults) =
 let hasExceededMaxRisk maxAllowedRisk (s:SimulationResults)  = 
     s.AscentResults.TotalRisk > maxAllowedRisk 
 
-let getLastIfValid maxAllowedRisk (strategyRes : Option<SimulationResults> )  = 
+let getSimulationResultIfNot hasExceededMaxAllowedRisk (strategyRes : Option<SimulationResults> )  = 
     match strategyRes with
     | None -> None
-    | Some s -> if ( s |> (hasExceededMaxRisk maxAllowedRisk) ) then
+    | Some s -> if ( s |> hasExceededMaxAllowedRisk)   then
                     None
                 else
                     Some s
