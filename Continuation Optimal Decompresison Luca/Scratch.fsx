@@ -412,3 +412,18 @@
     //let example = initConditionsGrid |> Array.take 2
     //solveAscentProblemWithTheseGrids  paramsGrid  initConditionsGrid  (integrationTime, controlToIntegration)
     //|> ignore
+
+//let allInputs = create3DGrid breakFracSeq exponents deltaTimeSurface
+
+//let resultsToArray (inputVec:float[], result:StrategyResults) =
+//    (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
+//     result.TotalRisk, result.InitTimeAtSurface)
+
+//let getOptimalForThisInputCondition (bottomTime, maximumDepth, pDCS) =
+//    let maxAllowedRisk = pDCSToRisk pDCS
+//    allInputs
+//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+//    |> Array.zip allInputs 
+//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
+//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
+//    |> Array.map resultsToArray

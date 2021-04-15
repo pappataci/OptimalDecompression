@@ -58,8 +58,15 @@ let strategyToDisk fileName (finalSubFolder:option<string>) (results:seq<float *
 type BruteForceOutput = CsvProvider<"BreakFract, Exp, TimeToSurf, AscentTime, AscentRisk, SurfaceRisk, TotRisk, InitTimeAtSurf" , 
                                     Schema = "float, float, float, float, float, float, float, float", HasHeaders = true >
 
-let bruteForceToDisk (fileName:string) resultForThisInitCondition =
+let bruteForceNoParamToDisk (fileName:string) resultForThisInitCondition =
     let table = new BruteForceOutput(Seq.map (fun x -> BruteForceOutput.Row(x) )  resultForThisInitCondition  )
     let subfolder =  @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults\BruteForce\"
     table.Save (subfolder + fileName)
 
+
+
+type BruteForceInitCond = CsvProvider<"BottomTime, MaximumDepth, MaxRisk, BreakFract, Exp, TimeToSurf, AscentTime, AscentRisk, SurfaceRisk, TotRisk, InitTimeAtSurf" , 
+                                       Schema = "float, float, float, float, float, float, float, float, float, float, float" ,
+                                       HasHeaders = true > 
+
+//let dumpBruteForceAnalysisToDisk (simulationResults: Option<SimulationResults>[])

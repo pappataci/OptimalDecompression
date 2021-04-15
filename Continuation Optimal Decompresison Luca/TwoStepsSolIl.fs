@@ -153,7 +153,9 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:fl
     {AscentResults =  strategyResult
      AscentParams = { BreakFraction = breakFractExpVec.[0]
                       Exponent      = breakFractExpVec.[1]
-                      TimeToSurface = deltaTimeToSurface} }
+                      TimeToSurface = deltaTimeToSurface} 
+     MissionParams = {BottomTime = bottomTime
+                      MaximumDepth = maximumDepth } }
 
 let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
     seq{ for breakFraction in seqBreakFractions do
@@ -172,6 +174,10 @@ let resultsToArray (inputVec:float[], result:StrategyResults) =
 let hasExceededMaxRisk maxAllowedRisk (s:SimulationResults)  = 
     s.AscentResults.TotalRisk > maxAllowedRisk 
 
+let hasExceededMaxAllowedRisk  (initCondition:float[]) = initCondition.[2]
+                                                         |> pDCSToRisk
+                                                         |> hasExceededMaxRisk
+
 let getSimulationResultIfNot hasExceededMaxAllowedRisk (strategyRes : Option<SimulationResults> )  = 
     match strategyRes with
     | None -> None
@@ -179,6 +185,23 @@ let getSimulationResultIfNot hasExceededMaxAllowedRisk (strategyRes : Option<Sim
                     None
                 else
                     Some s
+
+let tryFindSolutionWithAllParams integrationTimeSettings optimizationParams (initCondition:float[]) hasExceededMyMaxAllowedRisk  timeToSurface  =  
+    //let hasExceededMyMaxAllowedRisk = hasExceededMaxAllowedRisk initCondition
+    optimizationParams 
+    |> Seq.map (simulateStratWithParams integrationTimeSettings  initCondition  timeToSurface) 
+    |> SeqExtension.takeWhileWithLast hasExceededMyMaxAllowedRisk
+    |> Seq.tryLast
+    |> getSimulationResultIfNot hasExceededMyMaxAllowedRisk
+
+
+let tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid  (timesToSurfVec:float[]) (initCondition:float[])=
+    let hasExceededMyMaxAllowedRisk = hasExceededMaxAllowedRisk initCondition
+    timesToSurfVec
+    |> Seq.map (tryFindSolutionWithAllParams integrationTimeSettings paramsGrid initCondition hasExceededMyMaxAllowedRisk )
+    |> SeqExtension.takeWhileWithLast Option.isNone
+    |> Seq.last
+    |> getSimulationResultIfNot hasExceededMyMaxAllowedRisk
 
 //let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
 //    let maxAllowedRisk = pDCSToRisk pDCS
