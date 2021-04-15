@@ -390,3 +390,55 @@
 //    globalVar <- x
 //    x
 
+//deltaTimeSurface
+
+    //let solveAscentProblemWithTheseGrids (paramsGrid:float[][]) (initCondGrid:float[][]) (integrationTime, controlToIntegration) = 
+    //    let toTuple (x:float[]) = 
+    //        x.[0], x.[1], x.[2]
+
+    //    let createOutputName (x:float[]) = 
+    //        let bt, maxDepth, probBound = toTuple x 
+    //        printfn "solving %A" x
+    //        "BT_" +  (sprintf "%i" (int bt) ) + "_" + "MD_"  
+    //        + (sprintf "%i" (int maxDepth) ) + "PB" + sprintf "%.1f" (probBound*100.0) + ".csv"
+        
+    //    initCondGrid
+    //    |> Array.map  ( fun initCond -> let outputName = createOutputName initCond
+    //                                    initCond
+    //                                    |> toTuple   
+    //                                    |> getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) 
+    //                                    |>  bruteForceToDisk outputName   )
+           
+    //let example = initConditionsGrid |> Array.take 2
+    //solveAscentProblemWithTheseGrids  paramsGrid  initConditionsGrid  (integrationTime, controlToIntegration)
+    //|> ignore
+
+//let allInputs = create3DGrid breakFracSeq exponents deltaTimeSurface
+
+//let resultsToArray (inputVec:float[], result:StrategyResults) =
+//    (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
+//     result.TotalRisk, result.InitTimeAtSurface)
+
+//let getOptimalForThisInputCondition (bottomTime, maximumDepth, pDCS) =
+//    let maxAllowedRisk = pDCSToRisk pDCS
+//    allInputs
+//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+//    |> Array.zip allInputs 
+//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
+//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
+//    |> Array.map resultsToArray
+
+//let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
+//    let maxAllowedRisk = pDCSToRisk pDCS
+//    paramsGrid
+//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+//    |> Array.zip paramsGrid 
+//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
+//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
+//    |> Array.map resultsToArray
+
+//breakParams is the grid of internal params (break , exp) 
+
+//  let initCondition = [| bottomTime; maximumDepth; pDCS|] 
+
+//(fun (x:StrategyResults) -> x.TotalRisk <= maxAllowedRisk) )

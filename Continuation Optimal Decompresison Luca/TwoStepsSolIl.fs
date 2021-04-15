@@ -140,35 +140,71 @@ let findOptimalAscentGen (integrationTime, controlToIntegration) (bottomTime, ma
                                   |> getTimeAndAccruedRiskForThisStrategy myEnv initState
         optimizedDiveResult , Some optimalParams
     
-let simulateStratWithParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) (simParams:double[])=
-    let initState, residualRiskBound, myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:float[]) deltaTimeToSurface  (breakFractExpVec:float[])    =
+    let bottomTime = initCond.[0]
+    let maximumDepth = initCond.[1]
+    let pDCS = initCond.[2]
+    let simParams = Array.append breakFractExpVec [|deltaTimeToSurface|]
+    let initState, _ , myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+    //printfn "%A" breakFractExpVec
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
-    getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
+    let strategyResult = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
+    //printfn "%A" strategyResult
+    {AscentResults =  strategyResult
+     AscentParams = { BreakFraction = breakFractExpVec.[0]
+                      Exponent      = breakFractExpVec.[1]
+                      TimeToSurface = deltaTimeToSurface} 
+     MissionParams = {BottomTime = bottomTime
+                      MaximumDepth = maximumDepth } }
 
-let createInputForSim (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
+let create3DGrid (seqBreakFractions:seq<float>) (seqExponents:seq<float>) (seqDeltaTimeToSurface:seq<float>) = 
     seq{ for breakFraction in seqBreakFractions do
             for exponent in seqExponents do
                 for deltaTimeToSurface in seqDeltaTimeToSurface -> [|breakFraction ; exponent; deltaTimeToSurface|] }
     |> Seq.toArray
 
-let getSolutions (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)  = 
-    simulateStratWithParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+let create2DGrid (breakFracSeq:seq<float>)  (seqExponents :seq<float>)  = 
+    seq { for breakFraction in breakFracSeq do
+            for exponent in seqExponents  -> [|breakFraction ; exponent|] }
 
-let getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) (allParams:float[][])  = 
-    let simulator = getSolutions (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) 
-    allParams
-    |> Array.Parallel.map  simulator
+let successfulResultToArray ( result:SimulationResults ) =
+    (result.MissionParams.BottomTime, result.MissionParams.MaximumDepth,
+     result.AscentParams.BreakFraction, result.AscentParams.Exponent,result.AscentParams.TimeToSurface, 
+     result.AscentResults.AscentTime, result.AscentResults.AscentRisk, result.AscentResults.SurfaceRisk,
+     result.AscentResults.TotalRisk, result.AscentResults.InitTimeAtSurface)
+
+let hasExceededMaxRisk maxAllowedRisk (s:SimulationResults)  = 
+    s.AscentResults.TotalRisk > maxAllowedRisk 
+
+let hasExceededMaxAllowedRisk  (initCondition:float[]) = initCondition.[2]
+                                                         |> pDCSToRisk
+                                                         |> hasExceededMaxRisk
+
+let getSimulationResultIfNot hasExceededMaxAllowedRisk (strategyRes : Option<SimulationResults> )  = 
+    match strategyRes with
+    | None -> None
+    | Some s -> if ( s |> hasExceededMaxAllowedRisk)   then
+                    None
+                else
+                    Some s
+
+let tryFindSolutionWithAllParams integrationTimeSettings optimizationParams (initCondition:float[]) hasExceededMyMaxAllowedRisk  timeToSurface  =  
+    //let hasExceededMyMaxAllowedRisk = hasExceededMaxAllowedRisk initCondition
+    optimizationParams 
+    |> Seq.map (simulateStratWithParams integrationTimeSettings  initCondition  timeToSurface) 
+    |> SeqExtension.takeWhileWithLast hasExceededMyMaxAllowedRisk
+    |> Seq.tryLast
+    |> getSimulationResultIfNot hasExceededMyMaxAllowedRisk
 
 
-let resultsToArray (inputVec:float[], result:StrategyResults) =
-    (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
-     result.TotalRisk, result.InitTimeAtSurface)
+let tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid  (timesToSurfVec:float[]) (initCondition:float[])=
+    let hasExceededMyMaxAllowedRisk = hasExceededMaxAllowedRisk initCondition
+    timesToSurfVec
+    |> Seq.map (tryFindSolutionWithAllParams integrationTimeSettings paramsGrid initCondition hasExceededMyMaxAllowedRisk )
+    |> SeqExtension.takeWhileWithLast Option.isNone
+    |> Seq.last
+    |> getSimulationResultIfNot hasExceededMyMaxAllowedRisk
 
-let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
-    let maxAllowedRisk = pDCSToRisk pDCS
-    paramsGrid
-    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
-    |> Array.zip paramsGrid 
-    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
-    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
-    |> Array.map resultsToArray
+let resultsToInputForWriter  =
+    (Array.choose id ) >>  Array.map  successfulResultToArray
+

@@ -17,6 +17,17 @@ type StrategyResults = {AscentTime  : float
                         InitTimeAtSurface : float 
                         AscentHistory : Option<seq<seq<State<LEStatus>>>>}
 
+type AscentParams = { BreakFraction : float 
+                      Exponent      : float 
+                      TimeToSurface : float }
+
+
+type MissionParams = { BottomTime :float 
+                       MaximumDepth : float }
+
+type SimulationResults = { AscentResults : StrategyResults 
+                           AscentParams : AscentParams 
+                           MissionParams : MissionParams }
 
 let initStateAndEnvDescent maxSimTime  (integrationTime, controlToIntegration)   maximumDepth  bottomTime  = 
     let strategyOutput, myEnv = getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, integrationTime ) (Some maxSimTime) 1   maximumDepth  bottomTime maximumDepth 
