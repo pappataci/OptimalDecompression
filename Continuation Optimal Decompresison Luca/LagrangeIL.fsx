@@ -43,4 +43,8 @@ let timesToSurfVec = [1.0 ; 2.0; 5.0; 20.0; 50.0] @ [100.0 .. 50.0 .. 500.0]
                      |> Array.ofList
   
 let resultsParallel = initCondsGrid
-                     |> Array.Parallel.map ( tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid timesToSurfVec )
+                     |> Array.Parallel.map 
+                       ( tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid timesToSurfVec )
+         
+let resultsTable = resultsParallel
+                   |> resultsToInputForWriter // called out' in FSI

@@ -427,3 +427,18 @@
 //    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
 //    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
 //    |> Array.map resultsToArray
+
+//let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
+//    let maxAllowedRisk = pDCSToRisk pDCS
+//    paramsGrid
+//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
+//    |> Array.zip paramsGrid 
+//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
+//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
+//    |> Array.map resultsToArray
+
+//breakParams is the grid of internal params (break , exp) 
+
+//  let initCondition = [| bottomTime; maximumDepth; pDCS|] 
+
+//(fun (x:StrategyResults) -> x.TotalRisk <= maxAllowedRisk) )

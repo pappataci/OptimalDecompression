@@ -65,8 +65,11 @@ let bruteForceNoParamToDisk (fileName:string) resultForThisInitCondition =
 
 
 
-type BruteForceInitCond = CsvProvider<"BottomTime, MaximumDepth, MaxRisk, BreakFract, Exp, TimeToSurf, AscentTime, AscentRisk, SurfaceRisk, TotRisk, InitTimeAtSurf" , 
-                                       Schema = "float, float, float, float, float, float, float, float, float, float, float" ,
+type BruteForceWInitCond = CsvProvider<"BottomTime, MaximumDepth, BreakFract, Exp, TimeToSurf, AscentTime, AscentRisk, SurfaceRisk, TotRisk, InitTimeAtSurf" , 
+                                       Schema = "float, float, float, float, float, float, float, float, float, float" ,
                                        HasHeaders = true > 
 
-//let dumpBruteForceAnalysisToDisk (simulationResults: Option<SimulationResults>[])
+let resultsTableToDisk (fileName:string) (resultsTable:(float*float*float*float*float*float*float*float*float*float)[]) = 
+    let table = new BruteForceWInitCond(Array.map (fun x -> BruteForceWInitCond.Row(x) ) resultsTable)
+    let subfolder =  @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\NetResults\BruteForceOptimal\"
+    table.Save (subfolder + fileName)

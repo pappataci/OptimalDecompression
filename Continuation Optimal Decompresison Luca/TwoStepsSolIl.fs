@@ -167,9 +167,11 @@ let create2DGrid (breakFracSeq:seq<float>)  (seqExponents :seq<float>)  =
     seq { for breakFraction in breakFracSeq do
             for exponent in seqExponents  -> [|breakFraction ; exponent|] }
 
-let resultsToArray (inputVec:float[], result:StrategyResults) =
-    (inputVec.[0], inputVec.[1], inputVec.[2], result.AscentTime, result.AscentRisk, result.SurfaceRisk,
-     result.TotalRisk, result.InitTimeAtSurface)
+let successfulResultToArray ( result:SimulationResults ) =
+    (result.MissionParams.BottomTime, result.MissionParams.MaximumDepth,
+     result.AscentParams.BreakFraction, result.AscentParams.Exponent,result.AscentParams.TimeToSurface, 
+     result.AscentResults.AscentTime, result.AscentResults.AscentRisk, result.AscentResults.SurfaceRisk,
+     result.AscentResults.TotalRisk, result.AscentResults.InitTimeAtSurface)
 
 let hasExceededMaxRisk maxAllowedRisk (s:SimulationResults)  = 
     s.AscentResults.TotalRisk > maxAllowedRisk 
@@ -203,18 +205,6 @@ let tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid  (t
     |> Seq.last
     |> getSimulationResultIfNot hasExceededMyMaxAllowedRisk
 
-//let getOptimalForThisInputCondition  paramsGrid (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS) =
-//    let maxAllowedRisk = pDCSToRisk pDCS
-//    paramsGrid
-//    |> getAllSolutionsForThisProblem  (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
-//    |> Array.zip paramsGrid 
-//    |> Array.filter (fun  (inputVec, result )  -> result.TotalRisk < maxAllowedRisk )
-//    |> Array.sortBy ( fun (inputV, res) -> res.AscentTime)
-//    |> Array.map resultsToArray
-
-//breakParmas is the grid of internal params (break , exp) 
-
-//  let initCondition = [| bottomTime; maximumDepth; pDCS|] 
-
-//(fun (x:StrategyResults) -> x.TotalRisk <= maxAllowedRisk) )
+let resultsToInputForWriter  =
+    (Array.choose id ) >>  Array.map  successfulResultToArray
 
