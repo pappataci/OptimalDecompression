@@ -120,3 +120,13 @@ let getInitCondAfterDescentWithDefaultTimesResettingTimeNRisk stepsFromMaxToTarg
 
     ( finalState 
      |> resetTissueRiskAndTime , ascentLimit , env )
+
+let simulateSurfaceWithInitPressures (initPressures:float[]) (integrationTime, controlToIntegrationRatio) = 
+    let initTimeAndtDepth = 0.0, 0.0 
+    let initState = createState  initTimeAndtDepth initPressures
+    let atSurface = (fun _ -> 0.0) |> Seq.initInfinite
+    StrategyInput (  {MaxPDCS = infinity ; MaxSimTime = infinity ; PenaltyForExceedingRisk = 0.0 ; 
+                      RewardForDelivering = 0.0 ; PenaltyForExceedingTime = 0.0 ; IntegrationTime = integrationTime ;
+                      ControlToIntegrationTimeRatio = controlToIntegrationRatio; DescentRate = 0.0; MaximumDepth = 0.0 ;
+                      BottomTime = 0.0 ; LegDiscreteTime = 0.0 }   ,  Ascent  atSurface )
+    |> simulateStrategyWithInput (Some initState)

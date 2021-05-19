@@ -52,5 +52,7 @@ let main _ =
     resultsTable
     |> resultsTableToDisk "initResultDeepestDives_3Dot3Prob.csv"
 
+    printfn "results written to disk"
+
     System.Console.Read() |> ignore
     0

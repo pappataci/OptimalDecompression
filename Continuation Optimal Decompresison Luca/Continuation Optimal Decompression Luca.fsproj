@@ -109,6 +109,7 @@
     <None Include="DynamicProgramming.fsx" />
     <None Include="LarsAlgorithm.fsx" />
     <None Include="LagrangeIL.fsx" />
+    <None Include="InterpolationIL.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">
@@ -135,8 +136,20 @@
     <Reference Include="ILNumerics.numpy">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.numpy.dll</HintPath>
     </Reference>
+    <Reference Include="ILNumerics.Toolboxes.Drawing2">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Drawing2.dll</HintPath>
+    </Reference>
+    <Reference Include="ILNumerics.Toolboxes.Interpolation">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Interpolation.dll</HintPath>
+    </Reference>
+    <Reference Include="ILNumerics.Toolboxes.MachineLearning">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.MachineLearning.dll</HintPath>
+    </Reference>
     <Reference Include="ILNumerics.Toolboxes.Optimization">
       <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Optimization.dll</HintPath>
+    </Reference>
+    <Reference Include="ILNumerics.Toolboxes.Statistics">
+      <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Statistics.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.ML.Probabilistic">
       <HintPath>..\packages\Microsoft.ML.Probabilistic.0.3.1912.403\lib\netstandard2.0\Microsoft.ML.Probabilistic.dll</HintPath>

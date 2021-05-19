@@ -14,32 +14,6 @@ let inline (!!) (x:Array<'T> ) = InArray<'T>.op_Implicit(x)
 let inline  (!!!) (x:float[]) :InArray<float>  = Array.map float32 x 
                                                   |> InArray.op_Implicit
 
- //compute cost abstract example // for now we avoid extra fcns (at the end)
- //let optimalSolutionForThisMission  
- //       missionSimulationParams // missionParams contain init condition, bottom time, max depth, target depth, costToGoFcn
- //       initialState // LEState
- //       optimizer // optimizer takes care of the optimization
- //       initialGuess
- //       =
-
-
-//let a = ILMath.vector<float>(1.0, 2.0)
-
-//let b = ILMath.vector<float>(3.2,2.2)
-
-//let c = a  + b 
-
-//let a = !(vector<float>(1.0,2.0, 4.3))
-//let b = !vector<float>(3.2,2.2 , 1.23)
-//let c =  (a+b)
-
-
-//let d = !(ones(2L)) 
-
-
-//let a' =  
-
-// function experiment
 
 let myFunction (x: InArray<double>) =
     use _scope =  Scope.Enter(x)
