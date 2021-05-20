@@ -2,6 +2,7 @@
 module OneLegStrategy
 
 open ReinforcementLearning
+open ToPython
 open InitDescent
 open LEModel
 open InputDefinition
@@ -136,6 +137,7 @@ let createAscentSimpleTrajectory controlTime (bottomTime, maximumDepth) (linearS
     | _     -> ( seq{ yield! linearPart ; yield! initTanhPart}   ) 
 
 let private   executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
+    
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
 
 let   computeUpToSurface leInitState  ascentStrategy environment = 
@@ -143,6 +145,7 @@ let   computeUpToSurface leInitState  ascentStrategy environment =
     |> Seq.scan (executeThisStrategy  environment) leInitState
 
 let simulateStrategyUntilZeroRisk initStateAtSurface  environment =
+     
     let infiniteSequenceOfZeroDepth = Seq.initInfinite ( fun _ -> Control  0.0)
     infiniteSequenceOfZeroDepth
     |> Seq.scan (executeThisStrategy environment) initStateAtSurface
@@ -187,6 +190,17 @@ let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajecto
      InitTimeAtSurface = initTimeAtSurface
      AscentHistory = Some ascentHistory }
 
+
+let simulateSurfaceWithInitPressures (integrationTime, controlToIntegrationRatio) (initPressures:float[])  = 
+    let initTimeAndtDepth = 0.0, 0.0 
+    let initState = createState  initTimeAndtDepth initPressures
+    let env, _ ,  _ , _  , _=  getEnvInitStateAndAscentLimiter  ( infinity    , infinity , 
+                                                                  0.0 ,  0.0 , 0.0 , 
+                                                                  integrationTime  , controlToIntegrationRatio, 
+                                                                  MissionConstraints.descentRateLimit ,  10.0, 2.0 ,  integrationTime  )
+    simulateStrategyUntilZeroRisk initState  env
+
+    
 // given all parameters solve for the current ascent (using bisection solver)
 
 

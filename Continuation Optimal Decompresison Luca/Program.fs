@@ -19,9 +19,7 @@ let getTotalRiskResult aResult =
                               x.AscentParams.Exponent, x.AscentParams.BreakFraction)
     | None -> printfn "No result"
 
-
-[<EntryPoint>]
-let main _ =
+let mainOld _ =
     
     let integrationTime, controlToIntegration = 0.1 , 1 
     let integrationTimeSettings = integrationTime, controlToIntegration
@@ -56,3 +54,37 @@ let main _ =
 
     System.Console.Read() |> ignore
     0
+
+[<EntryPoint>]
+let main _ = 
+
+    let integrationTime, controlToIntegration = 0.1 , 1 
+    let integrationTimeSettings = integrationTime, controlToIntegration
+    let peakPressure = 1.5
+    let noRiskPressure = 0.7
+    
+    let initPressures =  [| [|peakPressure;noRiskPressure ; noRiskPressure|] ; 
+                            [|noRiskPressure;peakPressure;noRiskPressure|] ;
+                            [|noRiskPressure;noRiskPressure;peakPressure|] ; 
+                            [|peakPressure;peakPressure;peakPressure|] |]
+
+    let simulator = simulateSurfaceWithInitPressures (integrationTime, controlToIntegration) 
+    let press = initPressures
+                |> Array.map simulator
+        //Array.take 3 
+       
+    let riskCompute getter = press 
+                            |> getter 
+                            |> Array.map  ( Seq.last >>  (fun (State  x) -> x.Risk.AccruedRisk) ) 
+                            |> Array.sum
+
+    let riskUnc = riskCompute (Array.take 3)
+    let riskCoupled = riskCompute (fun x ->   [| x |> Array.last|] )  
+    //printfn "unc %A" riskUnc
+    //printfn "coupled  %A" riskCoupled
+
+    //printfn "difference %A" (riskUnc - riskCoupled)
+
+    //let riskCoupled = press |> 
+
+    0 
