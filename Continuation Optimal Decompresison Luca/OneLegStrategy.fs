@@ -190,7 +190,6 @@ let getTimeAndAccruedRiskForThisStrategy environment leInitState (ascentTrajecto
      InitTimeAtSurface = initTimeAtSurface
      AscentHistory = Some ascentHistory }
 
-
 let simulateSurfaceWithInitPressures (integrationTime, controlToIntegrationRatio) (initPressures:float[])  = 
     let initTimeAndtDepth = 0.0, 0.0 
     let initState = createState  initTimeAndtDepth initPressures
@@ -200,15 +199,18 @@ let simulateSurfaceWithInitPressures (integrationTime, controlToIntegrationRatio
                                                                   MissionConstraints.descentRateLimit ,  10.0, 2.0 ,  integrationTime  )
     simulateStrategyUntilZeroRisk initState  env
 
+let getRiskAndTimeForThisTissueAtDepth depth pInit tissueIdx integrationTimeSettings  = 
+
+    let computePressure  (idx:int) = 
+        if idx = tissueIdx then
+            pInit
+        else
+            computeZeroRiskPressureForThisTissueAtDepth depth ModelParams.threshold.[idx]
+
+    let initialPressures = [| 0 .. (( ModelParams.threshold |> Array.length) - 1) |]
+                           |> Array.map computePressure
     
-// given all parameters solve for the current ascent (using bisection solver)
-
-
-
-
-//let solver = BisectionSolver()
-//solver.LowerBound <- 0.0
-//solver.UpperBound <- 2.0
-
-//solver.TargetFunction <- System.Func<_,_> (Math.Cos)
-//let result = solver.Solve()
+    initialPressures
+    |> simulateSurfaceWithInitPressures integrationTimeSettings
+    |> Seq.last 
+    |> (fun x -> leStatus2Risk x, leStatus2ModelTime x  )

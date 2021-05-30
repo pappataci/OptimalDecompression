@@ -141,6 +141,10 @@ module LEModel  =
     let IsAtSurfaceLevel depth =
         Operators.abs(depth) <  MissionConstraints.depthTolerance
 
+    let computeZeroRiskPressureForThisTissueAtDepth actualDepth leParamThresholdForThisTissue =
+        let actualAmbientPressure = depth2AmbientPressure actualDepth
+        actualAmbientPressure +  leParamThresholdForThisTissue - dPFVG
+
     let areAllTissueTensionsAtMostEqualToAmbientN2Press  actualAmbientPressure  (leParamsThresholds: float[] ) (actualTissueTensions:float[])  = 
         actualTissueTensions 
         |> Array.map2 (fun tissueTensionThreshold  tissueTension  ->  tissueTension < actualAmbientPressure +  tissueTensionThreshold - dPFVG  )   leParamsThresholds
@@ -201,6 +205,8 @@ module LEModel  =
 
     let createFictitiouStateFromDepthTime (initTime, initDepth) = 
         createState (initTime, initDepth ) [|1.0;1.0;1.0|]
+
+
         
 module USN93_EXP = 
     open InitDescent

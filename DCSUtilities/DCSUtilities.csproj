@@ -76,6 +76,9 @@
       <HintPath>..\packages\Keras.NET.3.7.4.2\lib\netstandard2.0\Keras.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Numpy.Bare, Version=3.7.1.4, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\Numpy.Bare.3.7.1.21\lib\netstandard2.0\Numpy.Bare.dll</HintPath>
     </Reference>

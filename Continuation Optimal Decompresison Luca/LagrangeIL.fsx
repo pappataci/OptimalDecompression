@@ -27,6 +27,7 @@ open LEModel
 open AscentSimulator
 open OneLegStrategy
 open TwoStepsSolIl
+open InputDefinition
 
 //Initial Condition Grid Definition
 //let bottomTimes = [|30.0 .. 10.0 .. 60.0|] |> Array.toSeq
@@ -75,3 +76,23 @@ let riskCompute getter = press
 let riskUnc = riskCompute (Array.take 3)
 let riskCoupled = riskCompute (fun x ->   [| x |> Array.last|] ) 
 
+//start Krigging interpolation for 1D data
+
+//let defineZeroRiskPressureAtSurface  tissueIndex  =
+    //ModelParams.threshold
+
+let getRiskAndTimeForThisTissueAtDepth depth pInit tissueIdx integrationTimeSettings  = 
+
+    let computePressure  (idx:int) = 
+        if idx = tissueIdx then
+            pInit
+        else
+            computeZeroRiskPressureForThisTissueAtDepth depth ModelParams.threshold.[idx]
+
+    let initialPressures = [| 0 .. (( ModelParams.threshold |> Array.length) - 1) |]
+                           |> Array.map computePressure
+    
+    initialPressures
+    |> simulateSurfaceWithInitPressures integrationTimeSettings
+    |> Seq.last 
+    |> (fun x -> leStatus2Risk x, leStatus2ModelTime x  )
