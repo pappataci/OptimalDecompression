@@ -40,6 +40,9 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
     </Reference>
+    <Reference Include="FSharp.Core, Version=5.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\FSharp.Core.5.0.1\lib\netstandard2.0\FSharp.Core.dll</HintPath>
+    </Reference>
     <Reference Include="ILNumerics.Computing, Version=5.5.0.0, Culture=neutral, PublicKeyToken=8d9bf50ef854734d, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\..\..\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Computing.dll</HintPath>
@@ -82,6 +85,8 @@
     <Compile Include="KrigingInterpolator.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SurfaceMapper.cs" />
+    <Compile Include="SurfacePressureGridCreator.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

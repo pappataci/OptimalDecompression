@@ -3,12 +3,12 @@
 #r @"C:\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.numpy.dll"
 #r @"C:\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Optimization.dll"
 #r @"C:\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Toolboxes.Interpolation.dll"
-#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\FuncApprox\bin\Debug\FuncApprox.dll"
+//#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\FuncApprox\bin\Debug\FuncApprox.dll"
 
 open ILNumerics 
 open type ILMath
 open type Toolboxes.Interpolation
-open FuncApprox
+//open FuncApprox
 
 let inline (!) (x :RetArray<'T>) = Array<'T>.op_Implicit(x)
 let inline (!!) (x:Array<'T> ) = InArray<'T>.op_Implicit(x) 
@@ -33,7 +33,7 @@ let result = kriging( (!!)Y, (!!) X1', (!!) X1', null,  X3) |> (Seq.toArray >> V
 
 // linear interpolation example
 
-let interpolator = KrigingInterpolator(X1', Y)
+//let interpolator = KrigingInterpolator(X1', Y)
 
          
          //|> Seq.map float

@@ -136,7 +136,7 @@ let createAscentSimpleTrajectory controlTime (bottomTime, maximumDepth) (linearS
     | true  -> linearPart
     | _     -> ( seq{ yield! linearPart ; yield! initTanhPart}   ) 
 
-let private   executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
+let private  executeThisStrategy   (Environment environm: Environment<LEStatus, float, obj> )  (actualLEStatus:State<LEStatus>)  nextDepth   = 
     
     (environm actualLEStatus    nextDepth).EnvironmentFeedback.NextState
 
@@ -199,18 +199,27 @@ let simulateSurfaceWithInitPressures (integrationTime, controlToIntegrationRatio
                                                                   MissionConstraints.descentRateLimit ,  10.0, 2.0 ,  integrationTime  )
     simulateStrategyUntilZeroRisk initState  env
 
-let getRiskAndTimeForThisTissueAtDepth depth pInit tissueIdx integrationTimeSettings  = 
+let seqOfStatesToRiskAndTime (x: seq<State<LEStatus>>) = 
+    x
+    |> Seq.last
+    |> (fun x -> leStatus2Risk x, leStatus2ModelTime x  )
+
+let getSurfaceRiskNTimeWithInitPress  (integrationTime, controlToIntegrationRatio) (initPressures:float[]) =
+    initPressures
+    |> simulateSurfaceWithInitPressures   (integrationTime, controlToIntegrationRatio)
+    |> seqOfStatesToRiskAndTime
+
+let getRiskAndTimeForThisTissueAtDepth pInit tissueIdx integrationTimeSettings  = 
 
     let computePressure  (idx:int) = 
         if idx = tissueIdx then
             pInit
         else
-            computeZeroRiskPressureForThisTissueAtDepth depth ModelParams.threshold.[idx]
+            computeZeroRiskPressureForThisTissueAtDepth 0.0 ModelParams.threshold.[idx]
 
     let initialPressures = [| 0 .. (( ModelParams.threshold |> Array.length) - 1) |]
                            |> Array.map computePressure
     
     initialPressures
     |> simulateSurfaceWithInitPressures integrationTimeSettings
-    |> Seq.last 
-    |> (fun x -> leStatus2Risk x, leStatus2ModelTime x  )
+    |> seqOfStatesToRiskAndTime

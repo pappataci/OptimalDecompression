@@ -21,8 +21,9 @@ namespace FuncApprox
             interpolator = new KrigingInterpolatorDouble(Y, X);
         }
 
-        public Array<double> Apply(Array<double> X, object p)
+        public Array<double> Apply(Array<double> X )
         {
+            Console.WriteLine("test");
             return interpolator.Apply(X);
         }
 
