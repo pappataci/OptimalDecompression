@@ -41,29 +41,34 @@ namespace FuncApprox
             var pressures = surfaceMapValues.Item1;
             var risks = surfaceMapValues.Item2;
 
-            // third tissue
-            Array<double> pressure0 = reshape<double>(pressures[0], 1, 50);
-            Array<double> risk0 = reshape<double>(risks[0], 1, 50);
+            var adimMapper = new Kriging1DAdimMapper(pressures[0], risks[0]);
+            Console.WriteLine(adimMapper.EstimateMapValue(5.513));
 
-            var initPress = (double) pressure0[0];
-            Console.WriteLine(pressure0);
-            Console.WriteLine();
-            Console.WriteLine(risk0);
+            // third tissue
+            //Array<double> pressure0 = reshape<double>(pressures[0], 1, 50);
+            //Array<double> risk0 = reshape<double>(risks[0], 1, 50);
+
+            //var initPress = (double) pressure0[0];
+            //Console.WriteLine(pressure0);
+            //Console.WriteLine();
+            //Console.WriteLine(risk0);
+
+            
             //Console.WriteLine(pressure0.S);
 
 
             //KrigingInterpolator test = new KrigingInterpolator(risk0, pressure0);
-            var interpolator0 = CreateInterpolator(pressure0, risk0  );
+            //var interpolator0 = CreateInterpolator(pressure0, risk0  );
 
 
-            var riskEstimate = interpolator0.Apply(3.8);
-            Console.WriteLine(riskEstimate);
+            ////var riskEstimate = interpolator0.Apply(3.8);
+            //Console.WriteLine(riskEstimate);
 
-            Console.WriteLine("one d mapper example");
+            //Console.WriteLine("one d mapper example");
 
-            var adimMapper = new AdimMapper(pressure0);
+            //var adimMapper = new AdimMapper(pressure0);
 
-            Array<double> adimVec = adimMapper.GetAdim(pressure0);
+            //Array<double> adimVec = adimMapper.GetAdim(pressure0);
             
             //new KrigingInterpolatorDouble(Y, X);
 

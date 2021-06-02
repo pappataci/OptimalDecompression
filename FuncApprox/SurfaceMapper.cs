@@ -34,14 +34,27 @@ namespace FuncApprox
 
     public class Kriging1DAdimMapper
     {
-        private double scaleX, scaleY;
-
-        
-
+        private AdimMapper xFieldMapper;
+        private AdimMapper yFieldMapper;
+        private KrigingInterpolatorDouble interpolator;
         public Kriging1DAdimMapper(Array<double> xField, Array<double> yField)
         {
-            //var a = xField["end"];
+            xFieldMapper = new AdimMapper(xField);
+            yFieldMapper = new AdimMapper(yField);
+
+            Array<double> xAdimField = xFieldMapper.GetAdim(xField);
+            Array<double> yAdimField = yFieldMapper.GetAdim(yField);
+            interpolator = new KrigingInterpolatorDouble(yAdimField, xAdimField);
+
         }
+
+        public double EstimateMapValue(double dimensionalX)
+        {
+            var adimX = xFieldMapper.dimToAdim(dimensionalX);
+            var adimOutput = (double) interpolator.Apply(adimX);
+            return yFieldMapper.adimToDim(adimOutput);
+        }
+
     }
 
     public class AdimMapper
@@ -65,7 +78,8 @@ namespace FuncApprox
         {
             using(Scope.Enter(dimVector))
             {
-                return ((dimVector - minValue) / range);
+                Array<double> actualVector = reshape<double>(dimVector, 1, dimVector.Length);
+                return ((actualVector - minValue) / range);
             }
         }
 
