@@ -45,7 +45,7 @@ namespace FuncApprox
             Array<double> pressure0 = reshape<double>(pressures[0], 1, 50);
             Array<double> risk0 = reshape<double>(risks[0], 1, 50);
 
-
+            var initPress = (double) pressure0[0];
             Console.WriteLine(pressure0);
             Console.WriteLine();
             Console.WriteLine(risk0);
@@ -58,6 +58,13 @@ namespace FuncApprox
 
             var riskEstimate = interpolator0.Apply(3.8);
             Console.WriteLine(riskEstimate);
+
+            Console.WriteLine("one d mapper example");
+
+            var adimMapper = new AdimMapper(pressure0);
+
+            Array<double> adimVec = adimMapper.GetAdim(pressure0);
+            
             //new KrigingInterpolatorDouble(Y, X);
 
             //////Console.WriteLine(response);
