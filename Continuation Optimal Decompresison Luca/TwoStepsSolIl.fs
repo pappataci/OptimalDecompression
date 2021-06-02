@@ -146,10 +146,10 @@ let simulateStratWithParams (integrationTime, controlToIntegration) (initCond:fl
     let pDCS = initCond.[2]
     let simParams = Array.append breakFractExpVec [|deltaTimeToSurface|]
     let initState, _ , myEnv, controlTime  = getSimParams (integrationTime, controlToIntegration) (bottomTime, maximumDepth, pDCS)
-    //printfn "%A" breakFractExpVec
+
     let optimalStrategy = generateAscentStrategyGen initState simParams controlTime
     let strategyResult = getTimeAndAccruedRiskForThisStrategy myEnv initState optimalStrategy
-    //printfn "%A" strategyResult
+
     {AscentResults =  strategyResult
      AscentParams = { BreakFraction = breakFractExpVec.[0]
                       Exponent      = breakFractExpVec.[1]

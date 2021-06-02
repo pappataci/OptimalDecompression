@@ -33,6 +33,9 @@
   <ItemGroup>
     <Reference Include="ILNumerics.Computing, Version=5.5.0.0, Culture=neutral, PublicKeyToken=8d9bf50ef854734d" />
     <Reference Include="ILNumerics.Core, Version=5.5.0.0, Culture=neutral, PublicKeyToken=9651adc37f12bb00" />
+    <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
+      <HintPath>..\packages\Newtonsoft.Json.13.0.1\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="Python.Included">
       <HintPath>..\packages\Python.Included.3.7.3.4\lib\netstandard2.0\Python.Included.dll</HintPath>
     </Reference>
@@ -63,6 +66,7 @@
   <ItemGroup>
     <None Include="ILNumerics_deploy\ILNImports1.targets" />
     <None Include="ILNumerics_deploy\ILNImports2.targets" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="ILNumerics_deploy\ilnumerics.lic" />

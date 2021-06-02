@@ -442,3 +442,11 @@
 //  let initCondition = [| bottomTime; maximumDepth; pDCS|] 
 
 //(fun (x:StrategyResults) -> x.TotalRisk <= maxAllowedRisk) )
+
+
+//let solver = BisectionSolver()
+//solver.LowerBound <- 0.0
+//solver.UpperBound <- 2.0
+
+//solver.TargetFunction <- System.Func<_,_> (Math.Cos)
+//let result = solver.Solve()

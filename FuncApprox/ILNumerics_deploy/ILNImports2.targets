@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Target Name="AfterCompileILN" AfterTargets="Compile" DependsOnTargets="ILNSetProperties;ILNDeployBuildItems;ILNBuildDeployItems;ILNDoLC;ILNDoCH;AfterLicCompileLS"></Target>
+
+  <Target Name="ILNSetProperties">
+    
+    <PropertyGroup>
+      <ILNumerics_Version>5.4.0.0</ILNumerics_Version>
+      <ILNHelperFileLocation>$(MSBuildProjectDirectory)\ILNumerics_deploy\ILNHelper.cs</ILNHelperFileLocation>
+      <ILNHelperFileLocation Condition="!Exists('$(ILNHelperFileLocation)')">$(MSBuildProjectDirectory)\ILNumerics_deploy\ILNHelper.vb</ILNHelperFileLocation>
+      <LicHelperFileContent>$([System.IO.File]::ReadAllText($(ILNHelperFileLocation)))</LicHelperFileContent>
+      <!-- Deal with unique lic helper class name -->
+      <LicHelperClassName>$([System.Text.RegularExpressions.Regex]::Match($(LicHelperFileContent),`ILLicHelper_[0-9a-zA-Z]+_`))</LicHelperClassName>
+      <LicHelperClassName Condition="$(LicHelperClassName) == ''">ILLicHelper</LicHelperClassName>
+      <LicHelperFullClassName>ILNumerics_Licensing.$(LicHelperClassName)</LicHelperFullClassName>
+      <!--for VB only: add RootNamespace to the lic helper class name (VS2010 compatibility)-->
+      <LicHelperFullClassName Condition="($(OptionStrict) != '') or ($(OptionExplicit) != '') or ($(MyType) != '')">$(RootNamespace).$(LicHelperFullClassName)</LicHelperFullClassName>
+      <LCSourcesFileName>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)\ILTempLCinput.lc</LCSourcesFileName>
+      <MainTargetAssemblyFileName>$(MSBuildProjectDirectory)\$(IntermediateOutputPath)$(TargetFilename)</MainTargetAssemblyFileName>
+      <LicCHCompileSourceFileName>$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)ga5llk91.tmp</LicCHCompileSourceFileName>
+
+      <Is64BitTarget Condition="'$(PlatformTarget)' != '' and $(PlatformTarget.Contains('64'))">true</Is64BitTarget>
+      <Is32BitTarget Condition="'$(PlatformTarget)' != '' and $(PlatformTarget.Contains('86'))">true</Is32BitTarget>
+      <IsAnyCpuTarget Condition="'$(PlatformTarget)' != '' and $(PlatformTarget.ToLower().Contains('any')) and $(PlatformTarget.ToLower().Contains('cpu'))">true</IsAnyCpuTarget>
+      <ILNInstallDir>$([MSBuild]::GetRegistryValueFromView(`HKEY_LOCAL_MACHINE\SOFTWARE\ILNumerics\ILNumerics Ultimate VS`, `InstallDir`, ``, RegistryView.Registry32))</ILNInstallDir>
+      <ILNLicenseKey>$([MSBuild]::GetRegistryValueFromView(`HKEY_CURRENT_USER\SOFTWARE\ILNumerics\ILNumerics_Ultimate_VS`, `LicenseKey`, ``, RegistryView.Registry32))</ILNLicenseKey>
+      <ILNIsInstalled>false</ILNIsInstalled>
+      <ILNIsInstalled Condition="'$(ILNInstallDir)'!='' AND '$(ILNLicenseKey)'!=''">true</ILNIsInstalled>
+      
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="ILNBuildDeployItems" Condition="$(TargetFramework.StartsWith('netcore')) AND '$(ILNIsInstalled)' != 'true'">
+    <PropertyGroup>
+      <ILNMiniDeployItemsBuilderDir>$(BaseIntermediateOutputPath)MiniDeployItemsBuilder</ILNMiniDeployItemsBuilderDir>
+      <ILNMiniDeployItemsBuilderProjContent><![CDATA[<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.0</TargetFramework>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <OutputPath>bin</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Reflection" Version="4.3.0" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="4.7.1" />
+  </ItemGroup>
+
+</Project>
+]]>
+</ILNMiniDeployItemsBuilderProjContent>
+    <ILNMiniDeployItemsBuilderProg>
+          <![CDATA[$([MSBuild]::Escape('
+using System;
+using System.Reflection;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Security;
+using System.IO;
+using System.Collections.Generic;
+
+public class MiniDeployItemsBuilderCore {
+
+    public static void Main(string[] args) {
+        
+        Console.WriteLine($"MiniDeployItemsBuilder: running on {(Environment.Is64BitProcess ? "64" : "32")} bit.");
+
+        if (args == null || args.Length != 2) {
+            Console.WriteLine("invalid parameters");
+        }
+
+        var myPaths = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.Location);
+        using (var ctx = new MetadataLoadContext(new PathAssemblyResolver(myPaths))) {
+
+        try {
+            var target = GH(ctx.LoadFromAssemblyPath(args[0]));
+            var filepath = Path.Combine(args[1].Trim(), "ga5llk91.tmp");
+            System.IO.File.WriteAllText(filepath,$"NoInstall|{target}");
+        } catch (UnauthorizedAccessException) {
+        } catch (SecurityException) {
+        } catch (System.IO.IOException) { }
+        
+        }
+    }
+
+    private static string GH(Assembly ass) {
+        var hashAlg = SHA1.Create();
+        var h = new List<byte>(1000);
+
+        void hsa(IEnumerable<MethodBase> b) {
+            foreach (var me in b.OrderBy(m => m.ToString()))
+                h.AddRange(hashAlg.ComputeHash(me.GetMethodBody().GetILAsByteArray()));
+        }
+        var types = ass.GetModules().OrderBy(mod => mod.ScopeName).SelectMany(m => m.GetTypes().OrderBy(typ => typ.FullName));
+        foreach (var t in types) {
+            foreach (var f in new[] { 16, 42, 22, 38 })
+                hsa(t.GetMethods((BindingFlags)f));
+            hsa(t.GetConstructors((BindingFlags)60));
+        }
+        return Convert.ToBase64String(hashAlg.ComputeHash(h.ToArray()));
+    }
+}')) 
+]]></ILNMiniDeployItemsBuilderProg>
+      <ILNMiniDeployItemsBuilderExe Condition="$(Is32BitTarget)=='true'">$(ILNMiniDeployItemsBuilderDir)\bin32\publish\MiniDeployItemsBuilder.exe</ILNMiniDeployItemsBuilderExe>
+      <ILNMiniDeployItemsBuilderExe Condition="$(Is32BitTarget)!='true'">$(ILNMiniDeployItemsBuilderDir)\bin64\publish\MiniDeployItemsBuilder.exe</ILNMiniDeployItemsBuilderExe>
+    </PropertyGroup>
+    <MakeDir Condition="!Exists('$(ILNMiniDeployItemsBuilderDir)')" Directories="$(ILNMiniDeployItemsBuilderDir)"/>
+    <WriteLinesToFile Condition="!Exists('$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.csproj')" File="$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.csproj" Lines="$(ILNMiniDeployItemsBuilderProjContent)"/>
+    <WriteLinesToFile Condition="!Exists('$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.cs')" File="$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.cs" Lines="$(ILNMiniDeployItemsBuilderProg)"/>
+    <MSBuild Condition="$(Is32BitTarget)=='true'" Targets="Restore;Build;Publish" Projects="$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.csproj" Properties="Configuration=Release;Platform=x86;OutputPath=bin32\" > </MSBuild>
+    <MSBuild Condition="$(Is32BitTarget)!='true'" Targets="Restore;Build;Publish" Projects="$(ILNMiniDeployItemsBuilderDir)\MinideployItemsBuilder.csproj" Properties="Configuration=Release;Platform=x64;OutputPath=bin64\" > </MSBuild>
+    <Exec Condition="Exists('$(ILNMiniDeployItemsBuilderExe)')" Command="$(ILNMiniDeployItemsBuilderExe) &quot;$(MainTargetAssemblyFileName)&quot; &quot;$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath) &quot;"></Exec>
+  </Target>
+  
+  <Target Name="ILNDeployBuildItems" Condition="$(TargetFramework.StartsWith('netcore')) AND $(ILNIsInstalled)">
+    <PropertyGroup>
+      <DeployItemsBuilderPath>$(ILNInstallDir)bin\tools64\</DeployItemsBuilderPath>
+      <DeployItemsBuilderPath Condition="$(Is32BitTarget)=='true'">$(ILNInstallDir)\bin\tools32\</DeployItemsBuilderPath>
+      <DeployItemsBuilderName>DeployItemsBuilder.exe</DeployItemsBuilderName>
+    </PropertyGroup>
+    
+    <Exec WorkingDirectory="$(DeployItemsBuilderPath)" 
+          Command="$(DeployItemsBuilderName) -o &quot;$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath) &quot; -t &quot;$(MainTargetAssemblyFileName)&quot; -i &quot;@(ReferencePath);@(ReferenceDependencyPaths);$(MainTargetAssemblyFileName)&quot;"
+          Condition="Exists('$(DeployItemsBuilderPath)') AND Exists('$(MainTargetAssemblyFileName)')"
+          StandardOutputImportance="low" ContinueOnError="true"
+          />
+    <PropertyGroup>
+      <LicenseCompilerHasFailed Condition="'$(MSBuildLastTaskResult)' == 'false'">true</LicenseCompilerHasFailed>
+    </PropertyGroup>
+    <Message Text="The DeployBuildItems task completed with errors." Condition="'$(LicenseCompilerHasFailed)' == 'true'" Importance="normal"></Message>
+    <Message Text="The DeployBuildItems task completed without errors." Condition="'$(LicenseCompilerHasFailed)' != 'true'" Importance="low"></Message>
+  </Target>
+
+  <Target Name="ILNDoLC" Condition="$(TargetFramework.StartsWith('netcore')) != 'true' AND '$(ILNInstallDir)'!=''">
+    <!-- This is executed in the BeforeBuild task of the general build target -->
+    <GetFrameworkSdkPath>
+      <Output TaskParameter="Path" PropertyName="WindowsSdkPath"/>
+    </GetFrameworkSdkPath>
+    <ItemGroup>
+      <LC64ToolPath Include="$(WindowsSdkPath)**\x64\LC.exe"/>
+    </ItemGroup>
+    <PropertyGroup>
+      <!-- we need to link to 64 bit LC SDK tools manually when building for 64 bit -->
+      <LC64ToolDir Condition="@(LC64ToolPath) != ''">@(LC64ToolPath)</LC64ToolDir>
+      <!-- Fix 4.10: there might have been more than one lc.exe found! Take the last one: -->
+      <LC64ToolDirEntriesCount Condition="'@(LC64ToolPath->Count())' > '1'">@(LC64ToolPath->Count())</LC64ToolDirEntriesCount>
+      <LC64ToolDirEntriesCount Condition="'@(LC64ToolPath->Count())' > '1'">$([MSBuild]::Add('$(LC64ToolDirEntriesCount)',-1))</LC64ToolDirEntriesCount>
+      <LC64ToolDir Condition="'@(LC64ToolPath->Count())' > '1'">$(LC64ToolDir.Split(';')[$(LC64ToolDirEntriesCount)])</LC64ToolDir>
+      <LC64ToolDir Condition="'$(LC64ToolDir)' != ''">$(LC64ToolDir.Substring(0, $([MSBuild]::Add($(LC64ToolDir.Length),-6))))</LC64ToolDir>
+      <LCToolPath Condition="'$(Is64BitTarget)' == 'true'">$(LC64ToolDir)</LCToolPath>
+      <!-- now find the real SDK version to give correct parameters to LC task below -->
+      <SDKVersionUsed Condition="'$(WindowsSdkPath)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(WindowsSdkPath).Value,`v([0-9]+)\.`).Groups[1].Value)</SDKVersionUsed>
+
+    </PropertyGroup>
+
+    <Message Text="ILNumerics License Compiler: 64 bit platform target detected. Using LC tools from: $(LCToolPath)"
+             Condition="'$(Is64BitTarget)' == 'true'"
+             Importance="normal"></Message>
+
+    <WriteLinesToFile File="$(LCSourcesFileName)" Lines="$(LicHelperFullClassName), $(TargetName)" Overwrite="true"></WriteLinesToFile>
+    <Message Text="ILNLicCompile ReferencePath: @(ReferencePath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile ReferenceDependencyPaths: @(ReferenceDependencyPaths)" Importance="low"></Message>
+    <Message Text="ILNLicCompile MainTargetAssemblyFileName: $(MainTargetAssemblyFileName)" Importance="low"></Message>
+    <Message Text="ILNLicCompile Building with tools version: $(MSBuildToolsVersion)" Importance="low"></Message>
+    <Message Text="ILNLicCompile LCToolPath: $(LCToolPath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile MSBuildToolsPath: $(MSBuildToolsPath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile MSBuildBinPath: $(MSBuildBinPath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile WindowsSdkPath: $(WindowsSdkPath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile LC64ToolDir: $(LC64ToolDir)" Importance="low"></Message>
+    <Message Text="ILNLicCompile MSBuildFrameworkToolsPath : $(MSBuildFrameworkToolsPath)" Importance="low"></Message>
+    <Message Text="ILNLicCompile SDKVersionUsed : $(SDKVersionUsed)" Importance="low"></Message>
+    <Message Text="ILNLicCompile SDKVersionUsed is higher than 9" Condition="'$(SDKVersionUsed)' &gt; '9'" Importance="low"></Message>
+    <Message Text="ILNLicCompile SDKVersionUsed is lower or equal to 9" Condition="'$(SDKVersionUsed)' &lt;= '9'" Importance="low"></Message>
+
+    <LC Condition="'$(SDKVersionUsed)' &gt; '9'"
+      Sources="$(LCSourcesFileName)"
+      LicenseTarget="$(TargetFileName)"
+      OutputDirectory="$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)"
+      OutputLicense="ilnumerics.licenses"
+      ReferencedAssemblies="@(ReferencePath);@(ReferenceDependencyPaths);$(MainTargetAssemblyFileName)"
+      NoLogo="True" ToolPath="$(LCToolPath)"
+      EnvironmentVariables="$(LCEnvironment)"
+      MSBuildArchitecture="$(LCMSBuildArchitecture)"
+      ContinueOnError="true"
+      LogStandardErrorAsError="false"
+      TargetFrameworkVersion="$(TargetFrameworkVersion)" />
+
+    <LC Condition="'$(SDKVersionUsed)' &lt;= '9'"
+      Sources="$(LCSourcesFileName)"
+      LicenseTarget="$(TargetFileName)"
+      OutputDirectory="$(MSBuildProjectDirectory)\$(BaseIntermediateOutputPath)"
+      OutputLicense="ilnumerics.licenses"
+      ReferencedAssemblies="@(ReferencePath);@(ReferenceDependencyPaths);$(MainTargetAssemblyFileName)"
+      NoLogo="True" ToolPath="$(LCToolPath)"
+      EnvironmentVariables="$(LCEnvironment)"
+      MSBuildArchitecture="$(LCMSBuildArchitecture)"
+      ContinueOnError="true"
+      LogStandardErrorAsError="false"/>
+
+    <PropertyGroup>
+      <LicenseCompilerHasFailed Condition="'$(MSBuildLastTaskResult)' == 'false'">true</LicenseCompilerHasFailed>
+    </PropertyGroup>
+
+    <Move SourceFiles="ILNumerics_deploy\ilnumerics.tmplic" DestinationFiles="$(LicCHCompileSourceFileName)" Condition="Exists('ILNumerics_deploy\ilnumerics.tmplic')"></Move>
+    <Move SourceFiles="$(BaseIntermediateOutputPath)$(TargetFilename).licenses" DestinationFiles="$(BaseIntermediateOutputPath)ilnumerics.licenses" Condition="Exists('$(BaseIntermediateOutputPath)$(TargetFilename).licenses')"></Move>
+    
+    <Message Text="The LC task completed with errors." Condition="'$(LicenseCompilerHasFailed)' == 'true'" Importance="normal"></Message>
+    <Message Text="The LC task completed without errors." Condition="'$(LicenseCompilerHasFailed)' != 'true'" Importance="low"></Message>
+  </Target>
+
+  <Target Name="ILNDoCH">
+    <ReadLinesFromFile
+      File="$(LicCHCompileSourceFileName)"
+      Condition="Exists($(LicCHCompileSourceFileName))">
+      <Output PropertyName="ILNCH" TaskParameter="Lines"/>
+    </ReadLinesFromFile>
+    <Message Text="Determined code state for assembly $(MainTargetAssemblyFileName): $(ILNCH)" Importance="low" Condition="$(ILNCH.Length) > 0"></Message>
+    <Message Text="Failed to determine code state for assembly $(MainTargetAssemblyFileName)" Importance="low" Condition="$(ILNCH.Length) == 0"></Message>
+    <PropertyGroup>
+      <Pattern>(.+)\|(.+)</Pattern>
+      <LCErrorCode Condition="$(ILNCH)!=''">$([System.Text.RegularExpressions.Regex]::Match($(ILNCH),$(Pattern)).Groups[1].Value)</LCErrorCode>
+      <ILNCH Condition="$(ILNCH)!=''">$([System.Text.RegularExpressions.Regex]::Match($(ILNCH),$(Pattern)).Groups[2].Value)</ILNCH>
+      <CHFileContentVB>
+        Namespace ILNumerics_Licensing
+        Partial Public Class {0}
+        Public Const CH = "{1}"
+        End Class
+        End Namespace
+      </CHFileContentVB>
+      <CHFileContentCS>namespace ILNumerics_Licensing {{ public partial class {0} {{ public const string CH = &quot;{1}&quot;; }} }}</CHFileContentCS>
+      <CHHelperFileContent Condition="($(OptionStrict) != '') or ($(OptionExplicit) != '') or ($(MyType) != '')">$([System.String]::Format($(CHFileContentVB),$(LicHelperClassName),$(ILNCH)))</CHHelperFileContent>
+      <CHHelperFileContent Condition="'$(CHHelperFileContent)'==''">$([System.String]::Format(`$(CHFileContentCS)`,`$(LicHelperClassName)`,`$(ILNCH)`))</CHHelperFileContent>
+    </PropertyGroup>
+    <Message Text="Error code returned from LC task: $(LCErrorCode)" Importance="low"></Message>
+    <WriteLinesToFile 
+      File="$(LicCHCompileSourceFileName)" 
+      Lines="$(CHHelperFileContent)" 
+      Overwrite="true"></WriteLinesToFile>
+    <Delete Condition="Exists('$(LCSourcesFileName)')" Files="$(LCSourcesFileName)"></Delete>
+    <PropertyGroup>
+      <LicenseFileLocation Condition="Exists('$(BaseIntermediateOutputPath)ilnumerics.licenses')">$(BaseIntermediateOutputPath)ilnumerics.licenses</LicenseFileLocation>
+    </PropertyGroup>
+  </Target>
+
+  <Target Name="AfterLicCompileLS" 
+          Condition="Exists('$(LicenseFileLocation)') and ('$(LicenseCompilerHasFailed)' != 'true') and ('$(LCErrorCode)'=='Success')">
+
+    <Move 
+          SourceFiles="$(LicenseFileLocation)"
+          DestinationFiles="$(MSBuildProjectDirectory)\ILNumerics_deploy\ilnumerics.lic"
+          OverwriteReadOnlyFiles="true"/>
+
+    <WriteLinesToFile
+          Overwrite="false"
+          ContinueOnError="true"
+          File="$(MSBuildProjectDirectory)\ILNumerics_deploy\ilnumerics.lic"
+          Lines="%%ILLicBuildConfig=$(Configuration)|$(Platform)%%"/>
+    
+    <Delete  
+          Files="$(LicenseFileLocation)"
+          ContinueOnError="true"
+          TreatErrorsAsWarnings="true"></Delete>
+
+    <Message Condition="Exists('$(MSBuildProjectDirectory)\ILNumerics_deploy\ilnumerics.lic') and ($(LicenseCompilerHasFailed) != 'true')"
+          Text="Licenses compiled to: $(MSBuildProjectDirectory)\ILNumerics_deploy\ilnumerics.lic"
+          Importance="High" />
+  </Target>
+</Project>
