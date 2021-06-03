@@ -2,11 +2,14 @@
 using ILNumerics;
 using ILNumerics.Toolboxes;
 using static ILNumerics.ILMath;
+using System.Linq;
 
 namespace FuncApprox
 {
     public class SurfaceMapper
     {
+        private Kringing3DAdimMapper riskMapper;
+        private Kringing3DAdimMapper timeMapper;
 
         public SurfaceMapper(Tuple<Array<double>[], Array<double>[], Array<double>[]> rawData)
         {
@@ -14,21 +17,48 @@ namespace FuncApprox
             Array<double>[] risks = rawData.Item2;
             Array<double>[] times = rawData.Item3;
 
-            var riskMapper = new Kringing3DAdimMapper(pressures, risks);
-            var timeMapper = new Kringing3DAdimMapper(pressures, times);
+            Func<double[], double> sumComponents = x => x.Sum();
+            Func<double[], double> getMax = x => x.Max();
+
+            riskMapper = new Kringing3DAdimMapper(pressures, risks, sumComponents);
+            timeMapper = new Kringing3DAdimMapper(pressures, times, getMax);
         }
+
+        public double EstimateRisk(double[] pressures)
+        {
+            return riskMapper.SurfaceApproximateOutput(pressures);
+        }
+
+        public double EstimateTime(double[] pressures)
+        {
+            return timeMapper.SurfaceApproximateOutput(pressures);
+        }
+
     }
 
     public class Kringing3DAdimMapper
     {
-        private Array<double>[] pressures;
-        private Array<double>[] times;
+        private Kriging1DAdimMapper[] adimMappers;
+        private Func<double[], double> computationAggregator;
 
-        public Kringing3DAdimMapper(Array<double>[] pressures, Array<double>[] times)
+        public Kringing3DAdimMapper(Array<double>[] pressures, Array<double>[] dependentVar, Func<double[], double> aggregator)
         {
+            adimMappers = new Kriging1DAdimMapper[pressures.Length];
+            for (int iTissue = 0; iTissue < pressures.Length; iTissue++)
+            {
+                adimMappers[iTissue] = new Kriging1DAdimMapper(pressures[iTissue], dependentVar[iTissue]);
+            }
+            computationAggregator = aggregator;
+        }
 
-            this.pressures = pressures;
-            this.times = times;
+        public double SurfaceApproximateOutput(double[] independentVars)
+        {
+            var tissueValues = new double[independentVars.Length];
+            for (int iTissue = 0; iTissue < independentVars.Length; iTissue++)
+            {
+                tissueValues[iTissue] = adimMappers[iTissue].EstimateMapValue(independentVars[iTissue]);
+            }
+            return computationAggregator(tissueValues);
         }
     }
 
@@ -50,9 +80,9 @@ namespace FuncApprox
 
         public double EstimateMapValue(double dimensionalX)
         {
-            var adimX = xFieldMapper.dimToAdim(dimensionalX);
+            var adimX = xFieldMapper.DimToAdim(dimensionalX);
             var adimOutput = (double) interpolator.Apply(adimX);
-            return yFieldMapper.adimToDim(adimOutput);
+            return yFieldMapper.AdimToDim(adimOutput);
         }
 
     }
@@ -63,11 +93,11 @@ namespace FuncApprox
 
         public AdimMapper(Array<double> xField)
         {
-            range = getRange(xField);
+            range = GetRange(xField);
             minValue = (double)xField[0];
         }
 
-        public static double getRange(Array<double> vec)
+        public static double GetRange(Array<double> vec)
         {
             var endValue = (double)vec["end"];
             double initValue = (double)vec[0];
@@ -83,12 +113,12 @@ namespace FuncApprox
             }
         }
 
-        public double adimToDim(double adimValue)
+        public double AdimToDim(double adimValue)
         {
             return adimValue * range + minValue;
         }
 
-        public double dimToAdim(double dimValue)
+        public double DimToAdim(double dimValue)
         {
             return (dimValue - minValue) / range;
         }
