@@ -27,6 +27,8 @@ let V (x:'T[]) :Array<'T> = (ILMath.vector<'T> x) |>  Array.op_Implicit
 let X1':Array<float> =   (linspace<float>((!!!)[|-3.0|],(!!!) [|3.0|],(!!!)[|20.0|]))
                             |>  (Seq.toArray >> V )
 
+
+
 let Y:Array<float> = sin(X1')|> (Seq.toArray >> V)
 
 let result = kriging( (!!)Y, (!!) X1', (!!) X1', null,  X3) |> (Seq.toArray >> V)
