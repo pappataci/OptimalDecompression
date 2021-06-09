@@ -47,27 +47,28 @@ namespace FuncApprox
             //var adimMapper = new Kriging1DAdimMapper(pressures[0], risks[0]);
             s.Start();
             var surfaceApproximator = new SurfaceMapper(surfaceMapValues);
-            var initPressures = new double[] { 5.2, 1.535, 1.2 } ;
-            double approxRisk;
+            var initPressures = new double[] { 3.5, 1.1, 0.3 } ;
+            //double approxRisk;
 
-            for (int i =0; i< 10; i++)
-                approxRisk = surfaceApproximator.EstimateRisk(initPressures);
+            //for (int i =0; i < 1; i++)
+            //    approxRisk = surfaceApproximator.EstimateRisk(initPressures);
 
-            Console.WriteLine(s.ElapsedMilliseconds);
-            s.Restart();
+            //Console.WriteLine(s.ElapsedMilliseconds);
+            //s.Restart();
 
-            Tuple<double, double> exactSolution;
+            //Tuple<double, double> exactSolution;
 
-            for(int i = 0; i<10; i++)
-                exactSolution = getSurfaceRiskNTimeWithInitPress(dt, timeToControl, initPressures);
+            //for(int i = 0; i<5; i++)
+            var exactSolution = getSurfaceRiskNTimeWithInitPress(dt, timeToControl, initPressures);
             
             Console.WriteLine(s.ElapsedMilliseconds);
             Console.WriteLine("results");
 
-            //var approxTime = surfaceApproximator.EstimateTime(initPressures);
-            //var exactTime = exactSolution.Item2;
-            //Console.WriteLine(approxTime - exactTime);
-        
+            var approxRisk = surfaceApproximator.EstimateRisk(initPressures);
+            var exactRisk = exactSolution.Item1;
+            Console.WriteLine(approxRisk - exactRisk);
+            Console.WriteLine(exactRisk);
+            Console.WriteLine(approxRisk );
             //Console.WriteLine(adimMapper.EstimateMapValue(5.513));
 
             // third tissue

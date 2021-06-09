@@ -56,9 +56,9 @@ namespace FuncApprox
             var tissueValues = new double[independentVars.Length];
             for (int iTissue = 0; iTissue < independentVars.Length; iTissue++)
             {
-                tissueValues[iTissue] = adimMappers[iTissue].EstimateMapValue(independentVars[iTissue]);
+                tissueValues[iTissue] = Math.Max( adimMappers[iTissue].EstimateMapValue(independentVars[iTissue]) , 0.0) ;
             }
-            return computationAggregator(tissueValues);
+            return computationAggregator(tissueValues)  ;
         }
     }
 
