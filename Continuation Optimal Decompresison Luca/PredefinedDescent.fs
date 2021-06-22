@@ -21,7 +21,7 @@ module PredefinedDescent =
                       BottomTime : float  // (min)
                      }  
 
-    let defineFixedImmersion descentRate maximumDepth bottomTime =
+    let defineFixedImmersion descentRate maximumDepth bottomTime = 
         { DescentLegParams =  { DescentRate = descentRate
                                 MaximumDepth = maximumDepth } 
           BottomTime  = bottomTime}
