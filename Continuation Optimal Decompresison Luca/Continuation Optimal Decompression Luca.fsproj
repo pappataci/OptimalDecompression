@@ -110,6 +110,7 @@
     <None Include="LarsAlgorithm.fsx" />
     <None Include="LagrangeIL.fsx" />
     <None Include="InterpolationIL.fsx" />
+    <None Include="InterpolationScratch.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">

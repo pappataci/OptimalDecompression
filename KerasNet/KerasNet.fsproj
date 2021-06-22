@@ -51,6 +51,7 @@
     <None Include="App.config" />
     <None Include="KerasTest.fsx" />
     <Content Include="packages.config" />
+    <None Include="ComputationExpresison.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

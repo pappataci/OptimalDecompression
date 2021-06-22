@@ -13,6 +13,7 @@ using static ILNumerics.ILMath;
 using static ILNumerics.Globals;
 using System.IO;
 using System.Diagnostics;
+using System.Threading.Tasks;
 
 namespace FuncApprox
 {
@@ -45,30 +46,32 @@ namespace FuncApprox
             Stopwatch s = new Stopwatch();
 
             //var adimMapper = new Kriging1DAdimMapper(pressures[0], risks[0]);
-            s.Start();
+            
             var surfaceApproximator = new SurfaceMapper(surfaceMapValues);
             var initPressures = new double[] { 3.5, 1.1, 0.3 } ;
-            //double approxRisk;
+            double approxRisk;
+            s.Start();
+            //Parallel.For(0, 25000, i => { approxRisk = surfaceApproximator.EstimateRisk(initPressures);  });
 
-            //for (int i =0; i < 1; i++)
-            //    approxRisk = surfaceApproximator.EstimateRisk(initPressures);
+            for (int i = 0; i < 25000; i++)
+                approxRisk = surfaceApproximator.EstimateRisk(initPressures);
 
-            //Console.WriteLine(s.ElapsedMilliseconds);
+            Console.WriteLine(s.ElapsedMilliseconds);
             //s.Restart();
 
             //Tuple<double, double> exactSolution;
 
             //for(int i = 0; i<5; i++)
-            var exactSolution = getSurfaceRiskNTimeWithInitPress(dt, timeToControl, initPressures);
-            
-            Console.WriteLine(s.ElapsedMilliseconds);
+            //var exactSolution = getSurfaceRiskNTimeWithInitPress(dt, timeToControl, initPressures);
+
+            //Console.WriteLine(s.ElapsedMilliseconds);
             Console.WriteLine("results");
 
-            var approxRisk = surfaceApproximator.EstimateRisk(initPressures);
-            var exactRisk = exactSolution.Item1;
-            Console.WriteLine(approxRisk - exactRisk);
-            Console.WriteLine(exactRisk);
-            Console.WriteLine(approxRisk );
+            //var approxRisk = surfaceApproximator.EstimateRisk(initPressures);
+            //var exactRisk = exactSolution.Item1;
+            //Console.WriteLine(approxRisk - exactRisk);
+            //Console.WriteLine(exactRisk);
+            //Console.WriteLine(approxRisk );
             //Console.WriteLine(adimMapper.EstimateMapValue(5.513));
 
             // third tissue
@@ -129,19 +132,7 @@ namespace FuncApprox
 
         }
 
-        
-
-
-
-
-
-
-
-        public static KrigingInterpolatorDouble CreateInterpolator(Array<double> X, Array<double>Y)
-        {
-            return new KrigingInterpolatorDouble(Y, X);
-        }
-
+       
     }
 
     
