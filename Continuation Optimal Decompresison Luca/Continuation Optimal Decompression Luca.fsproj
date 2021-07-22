@@ -111,6 +111,8 @@
     <None Include="LagrangeIL.fsx" />
     <None Include="InterpolationIL.fsx" />
     <None Include="InterpolationScratch.fsx" />
+    <None Include="TrinomialCheck.fsx" />
+    <None Include="ImmersionLegTest.fsx" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Data">

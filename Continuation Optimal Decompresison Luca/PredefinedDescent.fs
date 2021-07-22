@@ -2,7 +2,7 @@
 
 module MissionConstraints = 
     let ascentRateLimit = -30.0  // ft/min: ascent is negative  (decreasing depth)
-    let descentRateLimit = 60.0 // ft/min : descent is positive (increasing depth)
+    let descentRateLimit = 75.0 // ft/min : descent is positive (increasing depth) , was 60.0
     let depthTolerance = 1.0 // 1 ft: this is considered to be surface
 
 [<AutoOpen>]

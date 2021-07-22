@@ -48,7 +48,7 @@ open InputDefinition
 //let resultsParallel = initCondsGrid
 //                     |> Array.Parallel.map 
 //                       ( tryFindSolutionWithIncreasingTimesSeq integrationTimeSettings paramsGrid timesToSurfVec )
-         
+        
 //let resultsTable = resultsParallel
 //                   |> resultsToInputForWriter // called out' in FSI
 

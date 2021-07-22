@@ -86,7 +86,7 @@ let  getInitConditionAfterDescentPhase (integrationTime, controlToIntegration, l
                      | None -> infinity
     
     let maxPDCS   , penaltyForRisk, rewardForDelivering, penaltyForTime ,   descentRate = 
-        infinity  ,  10.0          , 10.0               , 5.0            ,     60.0
+        infinity  ,  10.0          , 10.0               , 5.0            ,    -75.0
 
     let ascentStrategy = 
         targetDepth 
