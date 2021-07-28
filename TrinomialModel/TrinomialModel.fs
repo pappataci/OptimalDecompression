@@ -4,13 +4,13 @@ module TrinomialModel
     [<AutoOpen>]
     module Profile = 
 
-        type DepthTimeSeries = { Depth : double
-                                 Time  : double }
+        type DepthTimeInfo = { Depth : double
+                               Time  : double }
 
         type ExternalPressureConditions = { Ambient   : float
                                             Nitrogen  : float }
 
-        type Trajectory  = |Trajectory of seq<DepthTimeSeries>
+        type Trajectory  = |Trajectory of seq<DepthTimeInfo>
 
     [<AutoOpen>]
     module ModelPhysics = 
@@ -23,7 +23,7 @@ module TrinomialModel
     [<AutoOpen>]
     module Mission = 
         
-        type Node =  {    EnvInfo : DepthTimeSeries
+        type Node =  {    EnvInfo : DepthTimeInfo
                           Tensions : Tissue[]
                           ExternalPressures : ExternalPressureConditions
                           InstantaneousRisk : double[]
@@ -39,6 +39,7 @@ module TrinomialModel
                            Thresholds = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]}
         
         let  trinomialScaleFactor  = 0.134096478 
+        let maxIntegrationTime = 0.1 // min
         
         type Model<'S, 'A>   = | Model of ('S -> 'A -> 'S)
 
@@ -71,7 +72,19 @@ module TrinomialModel
             {Ambient = ambientPressure 
              Nitrogen = nitrogenPressure} 
 
-
+        let inBetweenNodesTimeDiscretization {Depth = initDepth; Time = initTime} {Depth = targetDepth ; Time = finalTime} = 
+            let timeLength = finalTime - initTime;
+            let numberOfSteps =  ceil( timeLength / maxIntegrationTime )  
+            let actualDeltaT = timeLength / numberOfSteps
+            let depthIncrement = (targetDepth - initDepth ) /numberOfSteps
+            Seq.init (int numberOfSteps) (fun actualCount -> 
+                                                let time = initTime  + (actualCount + 1 |>double) * actualDeltaT
+                                                let depth = initDepth + (actualCount + 1 |> double) * depthIncrement
+                                                {Depth = depth 
+                                                 Time = time} ) 
+            |> Trajectory
+             
+            
         //let modelTransitionFunction (actualLEStatus:LEStatus) (nextDepth:float)  =
 
         //    let nextStepAmbientConditions = depth2AmbientCondition modelConstants nextDepth
