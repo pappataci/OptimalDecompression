@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ComputationExpresison.fsx" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

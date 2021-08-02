@@ -4,13 +4,13 @@ module TrinomialModel
     [<AutoOpen>]
     module Profile = 
 
-        type DepthTimeInfo = { Depth : double
+        type DepthTime =     { Depth : double
                                Time  : double }
 
         type ExternalPressureConditions = { Ambient   : float
                                             Nitrogen  : float }
 
-        type Trajectory  = |Trajectory of seq<DepthTimeInfo>
+        type Trajectory  = |Trajectory of seq<DepthTime>
 
     [<AutoOpen>]
     module ModelPhysics = 
@@ -23,12 +23,14 @@ module TrinomialModel
     [<AutoOpen>]
     module Mission = 
         
-        type Node =  {    EnvInfo : DepthTimeInfo
+        type Node =  {    EnvInfo : DepthTime
                           Tensions : Tissue[]
                           ExternalPressures : ExternalPressureConditions
                           InstantaneousRisk : double[]
                           AccruedRisk : double[]
                           TotalRisk : double} 
+
+        type NodeEvolution = | NodeEvolution of seq<Node>
 
     [<AutoOpen>]
     module ModelDefinition = 
@@ -60,7 +62,7 @@ module TrinomialModel
             integrationFcn iTissue deltaT actualTissueTension pressures
             |> Tension
 
-        let private updateTissueTension  deltaT pressures  iTissue actualTension =
+        let private updateTissueTension  deltaT pressures iTissue  actualTension =
             (getLETissueTensionIncrement iTissue deltaT pressures actualTension) 
             |> (+>) actualTension
        
@@ -72,6 +74,10 @@ module TrinomialModel
             {Ambient = ambientPressure 
              Nitrogen = nitrogenPressure} 
 
+        let getTissueTensionsAtDepth externalPressureCondition =
+            Tension externalPressureCondition.Nitrogen
+            |> Array.create modelParams.Rates.Length 
+             
         let inBetweenNodesTimeDiscretization {Depth = initDepth; Time = initTime} {Depth = targetDepth ; Time = finalTime} = 
             let timeLength = finalTime - initTime;
             let numberOfSteps =  ceil( timeLength / maxIntegrationTime )  
@@ -83,8 +89,63 @@ module TrinomialModel
                                                 {Depth = depth 
                                                  Time = time} ) 
             |> Trajectory
-             
+
+
+        let private getInstantaneousRisk pressures iTissue  updatedTissueTension = 
             
+            modelParams.Gains.[iTissue] * 
+            ( updatedTissueTension - pressures.Ambient - ( modelParams.Thresholds.[iTissue]  - dPFVG ) ) / pressures.Ambient
+
+        //let private getIntegratedRisk 
+        // this is the Markov transition (state -> action -> state)  for ONE delta t
+        let oneStepInTimeTransitionFunction (actualNode:Node) (action:DepthTime) : Node = 
+            
+            let nextAmbientConditions = depth2AmbientCondition action.Depth
+            let actualTissueTensions = actualNode.Tensions
+            let deltaT = action.Time - actualNode.EnvInfo.Time
+            
+            let nextTissueTensions = Array.mapi (updateTissueTension deltaT nextAmbientConditions) actualTissueTensions
+            //let updatedTissueTensions = Array.mapi2 (updateTissueTension deltaT nextAmbientConditions) iTissue actualTissueTensions
+            
+            //let getIntegratedRiskForThisTissue = getIntegratedRiskForThisDeltaT modelConstants.IntegrationTime nextStepAmbientConditions.Pressures
+            
+            let nextNodeForTest = { EnvInfo = action
+                                    Tensions = nextTissueTensions
+                                    ExternalPressures  = nextAmbientConditions
+                                    InstantaneousRisk = [|0.0|]
+                                    AccruedRisk =  [|0.0|]
+                                    TotalRisk = 0.0} 
+            
+            nextNodeForTest
+
+        // this is the Markov function (state -> initNode -> state) for one discrete action
+        let getEvolutionDynamicsOnTrajectory (initNode: Node) (action:DepthTime) : Node  =  // TODO
+            let (Trajectory discretizedTraj)  = action   
+                                                    |> inBetweenNodesTimeDiscretization initNode.EnvInfo
+            
+            let internalSeqOfNodes = discretizedTraj
+                                     |> Seq.scan oneStepInTimeTransitionFunction initNode
+            internalSeqOfNodes
+            |>Seq.last
+            //{    EnvInfo  =  {Time = 0.0 ; Depth = 0.0} 
+            //                 Tensions = [| 0.3 |> Tension|]
+            //                 ExternalPressures = {Ambient = 1.0;  Nitrogen = 1.2}
+            //                 InstantaneousRisk  = [|0.1|]
+            //                 AccruedRisk  = [|0.1|]
+            //                 TotalRisk = 0.2 }    
+        
+        //let stateTransitionFunction (actualNode: Node) (action:DepthTime) : = 
+        //    action
+        //    |> inBetweenNodesTimeDiscretization actualNode.EnvInfo
+        //    |> getEvolutionDynamicsOnTrajectory
+           
+
+            //let updatedTissueTensions = updateTissueTension  deltaT pressures  iTissue actualTension =
+            //    (getLETissueTensionIncrement iTissue deltaT pressures actualTension) 
+            //    |> (+>) actualTension
+                
+
+
         //let modelTransitionFunction (actualLEStatus:LEStatus) (nextDepth:float)  =
 
         //    let nextStepAmbientConditions = depth2AmbientCondition modelConstants nextDepth
