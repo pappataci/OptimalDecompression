@@ -5,10 +5,13 @@ open InitDescent
 open Extreme.Mathematics
 open AscentSimulator
 open AscentOptimizer
+open LEModel
+open OneLegStrategy
+open TwoStepsSolIl
+open InputDefinition
 
 
-[<EntryPoint>]
-let main argv =
+let main' argv =
     printfn "%A" argv
     let maxPDCS , maxSimTime = 0.032 , 50000.0
     let rlDummyParam = 0.0 
@@ -40,4 +43,13 @@ let main argv =
          
     with 
         | Failure(msg)-> printfn "%A"  msg
+    0
+
+[<EntryPoint>]
+let main argv =
+    
+    let integrationTime , controlToIntegration = 0.1, 10
+    let maximumDepth = 30.0
+    let bottomTime = 371.0
+    let initState , myEnv = initStateAndEnvDescent maxSimTime (integrationTime, controlToIntegration) maximumDepth bottomTime
     0

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net462</TargetFramework> 
+
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarnOn>3390;$(WarnOn)</WarnOn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="SeqExtension.fs" />
+    <Compile Include="Gas.fs" />
+    <Compile Include="ELModelCommon.fs" />
+    <Compile Include="TrinomialModel.fs" />
+    <None Include="Script.fsx" />
+  </ItemGroup>
+</Project>

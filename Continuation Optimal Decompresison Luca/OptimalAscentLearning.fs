@@ -188,7 +188,7 @@ module GetStateAfterFixedLegImmersion =
                            |> defineFixedImmersion descentRate  maxDepth
         let seqOfNodes =  discretizeConstantDescentPath immersionLeg fixedLegDiscretizationTime 
                           |> skipFirstIfEqualsToInitState initState 
-
+        printfn "%A" (seqOfNodes |> Seq.take 3711)
         seqOfNodes
         |> Seq.map (fun (TemporalValue x ) -> x.Value)
         |> runModelAcrossSequenceOfNodesNGetFinalState initState model

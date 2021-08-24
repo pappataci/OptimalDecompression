@@ -35,10 +35,10 @@ let main _ =
     let fileName = 
         "completeResults" +  ( targetDepth' |> string ) + "Complete.csv"
 
-    grouppedResults
-    |> writeResultsToDisk fileName (Some  "TwoPiecesAscent" ) 
-    printfn "Completed"
-    //results
+    //grouppedResults
+    //|> writeResultsToDisk fileName (Some  "TwoPiecesAscent" ) 
+    //printfn "Completed"
+    ////results
     //|> myCsvBuildTable
     //|> saveToCsv @"C:\Users\glddm\Desktop\TwoLegResults30.csv"
 
