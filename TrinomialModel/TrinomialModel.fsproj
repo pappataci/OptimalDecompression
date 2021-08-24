@@ -7,10 +7,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="SeqExtension.fs" />
     <Compile Include="Gas.fs" />
     <Compile Include="ELModelCommon.fs" />
     <Compile Include="TrinomialModel.fs" />
-    <Compile Include="Library1.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
 </Project>

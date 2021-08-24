@@ -35,7 +35,9 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "ExampleConsummingDotNetStan
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FuncApprox", "FuncApprox\FuncApprox.csproj", "{F936DF45-A612-4CD7-B30A-453DA2474D24}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TrinomialModel", "TrinomialModel\TrinomialModel.fsproj", "{946944B8-22B8-499D-B740-69BC735E9CC8}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TrinomialModel", "TrinomialModel\TrinomialModel.fsproj", "{946944B8-22B8-499D-B740-69BC735E9CC8}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TrionamialTestApp", "TrionamialTestApp\TrionamialTestApp.fsproj", "{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -173,6 +175,14 @@ Global
 		{946944B8-22B8-499D-B740-69BC735E9CC8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{946944B8-22B8-499D-B740-69BC735E9CC8}.Release|x64.ActiveCfg = Release|Any CPU
 		{946944B8-22B8-499D-B740-69BC735E9CC8}.Release|x64.Build.0 = Release|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Debug|x64.Build.0 = Debug|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Release|x64.ActiveCfg = Release|Any CPU
+		{0EBD7371-8BB3-41B5-97FD-9415B3A1C841}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
