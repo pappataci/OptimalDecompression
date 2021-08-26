@@ -4,6 +4,8 @@
 #load "Gas.fs"
 #load "ELModelCommon.fs"
 #load "TrinomialModel.fs"
+#load "TableDataInputs.fs"
+#load "TableReader.fs"
 
 
 //let b x = x * 2.0
@@ -34,6 +36,11 @@ let three72Node = oneActionStepTransition three71Node {Time = 372.0; Depth =  0.
 let myFinalNode = runModelUntilZeroRisk three72Node
 
 let finalNode = oneActionStepTransition three72Node {Time = 1812.0; Depth =  0.0}
+
+let computedNodeSeq , checkedDiveLength = fileName
+                                            |> getDataContent
+                                            |> Array.map data2SequenceOfDepthAndTime
+                                            |> Array.unzip
 
 //module  Params = 
 //    let mutable A = 1.0

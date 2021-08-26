@@ -11,6 +11,8 @@
     <Compile Include="Gas.fs" />
     <Compile Include="ELModelCommon.fs" />
     <Compile Include="TrinomialModel.fs" />
+    <Compile Include="TableDataInputs.fs" />
+    <Compile Include="TableReader.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
 </Project>

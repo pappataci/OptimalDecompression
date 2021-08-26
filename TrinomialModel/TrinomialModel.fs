@@ -133,7 +133,7 @@ module TrinomialModel
             internalSeqOfNodes
             |>Seq.last
 
-        let notAccrueingRiskAtSurface    (actualTissueTensions: Tissue[])  = 
+        let accrueingRiskAtSurface  (actualTissueTensions: Tissue[])  = 
             let surfaceAmbientPressure = 1.0
             actualTissueTensions 
             |> Array.map2 (fun tissueTensionThreshold  (Tension tissueTension)  ->  tissueTension > surfaceAmbientPressure +  tissueTensionThreshold - dPFVG  )   
@@ -147,5 +147,6 @@ module TrinomialModel
             infiniteSeqOfDepthAndTime
             |> Seq.scan oneStepInTimeTransitionFunction initNodeAtSurface
             |> SeqExtension.takeWhileWithLast ( fun x ->  x.Tensions
-                                                          |> notAccrueingRiskAtSurface ) 
-            
+                                                          |> accrueingRiskAtSurface ) 
+
+        
