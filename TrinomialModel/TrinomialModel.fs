@@ -148,5 +148,6 @@ module TrinomialModel
             |> Seq.scan oneStepInTimeTransitionFunction initNodeAtSurface
             |> SeqExtension.takeWhileWithLast ( fun x ->  x.Tensions
                                                           |> accrueingRiskAtSurface ) 
+            |> Seq.last 
 
         

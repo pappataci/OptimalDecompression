@@ -13,6 +13,8 @@
     <Compile Include="TrinomialModel.fs" />
     <Compile Include="TableDataInputs.fs" />
     <Compile Include="TableReader.fs" />
+    <Compile Include="ProfileIntegrator.fs" />
+    <Compile Include="MissionDefinerFromTables.fs" />
     <None Include="Script.fsx" />
   </ItemGroup>
 </Project>

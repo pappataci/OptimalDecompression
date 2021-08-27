@@ -20,6 +20,10 @@ type AirTable = { MaximumDepth: double
 type AnsData = { Header: string 
                  NodeSeq: seq<DepthTime> }
 
+type MissionAscentInfo = { MaximumDepth: double
+                           BottomTime : double
+                           TotalAscentTime : double}
+
 let getDataContent  fileName = 
     let completeFileName = dataSrcFolder  + @"\" + fileName
 
@@ -80,13 +84,13 @@ let defineDepthAndTime (depth, time) =
     {Depth = depth
      Time = time }
 
-let createDescentNodes ({MaximumDepth = maxDepth}) =
+let createDescentNodes ({MaximumDepth = maxDepth} : AirTable) =
     seq{
         defineDepthAndTime (0.0, 0.0)
         defineDepthAndTime ( maxDepth, maxDepth/descentRate )
         }
 
-let createMaxDepthNode ({MaximumDepth = maxDepth; BottomTime = bottomTime} ) (actualSeq:seq<DepthTime>) =
+let createMaxDepthNode ({MaximumDepth = maxDepth; BottomTime = bottomTime} : AirTable) (actualSeq:seq<DepthTime>) =
     seq{
         defineDepthAndTime(maxDepth, bottomTime) 
         }
@@ -106,7 +110,7 @@ let createNodesOfFirstStop {StopTimes = stopTimes; TimeToFirstStop = timeToFirst
     seq{ yield nodeAtFirstStopStart
          yield! addEndNodeAtStopDepth stopTimes.[0] nextTime  nextDepth }
 
-let createNodesToStartOfAscent airTable  =
+let createNodesToStartOfAscent (airTable:AirTable)  =
     let descentNodes  = createDescentNodes airTable
     let maxDepthNode = createMaxDepthNode airTable descentNodes
     seq{ yield! descentNodes
@@ -150,21 +154,11 @@ let insertLastNode nodeSeq  =
         let deltaTime = -lastDepth / ascentRate 
         seq{defineDepthAndTime(zeroDepth, deltaTime + lastTime)}
 
-let computeAscentTime (nodesToSurf:seq<DepthTime>) (finalNode: seq<DepthTime>) = 
-    let {Time = initAscentTime} = (nodesToSurf|>Seq.head)
-
-    let getFinalTime  nodes2Surf finalN = 
-        if finalN |> Seq.isEmpty then
-            let {Time = fTime} = nodes2Surf |> Seq.last
-            fTime
-        else
-            let {Time = fTime} = finalN |> Seq.last
-            fTime
-        
-
-    let finalTime = getFinalTime nodesToSurf finalNode
-    finalTime - initAscentTime
-
+let getAscentParams (airTable:AirTable)  =
+    { MaximumDepth = airTable.MaximumDepth 
+      BottomTime = airTable.BottomTime
+      TotalAscentTime =  minutesSecToFloat  airTable.TotalAscentTime}
+    
 let data2SequenceOfDepthAndTime (originalString:string) = 
     let airTable = string2TableInfo originalString
     let toAscentStart = createNodesToStartOfAscent airTable
@@ -172,5 +166,20 @@ let data2SequenceOfDepthAndTime (originalString:string) =
     let initSeq = Seq.concat ( seq{yield toAscentStart 
                                    yield ascentNodesToSurface} )
     let finalNode = insertLastNode  initSeq
-    let computedAscentTime = computeAscentTime ascentNodesToSurface  finalNode
-    Seq.concat  ( seq{initSeq; finalNode} )  , computedAscentTime
+    
+    let ascentParams = getAscentParams airTable
+    Seq.concat  ( seq{initSeq; finalNode} )  , ascentParams
+
+let defNodeWithTensionAtDepthAndTime initDepthTime = // needed more generic function with initRisk and pressures
+
+    let {Depth = initDepth; Time = initTime} = initDepthTime
+    let externalPressures = depth2AmbientCondition initDepth
+    let zeroVector = Array.zeroCreate modelParams.Gains.Length
+    {EnvInfo = initDepthTime
+     Tensions = getTissueTensionsAtDepth externalPressures
+     ExternalPressures = depth2AmbientCondition initDepth
+     InstantaneousRisk = zeroVector
+     AccruedWeightedRisk = zeroVector
+     IntegratedRisk = zeroVector
+     IntegratedWeightedRisk = zeroVector
+     TotalRisk = 0.0}
