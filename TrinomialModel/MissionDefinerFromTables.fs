@@ -1,14 +1,18 @@
 ﻿[<AutoOpen>]
 module MissionDefinerFromTables
 
-type TableMissionMetrics = {MissionInfo: MissionAscentInfo
-                            TotalRisk  : double}            
+type TableMissionMetrics = { MissionInfo: MissionInfo
+                             TotalRisk: double
+                             InitAScentNode: Node }     
 
 let resetTimeForNode (aNode:Node) = 
     {aNode with EnvInfo ={Depth = aNode.EnvInfo.Depth ;
                           Time = 0.0}}
 
-let getInitialConditionNode (solutionOfSeqOfNodes:seq<Node>)  (missionInfo: MissionAscentInfo) = 
+let getInitialConditionNode (solutionOfSeqOfNodes:seq<Node>)  (missionInfo: MissionInfo) = 
+    
+    let isNodeAtBottomTime aNode = abs( aNode.EnvInfo.Time - missionInfo.BottomTime) < 1.0e-10
+
     solutionOfSeqOfNodes  
-    |> Seq.find (fun aNode ->  aNode.EnvInfo.Time = missionInfo.BottomTime)
+    |> Seq.find isNodeAtBottomTime
     |> resetTimeForNode

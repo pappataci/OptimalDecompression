@@ -115,9 +115,6 @@
     <None Include="ImmersionLegTest.fsx" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Extreme.Data">
-      <HintPath>..\..\..\..\..\..\Program Files (x86)\Extreme Optimization\Numerical Libraries for .NET 6.0\bin\Net40\Extreme.Data.dll</HintPath>
-    </Reference>
     <Reference Include="Extreme.Numerics">
       <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
     </Reference>

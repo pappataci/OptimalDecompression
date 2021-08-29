@@ -20,9 +20,9 @@ type AirTable = { MaximumDepth: double
 type AnsData = { Header: string 
                  NodeSeq: seq<DepthTime> }
 
-type MissionAscentInfo = { MaximumDepth: double
-                           BottomTime : double
-                           TotalAscentTime : double}
+type MissionInfo = { MaximumDepth: double
+                     BottomTime : double
+                     TotalAscentTime : double}
 
 let getDataContent  fileName = 
     let completeFileName = dataSrcFolder  + @"\" + fileName
@@ -176,7 +176,7 @@ let defNodeWithTensionAtDepthAndTime initDepthTime = // needed more generic func
     let externalPressures = depth2AmbientCondition initDepth
     let zeroVector = Array.zeroCreate modelParams.Gains.Length
     {EnvInfo = initDepthTime
-     Tensions = getTissueTensionsAtDepth externalPressures
+     TissueTensions = getTissueTensionsAtDepth externalPressures
      ExternalPressures = depth2AmbientCondition initDepth
      InstantaneousRisk = zeroVector
      AccruedWeightedRisk = zeroVector

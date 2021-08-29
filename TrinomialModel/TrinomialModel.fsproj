@@ -16,5 +16,7 @@
     <Compile Include="ProfileIntegrator.fs" />
     <Compile Include="MissionDefinerFromTables.fs" />
     <None Include="Script.fsx" />
+    <None Include="ParameterUpdateIdeas.fsx" />
+    <None Include="NotInUse.fsx" />
   </ItemGroup>
 </Project>
