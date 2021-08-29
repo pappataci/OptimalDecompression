@@ -16,3 +16,11 @@ let getInitialConditionNode (solutionOfSeqOfNodes:seq<Node>)  (missionInfo: Miss
     solutionOfSeqOfNodes  
     |> Seq.find isNodeAtBottomTime
     |> resetTimeForNode
+
+let getTensionToRiskAtSurface (solutionOfSeqOfNodes:seq<Node>) =
+    let seqLength = solutionOfSeqOfNodes |> Seq.length
+    let previousToLastNode  = solutionOfSeqOfNodes |> Seq.item (seqLength - 2 )
+    let lastNode = solutionOfSeqOfNodes |> Seq.last
+    let tensionsAtSurface = previousToLastNode.TissueTensions
+    let toGoRisk = lastNode.TotalRisk - previousToLastNode.TotalRisk
+    tensionsAtSurface, toGoRisk

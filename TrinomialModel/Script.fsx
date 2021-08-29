@@ -32,12 +32,14 @@ let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , table
     |> getTableMetrics initAscentNode lastNode
     
 
-let solutions = profilingOutput |> Array.Parallel.map  ( fun( x,   _ )  -> runModelOnInternalNodes x ) 
+//let getTensionDistributionForThisTissue 
+
+
+let solutions = profilingOutput |> Array.Parallel.map  ( fun( x,   _ )  -> runModelOnProfile x ) 
 
 let tableInitialConditions = profilingOutput |> Array.Parallel.map getInitialConditionAndTargetForTable
 
+let tensionToRiskTable = solutions |> Array.Parallel.map getTensionToRiskAtSurface
 
 
-let pSeriousDCS node = 1.0 - exp(-trinomialScaleFactor * node.TotalRisk)
-let pMildDCS node = (1.0 - exp(-node.TotalRisk)) * (1.0 - pSeriousDCS node)
-let pNoDCSEvent node = exp( -(trinomialScaleFactor + 1.0) * node.TotalRisk)
+
