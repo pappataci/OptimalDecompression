@@ -1,6 +1,8 @@
 ﻿[<AutoOpen>]
 module MissionDefinerFromTables
 
+open ModelRunner
+
 type TableMissionMetrics = { MissionInfo: MissionInfo
                              TotalRisk: double
                              InitAScentNode: Node }     
@@ -24,3 +26,16 @@ let getTensionToRiskAtSurface (solutionOfSeqOfNodes:seq<Node>) =
     let tensionsAtSurface = previousToLastNode.TissueTensions
     let toGoRisk = lastNode.TotalRisk - previousToLastNode.TotalRisk
     tensionsAtSurface, toGoRisk
+
+let getTableMetrics (initAscentNode:Node) (lastNode:Node)  (missionInfo: MissionInfo) : TableMissionMetrics =
+    {MissionInfo = missionInfo
+     TotalRisk = lastNode.TotalRisk
+     InitAScentNode = initAscentNode }
+
+let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
+    let modelSolution = runModelOnProfile tableSeqODepths
+    let initAscentNode = getInitialConditionNode modelSolution tableParams
+    let lastNode = modelSolution 
+                   |> Seq.last 
+    tableParams
+    |> getTableMetrics initAscentNode lastNode

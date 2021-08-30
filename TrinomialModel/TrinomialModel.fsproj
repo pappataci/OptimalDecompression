@@ -15,6 +15,7 @@
     <Compile Include="TableReader.fs" />
     <Compile Include="ProfileIntegrator.fs" />
     <Compile Include="MissionDefinerFromTables.fs" />
+    <Compile Include="SurfaceTableCreator.fs" />
     <None Include="Script.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
     <None Include="NotInUse.fsx" />
