@@ -19,26 +19,37 @@ let solutions = profilingOutput |> Array.Parallel.map  ( fun( x,   _ )  -> runMo
 
 let tableInitialConditions = profilingOutput |> Array.Parallel.map getInitialConditionAndTargetForTable
 
-let tensionToRiskTable = solutions |> Array.Parallel.map getTensionToRiskAtSurface
+let tensionToRiskTable = solutions |> Array.Parallel.map getTensionToIndividualRisksAtSurface
 
 let tensions, risks = tensionToRiskTable |> Array.unzip
 
+let overAllSurfaceToGoRisk = risks
+                             |> Array.map (fun r -> r |> Array.sum)
 
 let pressureDistributions = tensions
-                            |> initPresssures
+                            |> initPressures
                             |> Array.unzip3
 
+
 let press0 , press1 , press2 = pressureDistributions
+
+let risks0 , risks1, risks2 = [| 0 .. ((risks|>Array.length ) - 1 )  |]
+                              |> Array.map ( fun i -> risks.[i].[0] , risks.[i].[1], risks.[i].[2] )
+                              |> Array.unzip3
+
 
 let range (x : 'T[]) = 
     x|> Array.min ,  x |> Array.max
 
-[|press0; press1 ; press2|]
-|> Array.map range
+let pressRanges = [|press0; press1 ; press2|]
+                  |> Array.map range
 
-press2 |> Array.findIndex ( fun x -> x > 1.3779)
+let individualRisksRanges = [|risks0 ; risks1; risks2|]
+                            |> Array.map range
 
-//let getTensionDistributionForThisTissue  (tensToRiskTable:(TissueTension[]*double)[]) = 
-//    tensToRiskTable
-//    |> Array.mapi (fun i (tissueTensionsVec, risk)  -> tissueTensionsVec)
-press0 |> Array.sort
+let overallRiskRange = range overAllSurfaceToGoRisk
+
+let totalRisks = solutions
+                 |> Array.Parallel.map (fun seqOfNode -> seqOfNode |> Seq.last |> (fun n -> n.TotalRisk))
+
+let totalRiskRange = range totalRisks

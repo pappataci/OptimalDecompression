@@ -21,7 +21,7 @@ let main _ =
     
     
     let pressureDistributions = tensions
-                                |> initPresssures
+                                |> initPressures
                                 |> Array.unzip3
     
     let press0 , press1 , press2 = pressureDistributions
