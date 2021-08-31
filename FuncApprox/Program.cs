@@ -52,8 +52,9 @@ namespace FuncApprox
             double approxRisk;
             s.Start();
             //Parallel.For(0, 25000, i => { approxRisk = surfaceApproximator.EstimateRisk(initPressures);  });
+            var numOfIt = 200;
 
-            for (int i = 0; i < 25000; i++)
+            for (int i = 0; i < numOfIt; i++)
                 approxRisk = surfaceApproximator.EstimateRisk(initPressures);
 
             Console.WriteLine(s.ElapsedMilliseconds);

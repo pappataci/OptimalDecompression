@@ -1,4 +1,5 @@
-﻿#load "SeqExtension.fs"
+﻿#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\FuncApprox\bin\Debug\FuncApprox.dll"
+#load "SeqExtension.fs"
 #load "Gas.fs"
 #load "ELModelCommon.fs"
 #load "TrinomialModel.fs"
