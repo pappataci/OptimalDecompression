@@ -1,6 +1,4 @@
-﻿#r @"C:\Program Files (x86)\ILNumerics\ILNumerics Ultimate VS\bin\ILNumerics.Core.dll"
-#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\FuncApprox\bin\Debug\FuncApprox.dll"
-#load "SeqExtension.fs"
+﻿#load "SeqExtension.fs"
 #load "Gas.fs"
 #load "ELModelCommon.fs"
 #load "TrinomialModel.fs"
@@ -11,12 +9,15 @@
 #load "SurfaceTableCreator.fs"
 //open ProfileIntegrator
 open ModelRunner
-open FuncApprox
+
 let profilingOutput  = fileName
                                 |> getDataContent
                                 |> Array.map data2SequenceOfDepthAndTime
 
+let _ , missionInfos = profilingOutput |> Array.unzip
 
 let solutions = profilingOutput |> Array.Parallel.map  ( fun( x,   _ )  -> runModelOnProfile x ) 
 
-let tableInitialConditions = profilingOutput |> Array.Parallel.map getInitialConditionAndTargetForTable
+let tableInitialConditions' = profilingOutput |> Array.Parallel.map getInitialConditionAndTargetForTable
+let tableInitialConditions = Array.map2 getInitialConditionsFromSolution solutions missionInfos
+

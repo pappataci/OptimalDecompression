@@ -40,10 +40,13 @@ let getTableMetrics (initAscentNode:Node) (lastNode:Node)  (missionInfo: Mission
      TotalRisk = lastNode.TotalRisk
      InitAScentNode = initAscentNode }
 
-let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
-    let modelSolution = runModelOnProfile tableSeqODepths
+let getInitialConditionsFromSolution (modelSolution:seq<Node>)  (tableParams: MissionInfo) = 
     let initAscentNode = getInitialConditionNode modelSolution tableParams
     let lastNode = modelSolution 
-                   |> Seq.last 
+                    |> Seq.last
     tableParams
     |> getTableMetrics initAscentNode lastNode
+
+let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
+    let modelSolution = runModelOnProfile tableSeqODepths
+    getInitialConditionsFromSolution modelSolution tableParams
