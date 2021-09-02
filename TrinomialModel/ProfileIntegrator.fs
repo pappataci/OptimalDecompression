@@ -11,9 +11,11 @@ module ProfileIntegrator =
         |> Seq.scan  oneActionStepTransition initialNode
         |> Seq.skip 1
 
-    let runModelOnProfile  seqOfNodes = 
+    let runModelOnProfileGen (surfaceRiskEstimator:Node->Node) seqOfNodes = 
         let internalNodes = runModelOnInternalNodes  seqOfNodes
         let surfaceNode = internalNodes |> Seq.last 
-        let finalNode = runModelUntilZeroRisk surfaceNode
+        let finalNode = surfaceRiskEstimator surfaceNode
         seq{yield! internalNodes
             yield finalNode}
+
+    let runModelOnProfile :seq<DepthTime> -> seq<Node>  = runModelOnProfileGen runModelUntilZeroRisk

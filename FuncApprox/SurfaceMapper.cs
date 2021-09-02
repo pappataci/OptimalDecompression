@@ -72,11 +72,23 @@ namespace FuncApprox
             initInterpolator(xField, yField);
         }
 
-        public Kriging1DAdimMapper(double[] xField, double yField)
+        /// <summary>
+        ///  Just used for testing
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="t"></param>
+        public Kriging1DAdimMapper(string s , string t)
+        {
+            Array<double> x = new double[] { 1.0 };
+            Array<double> y = new double[] { 2.0};
+            initInterpolator(x, y);
+        }
+
+        public Kriging1DAdimMapper(double[] xField, double[] yField  )
         {
             Array<double> X = xField;
             Array<double> Y = yField;
-            initInterpolator(xField, yField);
+            initInterpolator(X, Y);
         }
 
         public void initInterpolator(Array<double> xField, Array<double> yField)
