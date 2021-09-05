@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ToData.fsx" />
     <Compile Include="SeqExtension.fs" />
     <Compile Include="Gas.fs" />
     <Compile Include="ELModelCommon.fs" />
