@@ -14,9 +14,9 @@ module TrinomialModel
 
     [<AutoOpen>]
     module ModelPhysics = 
-        type Tissue                     = |Tension   of  float 
+        type TissueTension                     = |Tension   of  float 
 
-        let inline (+>) (Tension x:Tissue ) (Tension y:Tissue)  = 
+        let inline (+>) (Tension x:TissueTension ) (Tension y:TissueTension)  = 
             (x + y) 
             |> Tension 
 
@@ -24,7 +24,7 @@ module TrinomialModel
     module Mission = 
         
         type Node =  {    EnvInfo : DepthTime
-                          Tensions : Tissue[]
+                          TissueTensions : TissueTension[]
                           ExternalPressures : ExternalPressureConditions
                           InstantaneousRisk : double[]
                           IntegratedRisk : double[]
@@ -60,7 +60,7 @@ module TrinomialModel
                 if (tissueTension > ambientPressure + modelParams.CrossOver.[iTissue]  - dPFVG) then linearKineticsIncrement
                 else exponentialKineticsIncrement
 
-        let private getLETissueTensionIncrement iTissue deltaT pressures ( actualTissueTension:Tissue )  =
+        let private getLETissueTensionIncrement iTissue deltaT pressures ( actualTissueTension:TissueTension )  =
             let integrationFcn = chooseAppropriateModelDependingOnTissueTensionNForcingTerm iTissue actualTissueTension pressures
             integrationFcn iTissue deltaT actualTissueTension pressures
             |> Tension
@@ -103,7 +103,7 @@ module TrinomialModel
         let oneStepInTimeTransitionFunction (actualNode:Node) (action:DepthTime) : Node = 
             
             let nextAmbientConditions = depth2AmbientCondition action.Depth
-            let actualTissueTensions = actualNode.Tensions
+            let actualTissueTensions = actualNode.TissueTensions
             let deltaT = action.Time - actualNode.EnvInfo.Time
             
             let nextTissueTensions = Array.mapi (updateTissueTension deltaT nextAmbientConditions) actualTissueTensions
@@ -115,7 +115,7 @@ module TrinomialModel
             
             let updatedAcrruedRisk  =  Array.map2 (+) integratedWeightedRisks actualNode.AccruedWeightedRisk
             { EnvInfo = action
-              Tensions = nextTissueTensions
+              TissueTensions = nextTissueTensions
               ExternalPressures  = nextAmbientConditions
               InstantaneousRisk = instantaneousRisks
               IntegratedRisk = integratedRisks
@@ -133,11 +133,13 @@ module TrinomialModel
             internalSeqOfNodes
             |>Seq.last
 
-        let notAccrueingRiskAtSurface    (actualTissueTensions: Tissue[])  = 
+        let isAccrueingRisk tissueTensionThreshold (Tension tissueTension) = 
             let surfaceAmbientPressure = 1.0
+            tissueTension > surfaceAmbientPressure +  tissueTensionThreshold - dPFVG
+
+        let accrueingRiskAtSurface  (actualTissueTensions: TissueTension[])  = 
             actualTissueTensions 
-            |> Array.map2 (fun tissueTensionThreshold  (Tension tissueTension)  ->  tissueTension > surfaceAmbientPressure +  tissueTensionThreshold - dPFVG  )   
-                modelParams.Thresholds
+            |> Array.map2 isAccrueingRisk  modelParams.Thresholds
             |> Array.reduce (||)
 
         let runModelUntilZeroRisk (initNodeAtSurface: Node) = 
@@ -146,6 +148,8 @@ module TrinomialModel
                 Seq.initInfinite (fun count -> {Depth = 0.0 ; Time = initTime + (float (count + 1 ) ) * maxIntegrationTime})
             infiniteSeqOfDepthAndTime
             |> Seq.scan oneStepInTimeTransitionFunction initNodeAtSurface
-            |> SeqExtension.takeWhileWithLast ( fun x ->  x.Tensions
-                                                          |> notAccrueingRiskAtSurface ) 
-            
+            |> SeqExtension.takeWhileWithLast ( fun x ->  x.TissueTensions
+                                                          |> accrueingRiskAtSurface ) 
+            |> Seq.last 
+
+        

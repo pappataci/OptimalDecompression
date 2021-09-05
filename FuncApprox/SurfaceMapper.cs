@@ -69,15 +69,37 @@ namespace FuncApprox
         private KrigingInterpolatorDouble interpolator;
         public Kriging1DAdimMapper(Array<double> xField, Array<double> yField)
         {
+            initInterpolator(xField, yField);
+        }
+
+        /// <summary>
+        ///  Just used for testing
+        /// </summary>
+        /// <param name="s"></param>
+        /// <param name="t"></param>
+        public Kriging1DAdimMapper(string s , string t)
+        {
+            Array<double> x = new double[] { 1.0 };
+            Array<double> y = new double[] { 2.0};
+            initInterpolator(x, y);
+        }
+
+        public Kriging1DAdimMapper(double[] xField, double[] yField  )
+        {
+            Array<double> X = xField;
+            Array<double> Y = yField;
+            initInterpolator(X, Y);
+        }
+
+        public void initInterpolator(Array<double> xField, Array<double> yField)
+        {
             xFieldMapper = new AdimMapper(xField);
             yFieldMapper = new AdimMapper(yField);
 
             Array<double> xAdimField = xFieldMapper.GetAdim(xField);
             Array<double> yAdimField = yFieldMapper.GetAdim(yField);
             interpolator = new KrigingInterpolatorDouble(yAdimField, xAdimField);
-
         }
-
         public double EstimateMapValue(double dimensionalX)
         {
             var adimX = xFieldMapper.DimToAdim(dimensionalX);

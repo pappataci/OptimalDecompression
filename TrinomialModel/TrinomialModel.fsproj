@@ -7,10 +7,23 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ToData.fsx" />
     <Compile Include="SeqExtension.fs" />
     <Compile Include="Gas.fs" />
     <Compile Include="ELModelCommon.fs" />
     <Compile Include="TrinomialModel.fs" />
+    <Compile Include="TableDataInputs.fs" />
+    <Compile Include="TableReader.fs" />
+    <Compile Include="ProfileIntegrator.fs" />
+    <Compile Include="MissionDefinerFromTables.fs" />
+    <Compile Include="SurfaceTableCreator.fs" />
+    <None Include="SurrogateDeprecated.fsx" />
     <None Include="Script.fsx" />
+    <None Include="ParameterUpdateIdeas.fsx" />
+    <None Include="NotInUse.fsx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FuncApprox\FuncApprox.csproj" />
   </ItemGroup>
 </Project>
