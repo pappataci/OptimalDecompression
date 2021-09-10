@@ -113,7 +113,6 @@
     <None Include="InterpolationScratch.fsx" />
     <None Include="TrinomialCheck.fsx" />
     <None Include="ImmersionLegTest.fsx" />
-    <Compile Include="MinimalTimeOptimizer.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="Extreme.Numerics">
