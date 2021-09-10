@@ -4,6 +4,7 @@
 
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <WarnOn>3390;$(WarnOn)</WarnOn>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +19,7 @@
     <Compile Include="MissionDefinerFromTables.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
     <None Include="SurrogateDeprecated.fsx" />
+    <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
     <None Include="NotInUse.fsx" />
