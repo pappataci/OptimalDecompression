@@ -2,7 +2,7 @@
 
 [<AutoOpen>]
 module ProfileIntegrator =
-    open TableReader 
+    
     let runModelOnInternalNodes  sequenceOfNodes  =
         let initialNode =  sequenceOfNodes
                            |>Seq.head 
@@ -19,3 +19,4 @@ module ProfileIntegrator =
             yield finalNode}
 
     let runModelOnProfile :seq<DepthTime> -> seq<Node>  = runModelOnProfileGen runModelUntilZeroRisk
+

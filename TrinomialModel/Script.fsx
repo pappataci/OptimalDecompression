@@ -7,7 +7,7 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "SurfaceTableCreator.fs"
-//open ProfileIntegrator
+
 open ModelRunner
 
 let profilingOutput  = fileName

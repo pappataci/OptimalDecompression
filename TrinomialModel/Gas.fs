@@ -1,6 +1,8 @@
 ﻿[<AutoOpen>]
 module Gas 
     
+    type ExternalPressureConditions = { Ambient   : float
+                                        Nitrogen  : float }
     [<AutoOpen>]
     module Constants = 
         let dFO2Air = 0.2100
@@ -29,6 +31,12 @@ module Gas
         depth 
         |> depth2AmbientPressure
         |> externalN2Pressure
+
+    let depth2EnvPressures depth = 
+        let ambPressure = depth2AmbientPressure depth 
+        let n2Pressure = externalN2Pressure ambPressure
+        {Ambient = ambPressure
+         Nitrogen = n2Pressure}
 
     let n2Pressure2Depth n2Pressure = 
         let k = dPH2O  + dPACO2 * (System.Convert.ToDouble  bThalmannError) 

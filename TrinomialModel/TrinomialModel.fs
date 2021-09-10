@@ -7,9 +7,7 @@ module TrinomialModel
         type DepthTime =     { Depth : double
                                Time  : double }
 
-        type ExternalPressureConditions = { Ambient   : float
-                                            Nitrogen  : float }
-
+        
         type Trajectory  = |Trajectory of seq<DepthTime>
 
     [<AutoOpen>]
