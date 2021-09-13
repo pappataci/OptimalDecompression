@@ -19,6 +19,7 @@
     <Compile Include="MissionDefinerFromTables.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
     <None Include="SurrogateDeprecated.fsx" />
+    <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
