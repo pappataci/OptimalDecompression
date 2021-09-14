@@ -36,15 +36,19 @@ type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float>
 
 let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParams:DenseVector<float>) : seq<DepthTime> = 
     
-    let breakFraction = curveParams.[0]
+    let breakFraction = curveParams.[0] //between 0 and 1
     let powerCoeff = curveParams.[1] // this has to be positive
-    let tau = curveParams.[2] // this has to be positive
+    let tau = curveParams.[2] // this has to be positive //TO DO: add linear time (that is the minimum time to go to surface)
  
     let initialDepth = initialNode.EnvInfo.Depth
     let endLinearPartDepth  = breakFraction  * initialDepth
     let endLinearPartTime   = (endLinearPartDepth - initialDepth)/ascentRate
 
     let endLinearPartDepthTime = {Time = endLinearPartTime; Depth = endLinearPartDepth} 
+    
+    let minimumAscentTime = initialDepth / abs(ascentRate) 
+    
+    //let tau = curveParams.[2] +  minimumAscentTime
 
     let getNextLinDepthTimeWTargetDepth (currentDepthAndTime:DepthTime) targetDepth = 
         (targetDepth - initialDepth)/ascentRate
@@ -61,7 +65,7 @@ let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParam
                 Time = currentDepthTime.Time + deltaT}
     
     let getNextCurveDepthTime  (currentDepthTime: DepthTime)  deltaT=
-        if currentDepthTime.Depth < 0.0 then 
+        if currentDepthTime.Depth > 0.0 then 
             let evaluateCurveAtThisTime (evaluationTime:double) = 
                 endLinearPartDepth - endLinearPartDepth *  ( ( (evaluationTime - endLinearPartTime) / tau ) ** powerCoeff )
         
@@ -77,32 +81,46 @@ let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParam
 
             match nextCandidateDepth with
             | x when x < 0.0 -> { Depth = 0.0 
-                                  Time = -currentDepthTime.Depth / curveIncrement  }
+                                  Time = currentDepthTime.Time - currentDepthTime.Depth / curveIncrement  }
             | _ -> {Depth = candidateDepthTime.Depth
                     Time = currentDepthTime.Time + deltaT}
         else
             {Depth = -999.9
              Time  = currentDepthTime.Time }
-        
+
+
     let nonlinearDecisionSeq = (fun _ -> decisionTime)
                                |> Seq.initInfinite 
                                |> Seq.scan getNextCurveDepthTime endLinearPartDepthTime
                                |> Seq.takeWhile ( fun x -> x.Depth >= 0.0 )
+                               |> Seq.skip 1
     
     seq{yield endLinearPartDepthTime 
         yield! nonlinearDecisionSeq }
     
 
 
-//let linear
 
-let runOptimizationForThisTableEntry (tableEntry:TableMissionMetrics) 
-                                     (InitialGuessFcn initialGuessFcn)
-                                     (TrajGen trajectoryGenerator )  = 
-    
-    let initialNode = tableEntry.InitAscentNode
-    let initialGuess = initialGuessFcn initialNode
-    
+//linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParams:DenseVector<float>) 
+
+let decisionTime = 1.0
+let initialNode= tableInitialConditions.[330].InitAscentNode
+
+let breakFraction = 0.6
+let powerCoeff = 11.0
+let tau = 5.5
+
+let curveParams = Vector.Create(breakFraction, powerCoeff, tau)
+
+let curveGen = linPowerCurveGenerator decisionTime initialNode curveParams
 
 
-    0.0
+let curveText (curveGen:seq<DepthTime>) = 
+    curveGen
+    |> Seq.map (fun x -> x.Time.ToString() + ",  " + x.Depth.ToString())
+
+
+let curveDescriptions = curveGen |> curveText
+
+open System.IO
+File.WriteAllLines(@"C:\Users\glddm\Desktop\New folder\text.txt" , curveDescriptions)
