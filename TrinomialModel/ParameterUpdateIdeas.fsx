@@ -22,12 +22,11 @@ open System.IO
 //let curveGen = linPowerCurveGenerator decisionTime initialNode curveParams
 
 
-let curveText (curveGen:seq<DepthTime>) = 
-    curveGen
-    |> Seq.map (fun x -> x.Time.ToString() + ",  " + x.Depth.ToString())
+//let curveText (curveGen:seq<DepthTime>) = 
+//    curveGen
+//    |> Seq.map (fun x -> x.Time.ToString() + ",  " + x.Depth.ToString())
 
-let writeStringSeqToDisk fileName (stringSeq:seq<string>) = 
-    File.WriteAllLines(fileName , stringSeq)
+
 
 //let curveDescriptions = curveGen |> curveText
 

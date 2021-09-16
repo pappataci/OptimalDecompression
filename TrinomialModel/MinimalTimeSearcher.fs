@@ -1,13 +1,13 @@
 ﻿namespace MinimalSearcher
-//open Extreme.Mathematics
-//open Extreme.Mathematics.Optimization
+open Extreme.Mathematics
+open Extreme.Mathematics.Optimization
 open Extreme.Mathematics.LinearAlgebra
 //open Extreme.Mathematics.EquationSolvers
 
 [<AutoOpen>]
 module MinimalTimeSearcher = 
     
-    let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParams:DenseVector<float>) : seq<DepthTime> = 
+    let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParams:Vector<float>) : seq<DepthTime> = 
     
         let breakFraction = curveParams.[0] //between 0 and 1
         let powerCoeff = curveParams.[1] // this has to be positive
@@ -68,3 +68,25 @@ module MinimalTimeSearcher =
     
         seq{yield endLinearPartDepthTime 
             yield! nonlinearDecisionSeq }
+
+    let curveStrategyToString (curveStrategy:seq<DepthTime>) = 
+        curveStrategy
+        |> Seq.map (fun x -> x.Time.ToString() + ",  " + x.Depth.ToString())
+
+
+[<AutoOpen>]
+module SimParams = 
+    let decisionTime = 1.0  // [min]
+
+    let penaltyForRisk (remainingRisk) = 
+        if (remainingRisk  >= 0.0) 
+            then 0.0
+        else 
+            remainingRisk ** 2.0 * 1000.0
+
+[<AutoOpen>]
+module StrategyToDisk = 
+    open System.IO
+
+    let writeStringSeqToDisk fileName (stringSeq:seq<string>) = 
+        File.WriteAllLines(fileName , stringSeq)
