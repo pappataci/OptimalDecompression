@@ -6,4 +6,4 @@ let descentRate = 75.0 // FPM
 let defaultAscentStep = -10.0
 
 let dataSrcFolder = @"C:\Users\glddm\Desktop\Table9_9"
-let fileName = "table9_9_air.txt"
+let table9FileName = "table9_9_air.txt"

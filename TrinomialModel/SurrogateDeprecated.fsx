@@ -12,7 +12,7 @@
 //open ProfileIntegrator
 open ModelRunner
 open FuncApprox
-let profilingOutput  = fileName
+let profilingOutput  = table9FileName
                                             |> getDataContent
                                             |> Array.map data2SequenceOfDepthAndTime
 

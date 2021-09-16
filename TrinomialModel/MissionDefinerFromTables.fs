@@ -5,7 +5,7 @@ open ModelRunner
 
 type TableMissionMetrics = { MissionInfo: MissionInfo
                              TotalRisk: double
-                             InitAScentNode: Node }     
+                             InitAscentNode: Node }     
 
 let resetTimeForNode (aNode:Node) = 
     {aNode with EnvInfo ={Depth = aNode.EnvInfo.Depth ;
@@ -38,7 +38,7 @@ let getTensionToIndividualRisksAtSurface (solutionOfSeqOfNodes:seq<Node>) =
 let getTableMetrics (initAscentNode:Node) (lastNode:Node)  (missionInfo: MissionInfo) : TableMissionMetrics =
     {MissionInfo = missionInfo
      TotalRisk = lastNode.TotalRisk
-     InitAScentNode = initAscentNode }
+     InitAscentNode = initAscentNode }
 
 let getInitialConditionsFromSolution (modelSolution:seq<Node>)  (tableParams: MissionInfo) = 
     let initAscentNode = getInitialConditionNode modelSolution tableParams

@@ -19,6 +19,7 @@
     <Compile Include="MissionDefinerFromTables.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
     <None Include="SurrogateDeprecated.fsx" />
+    <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
@@ -27,5 +28,11 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FuncApprox\FuncApprox.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Extreme.Numerics">
+      <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
+    </Reference>
   </ItemGroup>
 </Project>

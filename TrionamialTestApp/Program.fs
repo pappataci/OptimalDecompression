@@ -6,7 +6,7 @@ let main _ =
 
     //open ModelRunner
     
-    let profilingOutput  = fileName
+    let profilingOutput  = table9FileName
                                                 |> getDataContent
                                                 |> Array.map data2SequenceOfDepthAndTime
     
