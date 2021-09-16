@@ -11,6 +11,7 @@
 #load "MissionDefinerFromTables.fs"
 #load "SurfaceTableCreator.fs"
 #load "MinimalTimeSearcher.fs"
+#load "Logger.fs"
 
 open ModelRunner
 open MinimalSearcher
@@ -18,6 +19,7 @@ open Extreme.Mathematics
 open Extreme.Mathematics.Optimization
 open Extreme.Mathematics.LinearAlgebra
 open Extreme.Mathematics.EquationSolvers
+open Logger
 
 let profilingOutput  = table9FileName
                                 |> getDataContent
@@ -56,6 +58,10 @@ let getSimulationMetric(simSolution : seq<Node>) =
     
 let targetFcnDefinition (initialNode:Node) (riskBound:double) :System.Func<Vector<float> , double>= 
     let costComputation (strategyParams:Vector<float> ) =
+
+        addToLogger(seq{yield strategyParams.ToString()} ) 
+        
+        
         let solution = strategyParams
                         |> linPowerCurveGenerator decisionTime initialNode 
                         |> runModelOnProfile
@@ -91,7 +97,12 @@ let solveCurveGenProblem (InitialGuessFcn initialGuesser) (missionMetrics:TableM
 
 let initialGuesser = (fun _ -> curveParams) |> InitialGuessFcn
 
+
+
 let missionMetrics = tableInitialConditions.[10]
 let initialMissionNode = missionMetrics.InitAscentNode
 let riskBound = missionMetrics.TotalRisk
 let initialGuess = (fun _ -> curveParams)   initialMissionNode
+
+let objectiveFunction = targetFcnDefinition initialMissionNode riskBound
+let optimizerWithData = solveCurveGenProblem initialGuesser missionMetrics

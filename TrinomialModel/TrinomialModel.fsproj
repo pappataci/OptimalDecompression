@@ -21,6 +21,7 @@
     <None Include="SurrogateDeprecated.fsx" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
+    <Compile Include="Logger.fs" />
     <None Include="Script.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
     <None Include="NotInUse.fsx" />
