@@ -4,14 +4,21 @@ open Extreme.Mathematics.Optimization
 open Extreme.Mathematics.LinearAlgebra
 //open Extreme.Mathematics.EquationSolvers
 
+
+
+
 [<AutoOpen>]
 module MinimalTimeSearcher = 
     
+    // values are scaled
+    let powerCoeffScale = 10.0
+    let tauScale = 100.0
+
     let linPowerCurveGenerator  (decisionTime:double) (initialNode:Node) (curveParams:Vector<float>) : seq<DepthTime> = 
-    
+        
         let breakFraction = curveParams.[0] //between 0 and 1
-        let powerCoeff = curveParams.[1] // this has to be positive
-        let tau = curveParams.[2] // this has to be positive //TO DO: add linear time (that is the minimum time to go to surface)
+        let powerCoeff = curveParams.[1] * powerCoeffScale// this has to be positive
+        let tau = curveParams.[2] * tauScale// this has to be positive //TO DO: add linear time (that is the minimum time to go to surface)
  
         let initialDepth = initialNode.EnvInfo.Depth
         let endLinearPartDepth  = breakFraction  * initialDepth
@@ -82,7 +89,7 @@ module SimParams =
         if (remainingRisk  >= 0.0) 
             then 0.0
         else 
-            remainingRisk ** 2.0 * 1000.0
+            abs(remainingRisk)  * 100000.0
 
 [<AutoOpen>]
 module StrategyToDisk = 

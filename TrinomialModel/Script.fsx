@@ -35,13 +35,8 @@ type InitialGuesser = | InitialGuessFcn of (Node -> DenseVector<float> )
 type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float> -> Trajectory ) // decision time -> initialNode -> curveParams -> seq Of Depth and Time
     
 //let decisionTime = 1.0
-let initialNode = tableInitialConditions.[330].InitAscentNode
 
-let breakFraction = 0.3
-let powerCoeff = 0.2
-let tau = 205.5
 
-let curveParams = Vector.Create(breakFraction, powerCoeff, tau)
 
 //let curveGen = linPowerCurveGenerator decisionTime initialNode curveParams
 
@@ -56,20 +51,57 @@ let getSimulationMetric(simSolution : seq<Node>) =
     let previousToLast = simSolution |> Seq.item ( numberOfNodes - 2 )
     previousToLast.EnvInfo.Time ,  lastNode.TotalRisk
     
+let createFunctionBounds (lowerBound, upperBound) (penaltyLower, penaltyUpper) = 
+    let inner (inputArg:float) = 
+        match inputArg with
+        | x when x < lowerBound -> penaltyLower
+        | x when x > upperBound -> penaltyUpper
+        | _ -> 0.0
+    inner
+
+
+
+let breakLower, breakUpper = 0.001, 0.9999
+let powerLower, powerUpper = 0.0001, 1.5 
+let tauLower, tauUpper   = 0.01,  50.0
+
+let defaultPenalty = 100000.0
+
+let boundsForBreakPoint = createFunctionBounds (breakLower, breakUpper) (defaultPenalty , defaultPenalty )
+let boundsForPowerCoeff = createFunctionBounds (powerLower, powerUpper ) (defaultPenalty , defaultPenalty )
+let boundsForTau = createFunctionBounds (tauLower, tauUpper ) (defaultPenalty , defaultPenalty )
+
+let listOfValidators = [|boundsForBreakPoint ; boundsForPowerCoeff ; boundsForTau|]
+
+let costValidator (listOfValidators: seq<float -> float> )  
+                  (actualCost:Vector<float> ->double) = 
+
+    let validatedCost (strategyParams:Vector<float>)  = 
+        let penaltiesFromInput = strategyParams
+                                 |> Seq.map2 (fun f x -> f x ) listOfValidators 
+                                 |> Seq.sum 
+        match penaltiesFromInput with 
+        | 0.0 -> actualCost  strategyParams
+        | _ -> penaltiesFromInput
+               
+    validatedCost
+
 let targetFcnDefinition (initialNode:Node) (riskBound:double) :System.Func<Vector<float> , double>= 
     let costComputation (strategyParams:Vector<float> ) =
 
-        addToLogger(seq{yield strategyParams.ToString()} ) 
-        
-        
         let solution = strategyParams
                         |> linPowerCurveGenerator decisionTime initialNode 
                         |> runModelOnProfile
-        let (ascentTime, totalAccruedRisk) = getSimulationMetric(solution)
+        let (ascentTime, totalAccruedRisk) = getSimulationMetric(solution) 
+        let cost = ascentTime + penaltyForRisk (riskBound - totalAccruedRisk)
+        addToLogger(seq{yield strategyParams.ToString(); yield ascentTime.ToString(); 
+                        yield totalAccruedRisk.ToString(); 
+                        yield cost.ToString() })
+        cost
+
+    let validatedCost = costValidator listOfValidators costComputation
         
-        ascentTime + penaltyForRisk (riskBound - totalAccruedRisk) 
-        
-    System.Func<_,_> costComputation
+    System.Func<_,_> validatedCost
 
 
 let getPowellOptimizer(initGuess:Vector<float>)  objectiveFunction   = 
@@ -79,26 +111,50 @@ let getPowellOptimizer(initGuess:Vector<float>)  objectiveFunction   =
     pw.Dimensions <- initGuess.Length
     pw.InitialGuess <- initGuess
     pw.ObjectiveFunction <- objectiveFunction
+    pw.MaxIterations <- 500000
     pw
 
-//let optimizeThisProfile (TrajGen trajectoryGenerator) (InitialGuessFcn initGuessProvider)
+let getNelderMead(initGuess:Vector<float>)  objectiveFunction   = 
+    
+    let nm = NelderMeadOptimizer()
+    nm.ExtremumType  <- ExtremumType.Minimum
+    nm.Dimensions <- initGuess.Length
+    nm.InitialGuess <- initGuess
+    nm.ObjectiveFunction <- objectiveFunction
+    nm.MaxIterations <- 5000
 
-let solveCurveGenProblem (InitialGuessFcn initialGuesser) (missionMetrics:TableMissionMetrics)  = 
+    nm.ContractionFactor <- 0.75
+    nm.ExpansionFactor <- 1.75
+    nm.ReflectionFactor <- -1.75
+    nm
+
+
+
+let defineObjectieFunction (missionMetrics:TableMissionMetrics) = 
     let initialMissionNode = missionMetrics.InitAscentNode
     let riskBound = missionMetrics.TotalRisk
-    let initialGuess = initialGuesser initialMissionNode
-    let objectiveFunction = targetFcnDefinition initialMissionNode riskBound
+    targetFcnDefinition initialMissionNode riskBound
 
-    let optimizer = getPowellOptimizer initialGuess objectiveFunction
+let solveCurveGenProblem (InitialGuessFcn initialGuesser) (missionMetrics:TableMissionMetrics) = 
+    let initialMissionNode = missionMetrics.InitAscentNode
+    let initialGuess = initialGuesser initialMissionNode
+    let objectiveFunction =  defineObjectieFunction missionMetrics
+
+    let optimizer = getNelderMead initialGuess objectiveFunction
 
     let optimalSolution = optimizer.FindExtremum()
     optimizer
-    //let functionValue = optimizer.ValueAtExtremum
+
+
+let breakFraction = 0.2
+let powerCoeff = 0.4
+let tau = 240.0
+
+let curveParams = Vector.Create(breakFraction, powerCoeff, tau)
 
 let initialGuesser = (fun _ -> curveParams) |> InitialGuessFcn
 
-
-
+ 
 let missionMetrics = tableInitialConditions.[10]
 let initialMissionNode = missionMetrics.InitAscentNode
 let riskBound = missionMetrics.TotalRisk
@@ -106,3 +162,13 @@ let initialGuess = (fun _ -> curveParams)   initialMissionNode
 
 let objectiveFunction = targetFcnDefinition initialMissionNode riskBound
 let optimizerWithData = solveCurveGenProblem initialGuesser missionMetrics
+let optimalResult = optimizerWithData.Result
+
+let tableEntry = 120
+
+let initialNode = tableInitialConditions.[tableEntry].InitAscentNode
+
+
+let optimalCurve = linPowerCurveGenerator decisionTime initialNode  optimalResult
+
+let testSolution = runModelOnProfile optimalCurve
