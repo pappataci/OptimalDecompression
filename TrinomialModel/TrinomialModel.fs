@@ -1,6 +1,6 @@
 ﻿[<AutoOpen>]
 module TrinomialModel
-
+    
     [<AutoOpen>]
     module Profile = 
 
@@ -22,6 +22,8 @@ module TrinomialModel
     module Mission = 
         
         type Node =  {    EnvInfo : DepthTime
+                          MaxDepth : double
+                          AscentTime: double
                           TissueTensions : TissueTension[]
                           ExternalPressures : ExternalPressureConditions
                           InstantaneousRisk : double[]
@@ -42,7 +44,7 @@ module TrinomialModel
                            Thresholds = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]}
         
         let  trinomialScaleFactor  = 0.134096478 
-        let maxIntegrationTime = 0.01 // min
+        let maxIntegrationTime = 0.01  // min // this was 0.01 changed for debugging
         
         type Model<'S, 'A>   = | Model of ('S -> 'A -> 'S)
 
@@ -110,9 +112,28 @@ module TrinomialModel
                                   |> Array.map  ( (*) deltaT ) 
 
             let integratedWeightedRisks = Array.map2 (*) integratedRisks modelParams.Gains
+            let tolerance = 1.0e-7
+            let maxDepth , hasBeenUpdated = 
+                if action.Depth + tolerance>= actualNode.MaxDepth then
+                    action.Depth , true
+                else 
+                    actualNode.MaxDepth , false
             
+            let resetAscentTimeIfNewMaxDepth (initNode:Node) hasMaxDepthBeenUpdated (ascentDuration:double) =   
+                if hasMaxDepthBeenUpdated then  
+                    0.0
+                else
+                    initNode.AscentTime + ascentDuration
+
+            //Logger.LoggerSettings.addToLogger(seq{ "initDepth, nextDepth, nextNodeTime, maxDepth, updated" ; 
+            //                                  actualNode.EnvInfo.Depth.ToString() + " " + action.Depth.ToString() + " " + action.Time.ToString() + " " + maxDepth.ToString() + " "
+            //                                  + hasBeenUpdated.ToString()  })
+
+            let actualAscentTime = resetAscentTimeIfNewMaxDepth actualNode hasBeenUpdated deltaT
             let updatedAcrruedRisk  =  Array.map2 (+) integratedWeightedRisks actualNode.AccruedWeightedRisk
             { EnvInfo = action
+              MaxDepth = maxDepth
+              AscentTime = actualAscentTime
               TissueTensions = nextTissueTensions
               ExternalPressures  = nextAmbientConditions
               InstantaneousRisk = instantaneousRisks
@@ -149,5 +170,4 @@ module TrinomialModel
             |> SeqExtension.takeWhileWithLast ( fun x ->  x.TissueTensions
                                                           |> accrueingRiskAtSurface ) 
             |> Seq.last 
-
-        
+            |> (fun node -> {node with AscentTime = initNodeAtSurface.AscentTime})

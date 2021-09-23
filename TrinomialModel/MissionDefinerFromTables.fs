@@ -48,5 +48,5 @@ let getInitialConditionsFromSolution (modelSolution:seq<Node>)  (tableParams: Mi
     |> getTableMetrics initAscentNode lastNode
 
 let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
-    let modelSolution = runModelOnProfile tableSeqODepths
+    let modelSolution = runModelOnProfileUsingFirstDepthAsInitNode tableSeqODepths
     getInitialConditionsFromSolution modelSolution tableParams

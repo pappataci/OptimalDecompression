@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Logger.fs" />
     <None Include="ToData.fsx" />
     <Compile Include="SeqExtension.fs" />
     <Compile Include="Gas.fs" />
@@ -21,8 +22,9 @@
     <None Include="SurrogateDeprecated.fsx" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
-    <Compile Include="Logger.fs" />
+    <Compile Include="NodeLogging.fs" />
     <None Include="Script.fsx" />
+    <None Include="DebuggingScript.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
     <None Include="NotInUse.fsx" />
   </ItemGroup>
