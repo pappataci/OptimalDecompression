@@ -26,21 +26,21 @@ module MinimalTimeSearcher =
 
         let endLinearPartDepthTime = {Time = endLinearPartTime; Depth = endLinearPartDepth} 
     
-        let minimumAscentTime = initialDepth / abs(ascentRate) 
+        //let minimumAscentTime = initialDepth / abs(ascentRate) 
 
-        let getNextLinDepthTimeWTargetDepth (currentDepthAndTime:DepthTime) targetDepth = 
-            (targetDepth - initialDepth)/ascentRate
+        //let getNextLinDepthTimeWTargetDepth (currentDepthAndTime:DepthTime) targetDepth = 
+        //    (targetDepth - initialDepth)/ascentRate
 
 
-        let getNextLinDepthTime deltaT (currentDepthTime:DepthTime)  =      
-            let tentativeTargetDepth = currentDepthTime.Depth + ascentRate * deltaT
+        //let getNextLinDepthTime deltaT (currentDepthTime:DepthTime)  =      
+        //    let tentativeTargetDepth = currentDepthTime.Depth + ascentRate * deltaT
 
-            match tentativeTargetDepth with 
-            | x when x < 0.0 -> { Depth  = 0.0
-                                  Time = -currentDepthTime.Depth / ascentRate } 
+        //    match tentativeTargetDepth with 
+        //    | x when x < 0.0 -> { Depth  = 0.0
+        //                          Time = -currentDepthTime.Depth / ascentRate } 
                               
-            | _ -> {Depth = tentativeTargetDepth 
-                    Time = currentDepthTime.Time + deltaT}
+        //    | _ -> {Depth = tentativeTargetDepth 
+        //            Time = currentDepthTime.Time + deltaT}
     
         let getNextCurveDepthTime  (currentDepthTime: DepthTime)  deltaT=
             if currentDepthTime.Depth > 0.0 then 
@@ -71,9 +71,10 @@ module MinimalTimeSearcher =
                                    |> Seq.initInfinite 
                                    |> Seq.scan getNextCurveDepthTime endLinearPartDepthTime
                                    |> Seq.takeWhile ( fun x -> x.Depth >= 0.0 )
-                                   |> Seq.skip 1
+                                   //|> Seq.skip 1
     
-        seq{yield endLinearPartDepthTime 
+        seq{yield initialNode.EnvInfo
+            yield endLinearPartDepthTime 
             yield! nonlinearDecisionSeq }
 
     let curveStrategyToString (curveStrategy:seq<DepthTime>) = 

@@ -15,6 +15,8 @@ module ToPython =
         
         {EnvInfo = envInfo  
          TissueTensions = tensions
+         MaxDepth = depth
+         AscentTime = 0.0
          ExternalPressures = externalPressures
          InstantaneousRisk = zeroVec
          IntegratedRisk = zeroVec
