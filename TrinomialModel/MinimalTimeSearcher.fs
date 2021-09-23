@@ -5,8 +5,6 @@ open Extreme.Mathematics.LinearAlgebra
 //open Extreme.Mathematics.EquationSolvers
 
 
-
-
 [<AutoOpen>]
 module MinimalTimeSearcher = 
     
@@ -25,22 +23,6 @@ module MinimalTimeSearcher =
         let endLinearPartTime   = (endLinearPartDepth - initialDepth)/ascentRate
 
         let endLinearPartDepthTime = {Time = endLinearPartTime; Depth = endLinearPartDepth} 
-    
-        //let minimumAscentTime = initialDepth / abs(ascentRate) 
-
-        //let getNextLinDepthTimeWTargetDepth (currentDepthAndTime:DepthTime) targetDepth = 
-        //    (targetDepth - initialDepth)/ascentRate
-
-
-        //let getNextLinDepthTime deltaT (currentDepthTime:DepthTime)  =      
-        //    let tentativeTargetDepth = currentDepthTime.Depth + ascentRate * deltaT
-
-        //    match tentativeTargetDepth with 
-        //    | x when x < 0.0 -> { Depth  = 0.0
-        //                          Time = -currentDepthTime.Depth / ascentRate } 
-                              
-        //    | _ -> {Depth = tentativeTargetDepth 
-        //            Time = currentDepthTime.Time + deltaT}
     
         let getNextCurveDepthTime  (currentDepthTime: DepthTime)  deltaT=
             if currentDepthTime.Depth > 0.0 then 
@@ -65,7 +47,6 @@ module MinimalTimeSearcher =
             else
                 {Depth = -999.9
                  Time  = currentDepthTime.Time }
-
 
         let nonlinearDecisionSeq = (fun _ -> decisionTime)
                                    |> Seq.initInfinite 

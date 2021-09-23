@@ -19,13 +19,9 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "KerasNet", "KerasNet\KerasN
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PythonInteropFromCSharp", "PythonInteropFromCSharp\PythonInteropFromCSharp.csproj", "{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSharpWrapperToPython", "CSharpWrapperToPython\CSharpWrapperToPython.csproj", "{967DF3F7-4059-4750-85E1-7B5AFC52B98E}"
-EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "LEEnvironmentConsoleTesting", "LEEnvironmentConsoleTesting\LEEnvironmentConsoleTesting.fsproj", "{C4890114-F7F2-4182-993C-A7BD7585D12F}"
 EndProject
 Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "OptimalAscentDebugger", "OptimalAscentDebugger\OptimalAscentDebugger.fsproj", "{1954A726-0FE2-48B3-80F0-108E74B4D684}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLDotNet", "MLDotNet\MLDotNet.csproj", "{EB16A375-8D92-410A-9D9A-19860DDBE052}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DecompressionML.Model", "DecompressionML.Model\DecompressionML.Model.csproj", "{B5933F28-79A8-419C-9D53-0DD6BDDA407B}"
 EndProject
@@ -41,7 +37,7 @@ Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "TrionamialTestApp", "Triona
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestLibraryFramework", "TestLibraryFramework\TestLibraryFramework.fsproj", "{AD5DD4E7-D2E2-452D-B305-391389F1DDEB}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "DLLToPythonExample", "DLLToPythonExample\DLLToPythonExample.fsproj", "{02DDB179-EE6F-4A4A-B8B4-0B34BB322549}"
+Project("{6EC3EE1D-3C4E-46DD-8F32-0CC8E7565705}") = "DLLToPythonExample", "DLLToPythonExample\DLLToPythonExample.fsproj", "{02DDB179-EE6F-4A4A-B8B4-0B34BB322549}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -107,14 +103,6 @@ Global
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|Any CPU.Build.0 = Release|Any CPU
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|x64.ActiveCfg = Release|Any CPU
 		{55A4CB81-7B9D-47B6-9A77-3F652A7F8C90}.Release|x64.Build.0 = Release|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Debug|x64.Build.0 = Debug|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.ActiveCfg = Release|Any CPU
-		{967DF3F7-4059-4750-85E1-7B5AFC52B98E}.Release|x64.Build.0 = Release|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4890114-F7F2-4182-993C-A7BD7585D12F}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -131,14 +119,6 @@ Global
 		{1954A726-0FE2-48B3-80F0-108E74B4D684}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1954A726-0FE2-48B3-80F0-108E74B4D684}.Release|x64.ActiveCfg = Release|Any CPU
 		{1954A726-0FE2-48B3-80F0-108E74B4D684}.Release|x64.Build.0 = Release|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Debug|x64.Build.0 = Debug|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Release|Any CPU.Build.0 = Release|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Release|x64.ActiveCfg = Release|Any CPU
-		{EB16A375-8D92-410A-9D9A-19860DDBE052}.Release|x64.Build.0 = Release|Any CPU
 		{B5933F28-79A8-419C-9D53-0DD6BDDA407B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B5933F28-79A8-419C-9D53-0DD6BDDA407B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B5933F28-79A8-419C-9D53-0DD6BDDA407B}.Debug|x64.ActiveCfg = Debug|Any CPU
