@@ -19,13 +19,14 @@
     <Compile Include="ProfileIntegrator.fs" />
     <Compile Include="MissionDefinerFromTables.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
-    <None Include="SurrogateDeprecated.fsx" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <Compile Include="NodeLogging.fs" />
     <None Include="Script.fsx" />
+    <None Include="oneCurveOptimization.fsx" />
     <None Include="DebuggingScript.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
+    <None Include="SurrogateDeprecated.fsx" />
     <None Include="NotInUse.fsx" />
   </ItemGroup>
 

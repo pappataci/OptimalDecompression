@@ -46,13 +46,6 @@ type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float>
 //|>  writeStringSeqToDisk   outputStrategyFileName
 
 let getSimulationMetric(simSolution : seq<Node>) = 
-    //let numberOfNodes = simSolution |> Seq.length 
-    //let lastNode = simSolution|> Seq.last 
-    //let previousToLast = simSolution |> Seq.item ( numberOfNodes - 2 )
-
-
-
-    //previousToLast.EnvInfo.Time ,  lastNode.TotalRisk
 
     simSolution
     |> Seq.last
