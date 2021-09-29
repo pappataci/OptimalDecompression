@@ -58,4 +58,4 @@ let getTableOfInitialConditions tableFileName =
                                                     |> Array.unzip
 
     let solutions = seqDepthAndTimeFromTables |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode
-    Array.map2 getInitialConditionsFromSolution solutions missionInfos
+    Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables

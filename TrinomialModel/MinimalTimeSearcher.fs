@@ -80,8 +80,9 @@ module OptimizationParams =
     
     let breakLower, breakUpper = 0.001, 0.9999
     let powerLower, powerUpper = 0.0001, 1.5 
-    let tauLower, tauUpper   = 0.01,  50.0
-
+    let tauLower, tauUpper   = 0.01,  15.0
+    let defaultPenalty = 100000.0
+    
 [<AutoOpen>]
 module ConstraintsDefinition = 
 
@@ -98,6 +99,126 @@ module ConstraintsDefinition =
             | x when x > upperBound -> penaltyUpper
             | _ -> 0.0
         inner
+
+    let createFunctionBoundsDefaultPenalty (lowerBound, upperBound) = 
+        createFunctionBounds (lowerBound, upperBound) (defaultPenalty, defaultPenalty)
+
+
+    let variableLimits = [| breakLower, breakUpper  
+                            powerLower, powerUpper 
+                            tauLower, tauUpper     |]
+    
+    let listOfValidators = variableLimits
+                           |> Array.map createFunctionBoundsDefaultPenalty
+
+    
+    let costValidator (listOfValidators: seq<float -> float> )  
+                      (actualCost:Vector<float> ->double) = 
+    
+        let validatedCost (strategyParams:Vector<float>)  = 
+            let penaltiesFromInput = strategyParams
+                                     |> Seq.map2 (fun f x -> f x ) listOfValidators 
+                                     |> Seq.sum 
+            match penaltiesFromInput with 
+            | 0.0 -> actualCost  strategyParams
+            | _ -> penaltiesFromInput
+                   
+        validatedCost
+
+[<AutoOpen>]
+module OptimizerSettings = 
+    
+    open ModelRunner
+
+    let optimizerMaxIterations = 5000
+    let contractionFactor, expansionFactor, reflectionFactor = 0.75 , 
+                                                               1.75 , 
+                                                               -1.75
+
+    let getNelderMead(initGuess:Vector<float>)  objectiveFunction   = 
+        let nm = NelderMeadOptimizer()
+        nm.ExtremumType  <- ExtremumType.Minimum
+        nm.Dimensions <- initGuess.Length
+        nm.InitialGuess <- initGuess
+        nm.ObjectiveFunction <- objectiveFunction
+        nm.MaxIterations <- optimizerMaxIterations
+        nm.ContractionFactor <- contractionFactor
+        nm.ExpansionFactor <- expansionFactor
+        nm.ReflectionFactor <- reflectionFactor
+        nm
+
+    let targetFcnDefinition (initialNode:Node) (riskBound:double) :System.Func<Vector<float> , double>= 
+        let unconstrainedCostComputation (strategyParams:Vector<float> ) =
+    
+            let solution = strategyParams
+                            |> linPowerCurveGenerator decisionTime initialNode 
+                            |> runModelOnProfile initialNode
+            let (ascentTime, totalAccruedRisk) = getSimulationMetric(solution) 
+            let cost = ascentTime + penaltyForRisk (riskBound - totalAccruedRisk)
+            //addToLogger(seq{yield strategyParams.ToString(); yield ascentTime.ToString(); 
+            //                yield totalAccruedRisk.ToString(); 
+            //                yield cost.ToString() })
+            cost
+    
+        let validatedCost = costValidator listOfValidators unconstrainedCostComputation            
+        System.Func<_,_> validatedCost
+
+    let defineObjectiveFunction (missionMetrics:TableMissionMetrics) = 
+        let initialMissionNode = missionMetrics.InitAscentNode
+        let riskBound = missionMetrics.TotalRisk
+        targetFcnDefinition initialMissionNode riskBound
+
+    let solveCurveGenProblem (InitialGuessFcn initialGuesser) (missionMetrics:TableMissionMetrics) = 
+        let initialMissionNode = missionMetrics.InitAscentNode
+        let initialGuess = initialGuesser initialMissionNode
+        let objectiveFunction =  defineObjectiveFunction missionMetrics
+        let optimizer = getNelderMead initialGuess objectiveFunction
+        optimizer.FindExtremum() |> ignore  // (optimal search: internal state of the optimizer is affected)
+        optimizer
+
+    let createStaticInitialGuesser (breakFraction:float, powerCoeff, tau) : InitialGuesser = 
+        let curveParams = Vector.Create(breakFraction, powerCoeff, tau)
+        (fun _ -> curveParams) 
+        |> InitialGuessFcn
+
+[<AutoOpen>]
+module OptimizerVsTableComparison = 
+    open Utilities
+    open ModelRunner
+
+    type OptimalSolutionResult = {OptimalVsOriginalAscentTimeDiff: double
+                                  SearchTime: double
+                                  MissionInfo : MissionInfo
+                                  OptimalRisk : double
+                                  TableRisk : double 
+                                  OptimalVsOriginalPercRiskDiff : double
+                                  OptimalAscentTime : double
+                                  OptimalAscentCurve: seq<DepthTime>
+                                  OptimalCurveSolution: seq<Node>
+                                  OptimalValues: DenseVector<float> }
+
+    let getOptimizedVsTableComparison initialGuesser (tableMissionMetrics:TableMissionMetrics) = 
+    
+        let missionInfo = tableMissionMetrics.MissionInfo
+        let optimizeMission = solveCurveGenProblem initialGuesser
+
+        let optimizer , searchTime = timeThis optimizeMission tableMissionMetrics
+        let initialNode = tableMissionMetrics.InitAscentNode
+        let optimalCurve = linPowerCurveGenerator decisionTime initialNode  optimizer.Extremum
+        let modelSolutionOnOptimalCurve = runModelOnProfile initialNode optimalCurve
+        let optimalAscentTime, optimalRisk = getSimulationMetric modelSolutionOnOptimalCurve
+        let optimalVsOriginalAscent = percentComparison optimalAscentTime missionInfo.TotalAscentTime
+    
+        {OptimalVsOriginalAscentTimeDiff = optimalVsOriginalAscent
+         SearchTime = searchTime
+         MissionInfo = missionInfo
+         OptimalRisk = optimalRisk
+         TableRisk = tableMissionMetrics.TotalRisk
+         OptimalVsOriginalPercRiskDiff = percentComparison optimalRisk tableMissionMetrics.TotalRisk
+         OptimalAscentTime = optimalAscentTime
+         OptimalAscentCurve = optimalCurve
+         OptimalCurveSolution = modelSolutionOnOptimalCurve
+         OptimalValues = optimizer.Extremum}
 
 [<AutoOpen>]
 module StrategyToDisk = 
