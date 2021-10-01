@@ -1,7 +1,6 @@
 ﻿#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
 #load "Logger.fs"
 
-
 #load "SeqExtension.fs"
 #load "Gas.fs"
 #load "ELModelCommon.fs"
@@ -16,20 +15,10 @@
 open ModelRunner
 open MinimalSearcher
 open Extreme.Mathematics
-open Extreme.Mathematics.Optimization
 open Extreme.Mathematics.LinearAlgebra
 open Logger
 
-let profilingOutput  = table9FileName
-                                |> getDataContent
-                                |> Array.map data2SequenceOfDepthAndTime
-
-let seqDepthAndTime, missionInfos = profilingOutput |> Array.unzip
-
-
-let solutions = seqDepthAndTime |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode  
-
-let tableInitialConditions = Array.map2 getInitialConditionsFromSolution solutions missionInfos
+let tableInitialConditions = getTableOfInitialConditions table9FileName
 
 type InitialGuesser = | InitialGuessFcn of (Node -> DenseVector<float> ) 
 type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float> -> Trajectory ) // decision time -> initialNode -> curveParams -> seq Of Depth and Time
@@ -37,22 +26,7 @@ type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float>
 //let decisionTime = 1.0
 
 
-
-//let curveGen = linPowerCurveGenerator decisionTime initialNode curveParams
-
-//let strategyCurve = curveGen |> curveStrategyToString
-//let outputStrategyFileName = @"C:\Users\glddm\Desktop\New folder\text.txt"
-//strategyCurve
-//|>  writeStringSeqToDisk   outputStrategyFileName
-
 let getSimulationMetric(simSolution : seq<Node>) = 
-    //let numberOfNodes = simSolution |> Seq.length 
-    //let lastNode = simSolution|> Seq.last 
-    //let previousToLast = simSolution |> Seq.item ( numberOfNodes - 2 )
-
-
-
-    //previousToLast.EnvInfo.Time ,  lastNode.TotalRisk
 
     simSolution
     |> Seq.last
@@ -67,7 +41,6 @@ let createFunctionBounds (lowerBound, upperBound) (penaltyLower, penaltyUpper) =
     inner
 
 
-
 let breakLower, breakUpper = 0.001, 0.9999
 let powerLower, powerUpper = 0.0001, 1.5 
 let tauLower, tauUpper   = 0.01,  50.0
@@ -80,7 +53,7 @@ let boundsForTau = createFunctionBounds (tauLower, tauUpper ) (defaultPenalty , 
 
 let listOfValidators = [|boundsForBreakPoint ; boundsForPowerCoeff ; boundsForTau|]
 
-let costValidator (listOfValidators: seq<float -> float> )  
+let penaltyIfConstraintsAreViolated (listOfValidators: seq<float -> float> )  
                   (actualCost:Vector<float> ->double) = 
 
     let validatedCost (strategyParams:Vector<float>)  = 
@@ -106,7 +79,7 @@ let targetFcnDefinition (initialNode:Node) (riskBound:double) :System.Func<Vecto
                         yield cost.ToString() })
         cost
 
-    let validatedCost = costValidator listOfValidators costComputation
+    let validatedCost = penaltyIfConstraintsAreViolated listOfValidators costComputation
         
     System.Func<_,_> validatedCost
 
@@ -184,9 +157,9 @@ let testSolution = runModelOnProfileUsingFirstDepthAsInitNode testCurve
 
 // Debugging 
 
-let depthTimeSeq, missionInfo = profilingOutput.[tableEntry]
-depthTimeSeq |> Seq.toArray
+//let depthTimeSeq, missionInfo = profilingOutput.[tableEntry]
+//depthTimeSeq |> Seq.toArray
 
-depthTimeSeq
-|> runModelOnProfileUsingFirstDepthAsInitNode
-|> Seq.toArray
+//depthTimeSeq
+//|> runModelOnProfileUsingFirstDepthAsInitNode
+//|> Seq.toArray

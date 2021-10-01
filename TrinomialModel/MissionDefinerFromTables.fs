@@ -50,3 +50,12 @@ let getInitialConditionsFromSolution (modelSolution:seq<Node>)  (tableParams: Mi
 let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
     let modelSolution = runModelOnProfileUsingFirstDepthAsInitNode tableSeqODepths
     getInitialConditionsFromSolution modelSolution tableParams
+
+let getTableOfInitialConditions tableFileName = 
+    let seqDepthAndTimeFromTables , missionInfos =  table9FileName
+                                                    |> getDataContent
+                                                    |> Array.map data2SequenceOfDepthAndTime
+                                                    |> Array.unzip
+
+    let solutions = seqDepthAndTimeFromTables |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode
+    Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables

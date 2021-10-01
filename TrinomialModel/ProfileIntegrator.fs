@@ -34,20 +34,3 @@ module ProfileIntegrator =
 
         seq{ yield initialNode 
              yield! remainingSolution}
-
-    //let runModelOnInternalNodes  sequenceDepthTime  =
-    //    let initialNode =  sequenceDepthTime
-    //                       |>Seq.head 
-    //                       |> defNodeWithTensionAtDepthAndTime
-    //    sequenceDepthTime
-    //    |> Seq.scan  oneActionStepTransition initialNode
-
-    //let private runModelOnProfileGen (surfaceRiskEstimator:Node->Node) seqDepthTime = 
-    //    let internalNodes = runModelOnInternalNodes  seqDepthTime
-    //    let surfaceNode = internalNodes |> Seq.last 
-    //    let finalNode = surfaceRiskEstimator surfaceNode
-    //    seq{yield! internalNodes
-    //        yield finalNode}
-
-    //let runModelOnProfile' :seq<DepthTime> -> seq<Node>  = runModelOnProfileGen runModelUntilZeroRisk
-

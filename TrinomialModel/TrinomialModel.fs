@@ -171,3 +171,9 @@ module TrinomialModel
                                                           |> accrueingRiskAtSurface ) 
             |> Seq.last 
             |> (fun node -> {node with AscentTime = initNodeAtSurface.AscentTime})
+
+        let getSimulationMetric(simSolution : seq<Node>) = 
+        
+            simSolution
+            |> Seq.last
+            |> (fun lastNode -> lastNode.AscentTime , lastNode.TotalRisk)
