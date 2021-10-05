@@ -1,10 +1,24 @@
 ﻿namespace TrinomialModToPython
 
 module ToPython =
-    let internalActionStepTransition (initNode: Node, nextTime: double , nextDepth : double) =
-        let nextDepthTime = {Time = nextTime; Depth = nextDepth}
-        oneActionStepTransition initNode nextDepthTime
+
+    let getDefaultTableInitConditions() = 
+        table9FileName
+        |> getTableOfInitialConditions  
+        |> fst
+
+    let isAtSurface (depth:double) =
+        abs(depth) < 1.0E-7 // tolerance for being at surface
     
+    let stepFunction (initNode: Node, nextTime: double , nextDepth : double) =
+        let nextDepthTime = {Time = nextTime; Depth = nextDepth}
+        let nextNode =  oneActionStepTransition initNode nextDepthTime
+
+        if nextDepth |> isAtSurface   then
+            runModelUntilZeroRisk nextNode
+        else
+            nextNode
+          
     let createInitNodeWithThesePressAtDepth( press0, press1, press2 , depth) = 
         let envInfo = {Time = 0.0; Depth = depth}
 
