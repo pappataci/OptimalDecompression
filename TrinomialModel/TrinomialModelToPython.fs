@@ -2,6 +2,9 @@
 
 module ToPython =
 
+    let  ascentRate = ascentRate
+    let descentRate = descentRate
+
     let getDefaultTableInitConditions() = 
         table9FileName
         |> getTableOfInitialConditions  
@@ -14,7 +17,7 @@ module ToPython =
         let nextDepthTime = {Time = nextTime; Depth = nextDepth}
         let nextNode =  oneActionStepTransition initNode nextDepthTime
 
-        if nextDepth |> isAtSurface   then
+        if nextDepth |> isAtSurface  then
             runModelUntilZeroRisk nextNode
         else
             nextNode
