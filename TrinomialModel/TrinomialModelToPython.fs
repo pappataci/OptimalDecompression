@@ -40,3 +40,10 @@ module ToPython =
          IntegratedWeightedRisk = zeroVec 
          AccruedWeightedRisk = zeroVec 
          TotalRisk  = 0.0}
+
+    let nodeToStateVec (node) = 
+        let tissueTensions = node.TissueTensions
+                             |> Array.map (fun (Tension t ) -> t  )
+        
+        Array.append tissueTensions [|node.ExternalPressures.Nitrogen ; node.TotalRisk|]
+        
