@@ -52,10 +52,13 @@ let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , table
     getInitialConditionsFromSolution modelSolution tableParams
 
 let getTableOfInitialConditions tableFileName = 
-    let seqDepthAndTimeFromTables , missionInfos =  table9FileName
+    let seqDepthAndTimeFromTables , missionInfos =  tableFileName
                                                     |> getDataContent
                                                     |> Array.map data2SequenceOfDepthAndTime
                                                     |> Array.unzip
 
     let solutions = seqDepthAndTimeFromTables |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode
-    Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables
+    let tableMissionMetrics, tableStrategies = Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables
+    let tableStrategiesArrays = tableStrategies
+                                |> Array.map Seq.toArray
+    tableMissionMetrics , tableStrategiesArrays
