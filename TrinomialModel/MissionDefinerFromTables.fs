@@ -47,9 +47,24 @@ let getInitialConditionsFromSolution (modelSolution:seq<Node>)  (tableParams: Mi
     tableParams
     |> getTableMetrics initAscentNode lastNode
 
-let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
-    let modelSolution = runModelOnProfileUsingFirstDepthAsInitNode tableSeqODepths
-    getInitialConditionsFromSolution modelSolution tableParams
+//let getInitialConditionAndTargetForTable (tableSeqODepths:seq<DepthTime> , tableParams: MissionInfo) =
+//    let modelSolution = runModelOnProfileUsingFirstDepthAsInitNode tableSeqODepths
+//    getInitialConditionsFromSolution modelSolution tableParams
+
+let depthTimetoDepth (depthTime:DepthTime) = 
+    depthTime.Depth
+
+let depthToAction (strategy: seq<float> )  =
+    
+    let internalSeq = strategy   
+                    |> Seq.pairwise
+                    |> Seq.map (fun (previousDepth, actualDepth) -> match abs(previousDepth - actualDepth) < 1.0e-3 with
+                                                                    | true -> 1.0
+                                                                    | _ -> 0.0 )
+    seq { yield 0.0
+          yield! internalSeq}
+    |> Seq.toArray
+
 
 let getTableOfInitialConditions tableFileName = 
     let seqDepthAndTimeFromTables , missionInfos =  tableFileName
@@ -59,6 +74,7 @@ let getTableOfInitialConditions tableFileName =
 
     let solutions = seqDepthAndTimeFromTables |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode
     let tableMissionMetrics, tableStrategies = Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables
-    let tableStrategiesArrays = tableStrategies
-                                |> Array.map Seq.toArray
-    tableMissionMetrics , tableStrategiesArrays
+    let tableStategiesAsActions = tableStrategies
+                                  |> Array.map ( Seq.map (depthTimetoDepth ) )
+                                  |> Array.map depthToAction
+    tableMissionMetrics , tableStategiesAsActions
