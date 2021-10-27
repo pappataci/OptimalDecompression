@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ToPythonDebugging.fsx" />
     <None Include="ToPythonTesting.fsx" />
     <Compile Include="Diagnostics.fs" />
     <Compile Include="Logger.fs" />

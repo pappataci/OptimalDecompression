@@ -74,7 +74,7 @@ let getTableOfInitialConditions tableFileName =
 
     let solutions = seqDepthAndTimeFromTables |> Array.Parallel.map  runModelOnProfileUsingFirstDepthAsInitNode
     let tableMissionMetrics, tableStrategies = Array.map2 getInitialConditionsFromSolution solutions missionInfos , seqDepthAndTimeFromTables
-    let tableStategiesAsActions = tableStrategies
-                                  |> Array.map ( Seq.map (depthTimetoDepth ) )
-                                  |> Array.map depthToAction
-    tableMissionMetrics , tableStategiesAsActions
+    //let tableStategiesAsActions = tableStrategies
+    //                              |> Array.map ( Seq.map (depthTimetoDepth ) )
+    //                              |> Array.map depthToAction
+    tableMissionMetrics , tableStrategies
