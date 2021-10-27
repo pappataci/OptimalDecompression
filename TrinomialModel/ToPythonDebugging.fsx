@@ -27,8 +27,12 @@ open TrinomialModToPython
 
 let initialConditions, depthProfiles = getTableOfInitialConditions table9FileName
 
-let getAscentProfileFromSingleDepthProfile initialCondition depthProfile = 
+let getAscentProfileFromSingleDepthProfile (initialCondition:TableMissionMetrics) (depthProfile:seq<DepthTime>) = 
+    let timeTolerance = 1.0e-5
     depthProfile
+    |> Seq.filter ( fun x -> x.Time >= initialCondition.MissionInfo.BottomTime - timeTolerance  )
+    |> Seq.skip 1 // get rid of first node: this is the initial condition
+    
 
 let getAscentProfilesFromDepthProfiles (initialConditions:TableMissionMetrics[]) (depthProfiles:seq<DepthTime> [])  = 
     Array.map2 getAscentProfileFromSingleDepthProfile initialConditions depthProfiles
