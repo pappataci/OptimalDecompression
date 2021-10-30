@@ -40,14 +40,42 @@ let getAscentProfilesFromDepthProfiles (initialConditions:TableMissionMetrics[])
 
 let ascentProfiles = getAscentProfilesFromDepthProfiles initialConditions depthProfiles
 
-let toVectorOfActions (strategy: seq<float> )  =
-    
-    let internalSeq = strategy   
-                    |> Seq.pairwise
-                    |> Seq.map (fun (previousDepth, actualDepth) -> match abs(previousDepth - actualDepth) < 1.0e-3 with
-                                                                    | true -> 1.0
-                                                                    | _ -> 0.0 )
-    seq { yield 0.0
-          yield! internalSeq}
 
-let depths = [|0.0|]
+
+let vecIndex = 40
+let initSeq = getAscentProfileFromSingleDepthProfile initialConditions.[vecIndex]  depthProfiles.[vecIndex]
+
+
+let testInitSeq = initSeq |> Seq.pairwise
+
+let getNumberOfActions (init:double) final =
+    let decisionTime = 1.0
+    (final - init) / decisionTime
+    |> int
+
+let getActionConstantDepth initTime (finalTime:float) =
+    let numberOfActions = getNumberOfActions initTime finalTime
+    Seq.init numberOfActions (fun _ -> 1.0)
+
+let getInternalSeq strategy = strategy   
+                                |> Seq.pairwise
+                                |> Seq.map (fun (prev, actual)  ->  let isAlmostEqualTo (x:float) y = abs(x-y) < 1.0e-3
+                                                                    if (prev.Depth |> isAlmostEqualTo actual.Depth ) then 
+                                                                       getActionConstantDepth  prev.Time actual.Time 
+                                                                    else
+                                                                       seq{0.0} )
+                                |> Seq.concat
+
+let toVectorOfActions (strategy: seq<DepthTime> )  =   
+    let internalSeq = getInternalSeq strategy
+    seq { yield 0.0 // first action is always ascent to next level
+          yield! internalSeq}
+    |> Seq.toArray
+    
+let actions = initSeq 
+                |> toVectorOfActions
+
+
+printfn " INIT CONDITION %A"   initialConditions.[vecIndex].InitAscentNode
+printfn " TABLE ASCENT %A"   ( depthProfiles.[vecIndex] |> Seq.toArray ) 
+printfn " ACTIONS %A" actions
