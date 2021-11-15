@@ -2,12 +2,12 @@
 
 module ToPython =
 
-    let  ascentRate = ascentRate
+    let ascentRate = ascentRate
     let descentRate = descentRate
 
     let getTables() = 
         table9FileName
-        |> getTableOfInitialConditions
+        |> getTableInitialConditionsAndTableStrategies
 
     let isAtSurface (depth:double) =
         abs(depth) < 1.0E-7 // tolerance for being at surface

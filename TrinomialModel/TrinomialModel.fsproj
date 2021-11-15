@@ -8,7 +8,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="ToPythonDebugging.fsx" />
     <None Include="ToPythonTesting.fsx" />
     <Compile Include="Diagnostics.fs" />
     <Compile Include="Logger.fs" />
@@ -23,8 +22,10 @@
     <Compile Include="SurfaceTableCreator.fs" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="NodeLogging.fs" />
+    <Compile Include="TableToDiscreteActionsSeq.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
+    <None Include="ToPythonDebugging.fsx" />
     <None Include="oneCurveOptimization.fsx" />
     <None Include="DebuggingScript.fsx" />
     <None Include="ParameterUpdateIdeas.fsx" />
