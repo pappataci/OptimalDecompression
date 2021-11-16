@@ -17,30 +17,31 @@ equivalent to running the model through the tables, as a sequence of <DepthTime>
 #load "TableToDiscreteActionsSeq.fs"
 
 
-//let initialConditions, depthProfiles = getTableOfInitialConditions table9FileName
-
-
-
-//let vecIndex = 1
-//let initSeq = getAscentProfileFromSingleDepthProfile initialConditions.[vecIndex]  depthProfiles.[vecIndex]
-    
-//let actions = initSeq 
-//                |> toVectorOfActions
-
-
-//printfn " INIT CONDITION %A"   initialConditions.[vecIndex].InitAscentNode
-//printfn " TABLE ASCENT %A"   ( depthProfiles.[vecIndex] |> Seq.toArray ) 
-//printfn " ACTIONS %A" actions
 
 //let vectorsOfActions = Array.map2 getAscentProfileFromSingleDepthProfile initialConditions  depthProfiles
 //                       |> Array.map toVectorOfActions
 
 
-let getTableInitialConditionsAndTableStrategies tableFileName = 
-    let initialConditions, depthProfiles = getTableOfInitialConditions tableFileName
-    let vectorsOfActions = Array.map2 getAscentProfileFromSingleDepthProfile initialConditions  depthProfiles
-                           |> Array.map toVectorOfActions
-    initialConditions , vectorsOfActions
+
+//let initialConditions, vectorsOfActions = getTableInitialConditionsAndTableStrategies table9FileName
+
+let tableFileName = table9FileName
+let initialConditions, depthProfiles = getTableOfInitialConditions tableFileName
+
+let offendingProfileLbl = 128
+let initCond = initialConditions.[offendingProfileLbl]
+let depthProf = depthProfiles.[offendingProfileLbl] |> Seq.toArray
+
+let ascentProfile = getAscentProfileFromSingleDepthProfile initCond depthProf
 
 
-let initialConditions, vectorsOfActions = getTableInitialConditionsAndTableStrategies table9FileName
+
+toVectorOfActions ascentProfile // has a bug, as expected
+
+// try to isolate just the two last steps (assuming everything else is functional)
+//let ascentProfVec = ascentProfile|>Seq.toArray
+
+//let prevDepth, actDepth = ascentProfVec.[2..]
+//                           |> (fun x -> x.[0].Depth , x.[1].Depth)
+                           
+//getActionForAscent  prevDepth actDepth

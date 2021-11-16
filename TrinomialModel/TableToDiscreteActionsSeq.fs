@@ -14,11 +14,13 @@ let getAscentProfilesFromDepthProfiles (initialConditions:TableMissionMetrics[])
 let getNumOfActsForConstantDepth (init:double) final =
     let decisionTime = 1.0
     (final - init) / decisionTime
+    |> (fun x -> System.Math.Round(x, 7))
     |> int
 
 let getNumberOfActsForAscent (initDepth:double) finalDepth = 
     let depthStep = 10.0 // ft
     let numOfSteps = (initDepth - finalDepth)/depthStep
+                   |> (fun x -> System.Math.Round(x, 7))
                    |> ceil
                    |> int 
 
@@ -38,7 +40,7 @@ let getActionConstantDepth =
 let getActionForAscent = 
     getActionVector getNumberOfActsForAscent 0.0
 
-let getInternalSeq strategy = strategy   
+let toVectorOfActions strategy = strategy   
                                 |> Seq.pairwise
                                 |> Seq.map (fun (prev, actual)  ->  let isAlmostEqualTo (x:float) y = abs(x-y) < 1.0e-3
                                                                     if (prev.Depth |> isAlmostEqualTo actual.Depth ) then 
@@ -46,11 +48,8 @@ let getInternalSeq strategy = strategy
                                                                     else
                                                                        getActionForAscent prev.Depth actual.Depth  )
                                 |> Seq.concat
+                                |> Seq.toArray
 
-let toVectorOfActions (strategy: seq<DepthTime> )  =   
-    let internalSeq = getInternalSeq strategy
-    seq {   yield! internalSeq}
-    |> Seq.toArray
 
 let getTableInitialConditionsAndTableStrategies tableFileName = 
     let initialConditions, depthProfiles = getTableOfInitialConditions tableFileName
