@@ -5,9 +5,17 @@ module ToPython =
     let ascentRate = ascentRate
     let descentRate = descentRate
 
-    let getTables() = 
-        table9FileName
-        |> getTableInitialConditionsAndTableStrategies
+    let validateTablesData maybeTableInitCond maybeTableStrats =
+        
+        match (maybeTableInitCond , maybeTableStrats) with
+        | (Some tableInitCond, Some tableStrategies) ->  tableInitCond , tableStrategies
+        | _ -> table9FileName
+               |> getTableInitialConditionsAndTableStrategies
+
+    let getTables() =        
+        let maybeTableInitConditions = tryReadTableMissionsMetricsFromFile tableInitConditionsFile
+        let maybeTableStrategies = tryReadTableStrategiesFromFile tableStrategiesFile
+        validateTablesData maybeTableInitConditions maybeTableStrategies
 
     let isAtSurface (depth:double) =
         abs(depth) < 1.0E-7 // tolerance for being at surface

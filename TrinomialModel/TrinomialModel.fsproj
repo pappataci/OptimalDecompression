@@ -22,8 +22,8 @@
     <Compile Include="SurfaceTableCreator.fs" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="NodeLogging.fs" />
-    <Compile Include="TableToDiscreteActionsSeq.fs" />
     <Compile Include="MissionSerializer.fs" />
+    <Compile Include="TableToDiscreteActionsSeq.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
     <None Include="ToPythonDebugging.fsx" />

@@ -10,20 +10,25 @@
 #load "SurfaceTableCreator.fs"
 #load "Diagnostics.fs"
 #load "TableToDiscreteActionsSeq.fs"
+#load "MissionSerializer.fs"
 #load "TrinomialModelToPython.fs"
+#load "MissionSerializer.fs"
 
 open TrinomialModToPython.ToPython
 
 //let initConditions, tableStrategies = getTables()
 
+open System.IO 
 open Newtonsoft.Json
 
 //JsonConvert.SerializeObject
 
 //let test = JsonConvert.SerializeObject initConditions
 
-let outputFile = @"C:\Users\glddm\Desktop\initCondition.data"
+let tableMissionFile = @"C:\Users\glddm\Desktop\initCondition.data"
 //System.IO.File.WriteAllText(outputFile, test)
 
-let serializedData = System.IO.File.ReadAllText outputFile
-let testData = JsonConvert.DeserializeObject<TableMissionMetrics[]>  serializedData
+let tableInitConditions, tableStrategies = getTables()
+//tableInitConditionsFile , tableStrategiesFile
+
+//let (Some tableObj) = deserializeObjectFromFile<TableMissionMetrics[]> outputFile
