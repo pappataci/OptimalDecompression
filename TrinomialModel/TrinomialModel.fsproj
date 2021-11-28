@@ -23,6 +23,7 @@
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="NodeLogging.fs" />
     <Compile Include="TableToDiscreteActionsSeq.fs" />
+    <Compile Include="MissionSerializer.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <None Include="Script.fsx" />
     <None Include="ToPythonDebugging.fsx" />
@@ -31,15 +32,21 @@
     <None Include="ParameterUpdateIdeas.fsx" />
     <None Include="SurrogateDeprecated.fsx" />
     <None Include="NotInUse.fsx" />
+    <None Include="ToPythoUtil.fsx" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FuncApprox\FuncApprox.csproj" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="Extreme.Numerics">
       <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
+    <PackageReference Update="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 </Project>

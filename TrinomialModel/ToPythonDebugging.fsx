@@ -28,7 +28,7 @@ equivalent to running the model through the tables, as a sequence of <DepthTime>
 let tableFileName = table9FileName
 let initialConditions, depthProfiles = getTableOfInitialConditions tableFileName
 
-let offendingProfileLbl = 128
+let offendingProfileLbl = 282
 let initCond = initialConditions.[offendingProfileLbl]
 let depthProf = depthProfiles.[offendingProfileLbl] |> Seq.toArray
 
