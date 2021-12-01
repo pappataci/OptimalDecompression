@@ -53,4 +53,22 @@ module ToPython =
                              |> Array.map (fun (Tension t ) -> t  )
         
         Array.append tissueTensions [|node.ExternalPressures.Nitrogen ; node.TotalRisk|]
-        
+    
+    // just used for debugging and testing from Python
+    let createNode(dpth, tm, t0,t1,t2,  totRisk) = 
+        let envInfo = {Depth = dpth; Time = tm}
+        let tensions = [|t0;t1;t2|]
+                       |> Array.map Tension
+         
+        let dummyZeroes : float[]= Array.zeroCreate (modelParams.Gains|>Seq.length )
+
+        {EnvInfo = envInfo
+         MaxDepth = dpth
+         AscentTime = 0.0
+         TissueTensions = tensions
+         ExternalPressures = depth2AmbientCondition dpth 
+         InstantaneousRisk = dummyZeroes
+         IntegratedRisk = dummyZeroes
+         IntegratedWeightedRisk = dummyZeroes
+         AccruedWeightedRisk = dummyZeroes
+         TotalRisk = totRisk}
