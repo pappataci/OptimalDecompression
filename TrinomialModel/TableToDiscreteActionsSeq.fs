@@ -40,15 +40,23 @@ let getActionConstantDepth =
 let getActionForAscent = 
     getActionVector getNumberOfActsForAscent 0.0
 
-let toVectorOfActions strategy = strategy   
-                                |> Seq.pairwise
-                                |> Seq.map (fun (prev, actual)  ->  let isAlmostEqualTo (x:float) y = abs(x-y) < 1.0e-3
-                                                                    if (prev.Depth |> isAlmostEqualTo actual.Depth ) then 
-                                                                       getActionConstantDepth  prev.Time actual.Time 
-                                                                    else
-                                                                       getActionForAscent prev.Depth actual.Depth  )
-                                |> Seq.concat
-                                |> Seq.toArray
+
+let toVectorOfActionsGen (constantDepthFcn , ascentFcn) strategy = 
+    strategy   
+    |> Seq.pairwise
+    |> Seq.map (fun (prev, actual)  ->  let isAlmostEqualTo (x:float) y = abs(x-y) < 1.0e-3
+                                        if (prev.Depth |> isAlmostEqualTo actual.Depth ) then 
+                                            constantDepthFcn  prev actual
+                                        else
+                                            ascentFcn prev actual  )
+    |> Seq.concat
+    |> Seq.toArray
+
+
+let toVectorOfActions =
+    let constantDepthFcn = fun prev  actual -> getActionConstantDepth prev.Time actual.Time
+    let ascentFcn =  fun  prev actual -> getActionForAscent prev.Depth actual.Depth
+    toVectorOfActionsGen (constantDepthFcn, ascentFcn)
 
 
 let getTableInitialConditionsAndTableStrategies tableFileName = 

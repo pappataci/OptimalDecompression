@@ -21,14 +21,65 @@ open TrinomialModToPython.ToPython
 open System.IO 
 open Newtonsoft.Json
 
-//JsonConvert.SerializeObject
+//let tableInitConditions, tableStrategies = getTables()
 
-//let test = JsonConvert.SerializeObject initConditions
 
-let tableMissionFile = @"C:\Users\glddm\Desktop\initCondition.data"
-//System.IO.File.WriteAllText(outputFile, test)
+let initialConditions, depthProfiles = getTableOfInitialConditions table9FileName
 
-let tableInitConditions, tableStrategies = getTables()
-//tableInitConditionsFile , tableStrategiesFile
+let ascentProfiles = Array.map2 getAscentProfileFromSingleDepthProfile initialConditions  depthProfiles
 
-//let (Some tableObj) = deserializeObjectFromFile<TableMissionMetrics[]> outputFile
+//toVectorOfActionsGen (constantDepthFcn , ascentFcn) strategy
+
+
+
+let timeScale  = 100.0
+
+let actionScaled = fun _ -> timeScale
+
+let constantDepthFcn { Time = previousTime ; Depth = depth}  { Time = nextTime} : seq<float> = 
+    
+    let timeDifference = nextTime - previousTime
+    let scalingFactor = actionScaled depth
+    let completeParts = floor(timeDifference/scalingFactor) |> round |> int 
+    let remainder = (timeDifference % scalingFactor  ) / scalingFactor
+
+    let remainderSequence =  match remainder > 0.0 with
+                             | true -> seq{-remainder    }
+                             | false -> Seq.empty
+
+
+    seq{yield! Seq.init completeParts (fun _ -> -1.0)
+        yield! remainderSequence}
+
+
+
+
+let ascentFcn {Depth = initDepth } {Depth = targetDepth} = 
+    seq {1.0 - targetDepth / initDepth}
+
+
+let index = 325
+
+ascentProfiles.[index] // test ascent profiles
+|> Seq.toArray
+|> printfn "%A"
+
+let testResult = toVectorOfActionsGen (constantDepthFcn, ascentFcn) ascentProfiles.[index]
+
+let forPastingToPython (x:float[]) =
+    let r = fun (x:float)  -> System.Math.Round(x, 10)
+    x
+    |> Seq.map   (fun aNumber ->  aNumber |> r |> string  )  
+    |> String.concat ", "
+
+testResult
+|>forPastingToPython
+
+let actionsToDisk:seq<DepthTime> -> string= toVectorOfActionsGen (constantDepthFcn, ascentFcn)
+                                              >> forPastingToPython
+
+
+let actionsStringForFile = ascentProfiles
+                           |> Array.Parallel.map actionsToDisk
+
+System.IO.File.WriteAllLines(@"C:\Users\glddm\Desktop\Table9_9\actions.txt", actionsStringForFile)
