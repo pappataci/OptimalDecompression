@@ -71,8 +71,6 @@ module SimParams =
     let decisionTime = 1.0  // [min]
 
 
-
-
 [<AutoOpen>]
 module OptimizationParams = 
     let penaltyForExceedingRisk = 100000.0

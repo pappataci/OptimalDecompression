@@ -10,6 +10,7 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "SurfaceTableCreator.fs"
+#load "Diagnostics.fs"
 #load "MinimalTimeSearcher.fs"
 
 open ModelRunner
@@ -25,6 +26,25 @@ type TrajectoryGenerator = | TrajGen of ( double -> Node  ->  DenseVector<float>
     
 //let decisionTime = 1.0
 
+let missionMetrics , tableAscentStrategy = tableInitialConditions
+
+
+
+
+let press0, press1, press2 = missionMetrics
+                            |> Array.map (fun x-> x.InitAscentNode.TissueTensions
+                                                  |> Array.map (fun (Tension t ) -> t ))
+                            |> Array.map (fun x -> (x.[0], x.[1], x.[2]))
+                            |> Array.unzip3
+
+let getRange (pressureField:double[]) = 
+    pressureField|> Array.min , pressureField   |> Array.max
+
+let ranges = [|press0; press1;press2|] 
+             |> Array.map getRange // [|(1.458005322, 7.908719156); (0.9535888575, 4.650806718);   (0.7667482167, 1.940233149)|]
+
+
+missionMetrics |> Array.map (fun x-> x.InitAscentNode.ExternalPressures.Nitrogen) |> getRange
 
 let getSimulationMetric(simSolution : seq<Node>) = 
 
@@ -135,9 +155,9 @@ let curveParams = Vector.Create(breakFraction, powerCoeff, tau)
 let initialGuesser = (fun _ -> curveParams) |> InitialGuessFcn
 
  
-let missionMetrics = tableInitialConditions.[10]
-let initialMissionNode = missionMetrics.InitAscentNode
-let riskBound = missionMetrics.TotalRisk
+let missionMetrics_= missionMetrics.[10]
+let initialMissionNode = missionMetrics_.InitAscentNode
+let riskBound = missionMetrics_.TotalRisk
 let initialGuess = (fun _ -> curveParams)   initialMissionNode
 
 let objectiveFunction = targetFcnDefinition initialMissionNode riskBound
@@ -146,7 +166,7 @@ let objectiveFunction = targetFcnDefinition initialMissionNode riskBound
 
 let tableEntry = 120
 
-let initialNode = tableInitialConditions.[tableEntry].InitAscentNode
+let initialNode = missionMetrics_.InitAscentNode
 
 
 let testCurve = linPowerCurveGenerator decisionTime initialNode  curveParams
@@ -154,7 +174,7 @@ let testCurve = linPowerCurveGenerator decisionTime initialNode  curveParams
 
 let testSolution = runModelOnProfileUsingFirstDepthAsInitNode testCurve
 
-
+ //(runModelOnProfile: Node -> seq<DepthTime> -> seq<Node> )
 // Debugging 
 
 //let depthTimeSeq, missionInfo = profilingOutput.[tableEntry]

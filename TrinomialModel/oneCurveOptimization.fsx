@@ -86,8 +86,6 @@ let tableVsOptimalCurveToDisk fileName (optimalStrategy:OptimalSolutionResult) (
     // Bottom Time
     // Max Depth
 
-    
-
     let outputString = seq{yield! (vectorToString optimalStrategy.OptimalValues)
                            yield!   optimalStrategy.OptimalCurveSolution
                                     |> Seq.last 
