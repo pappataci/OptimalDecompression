@@ -1,4 +1,4 @@
-﻿open ModelRunner
+open ModelRunner
 
 [<EntryPoint>]
 let main _ =
@@ -10,7 +10,7 @@ let main _ =
                                                 |> getDataContent
                                                 |> Array.map data2SequenceOfDepthAndTime
     
-    
+    printfn "%A" profilingOutput.[0]    
     //let solutions = profilingOutput |> Array.Parallel.map  ( fun( x,   _ )  -> runModelOnProfile x ) 
     
     //let tableInitialConditions = profilingOutput |> Array.Parallel.map getInitialConditionAndTargetForTable

@@ -124,12 +124,6 @@
   <ItemGroup>
     <EmbeddedResource Include="ILNumerics_deploy\ilnumerics.lic" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Continuation Optimal Decompresison Luca\Continuation Optimal Decompression Luca.fsproj">
-      <Project>{57815096-3d6b-44ce-aee7-106055c347fc}</Project>
-      <Name>Continuation Optimal Decompression Luca</Name>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="ILNumerics_deploy\ILNImports1.targets" Condition="$(ILNLicCompile) != 'true'" />
   <Import Project="ILNumerics_deploy\ILNImports2.targets" Condition="$(ILNLicCompile) == 'true'" />

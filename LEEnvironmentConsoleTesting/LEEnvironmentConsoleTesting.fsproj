@@ -119,13 +119,6 @@
       <HintPath>..\packages\TensorFlow.NET.0.15.1\lib\netstandard2.0\TensorFlow.NET.dll</HintPath>
     </Reference>
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Continuation Optimal Decompresison Luca\Continuation Optimal Decompression Luca.fsproj">
-      <Name>Continuation Optimal Decompression Luca</Name>
-      <Project>{57815096-3d6b-44ce-aee7-106055c347fc}</Project>
-      <Private>True</Private>
-    </ProjectReference>
-  </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
