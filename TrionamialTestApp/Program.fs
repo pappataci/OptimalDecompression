@@ -1,4 +1,4 @@
-﻿open ModelRunner
+open ModelRunner
 
 [<EntryPoint>]
 let main _ =

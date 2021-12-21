@@ -7,3 +7,7 @@ let defaultAscentStep = -10.0 // decrement in depth in the ascending part of the
 
 let dataSrcFolder = @"C:\Users\glddm\Desktop\Table9_9"
 let table9FileName = "table9_9_air.txt"
+
+// used for serialization/deserializaiton
+let tableInitConditionsFile = dataSrcFolder + @"\tableInitConditions.json"
+let tableStrategiesFile = dataSrcFolder + @"\tableStrategis.json"

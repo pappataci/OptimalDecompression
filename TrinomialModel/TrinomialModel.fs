@@ -114,7 +114,7 @@ module TrinomialModel
             let integratedWeightedRisks = Array.map2 (*) integratedRisks modelParams.Gains
             let tolerance = 1.0e-7
             let maxDepth , hasBeenUpdated = 
-                if action.Depth + tolerance>= actualNode.MaxDepth then
+                if action.Depth + tolerance >= actualNode.MaxDepth then
                     action.Depth , true
                 else 
                     actualNode.MaxDepth , false
@@ -173,7 +173,6 @@ module TrinomialModel
             |> (fun node -> {node with AscentTime = initNodeAtSurface.AscentTime})
 
         let getSimulationMetric(simSolution : seq<Node>) = 
-        
             simSolution
             |> Seq.last
             |> (fun lastNode -> lastNode.AscentTime , lastNode.TotalRisk)

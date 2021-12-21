@@ -2,7 +2,6 @@
 
 [<AutoOpen>]
 module ProfileIntegrator =
-
     
     let runModelUntilSurface initialNode sequenceDepthTime  =
         sequenceDepthTime
