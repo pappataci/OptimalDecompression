@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="FromPythonImporter.fs" />
     <Compile Include="Diagnostics.fs" />
     <Compile Include="Logger.fs" />
     <Compile Include="SeqExtension.fs" />
@@ -18,6 +19,8 @@
     <Compile Include="TableReader.fs" />
     <Compile Include="ProfileIntegrator.fs" />
     <Compile Include="MissionDefinerFromTables.fs" />
+    <Compile Include="MissionSerializer.fs" />
+    <Compile Include="TableToDiscreteActionsSeq.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
     <Compile Include="MinimalTimeSearcher.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
@@ -31,8 +34,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Data" Version="4.2.6" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Extreme.Numerics">
       <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="6.0.1" />
+    <PackageReference Update="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 </Project>
