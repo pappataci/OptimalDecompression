@@ -1,6 +1,5 @@
 ﻿
 
-
 //let problematicProfiles = tableInitialConditions 
 //                            |> Array.indexed
 //                            |> Array.filter (fun (i, x) -> x.IsNone)
@@ -20,27 +19,37 @@
 //|>  writeStringSeqToDisk   outputStrategyFileName
 
 
-#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
-#load "Logger.fs"
+//#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
+//#load "Logger.fs"
 
-#load "SeqExtension.fs"
-#load "Gas.fs"
-#load "ELModelCommon.fs"
-#load "TrinomialModel.fs"
-#load "TableDataInputs.fs"
-#load "TableReader.fs"
-#load "ProfileIntegrator.fs"
-#load "MissionDefinerFromTables.fs"
-#load "SurfaceTableCreator.fs"
-#load "Diagnostics.fs"
-#load "MinimalTimeSearcher.fs"
+//#load "SeqExtension.fs"
+//#load "Gas.fs"
+//#load "ELModelCommon.fs"
+//#load "TrinomialModel.fs"
+//#load "TableDataInputs.fs"
+//#load "TableReader.fs"
+//#load "ProfileIntegrator.fs"
+//#load "MissionDefinerFromTables.fs"
+//#load "SurfaceTableCreator.fs"
+//#load "Diagnostics.fs"
+//#load "MinimalTimeSearcher.fs"
 
-open ModelRunner
-open MinimalSearcher
-open Extreme.Mathematics
-open Extreme.Mathematics.LinearAlgebra
-open Logger
+//open ModelRunner
+//open MinimalSearcher
+//open Extreme.Mathematics
+//open Extreme.Mathematics.LinearAlgebra
+//open Logger
 
-let tableInitialConditions = getTableOfInitialConditions table9FileName
+//let tableInitialConditions = getTableOfInitialConditions table9FileName
 
-let tableMissionMetrics, profileStrategy = tableInitialConditions
+//let tableMissionMetrics, profileStrategy = tableInitialConditions
+
+//#r @"C:\Users\glddm\.nuget\packages\fsharp.data\4.2.6\lib\netstandard2.0\FSharp.Data.dll"
+//open FSharp.Data
+//#load "FromPythonImporter.fs"
+
+open System
+open System.IO
+let  workingDirectory =  Environment.SpecialFolder.MyDocuments 
+                         |> Environment.GetFolderPath
+                        

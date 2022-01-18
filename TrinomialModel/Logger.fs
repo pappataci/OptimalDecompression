@@ -5,7 +5,11 @@ module LoggerSettings =
     open System
     open System.IO
 
-    let logFolder = @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Logs\"
+    let  documentsFolder =  Environment.SpecialFolder.MyDocuments 
+                              |> Environment.GetFolderPath
+    
+    let logFolder = documentsFolder +  @"\Duke\Research\OptimalAscent\Logs\"
+
     let dateFormat = "s"
     
     let createLogFileName()  =
