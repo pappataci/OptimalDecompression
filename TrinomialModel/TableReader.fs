@@ -163,12 +163,11 @@ let data2SequenceOfDepthAndTime (originalString:string) =
     let airTable = string2TableInfo originalString
     let toAscentStart = createNodesToStartOfAscent airTable
     let ascentNodesToSurface = createAscentUpToSurface airTable toAscentStart
-    let initSeq = Seq.concat ( seq{yield toAscentStart 
-                                   yield ascentNodesToSurface} )
+    let initSeq = Seq.concat [toAscentStart; ascentNodesToSurface]
     let finalNode = insertLastNode  initSeq
     
     let ascentParams = getAscentParams airTable
-    Seq.concat  ( seq{initSeq; finalNode} )  , ascentParams
+    Seq.concat  [initSeq; finalNode]  , ascentParams
 
 let defNodeWithTensionAtDepthAndTime initDepthTime = // needed more generic function with initRisk and pressures
 

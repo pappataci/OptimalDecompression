@@ -52,4 +52,16 @@ open System
 open System.IO
 let  workingDirectory =  Environment.SpecialFolder.MyDocuments 
                          |> Environment.GetFolderPath
-                        
+ 
+let trinomialScaleFactor = 0.134096478 
+let pNoDCSEvent totalRisk =  exp( -(trinomialScaleFactor + 1.0) * totalRisk)
+
+let rlFinalRisk = [0.07734550561 ; 0.05293339351] 
+let tableFinalRisk =  [0.07757759687; 0.05295810716]
+
+let pDCSRL = rlFinalRisk |> List.map (fun r -> 1.0 -  pNoDCSEvent r ) 
+let pDCSTable = tableFinalRisk  |> List.map (fun r -> 1.0 -  pNoDCSEvent r ) 
+
+let pSeriousDCS totalRisk = 1.0 - exp(-trinomialScaleFactor * totalRisk)
+
+rlFinalRisk |> List.map pSeriousDCS

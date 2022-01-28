@@ -6,6 +6,9 @@ let ascentRate = -30.0 // FPM
 let descentRate = 75.0 // FPM
 let defaultAscentStep = -10.0 // decrement in depth in the ascending part of the table
 
+let deltaDepthForRefinedNodeMapping = 5.0
+let minDepthForStop = 20.0
+
 let docFolder = Environment.SpecialFolder.MyDocuments 
                 |> Environment.GetFolderPath
 
