@@ -11,7 +11,6 @@ let resetTimeForNode (aNode:Node) =
     {aNode with EnvInfo ={Depth = aNode.EnvInfo.Depth ;
                           Time = 0.0}}
 
-
 let partitionSequenceInAscentDescent (initSequence:seq<DepthTime> , missionInfo:MissionInfo)  = 
     let timeTol = 1.0E-4
     initSequence
@@ -172,7 +171,7 @@ let getAllInitConditionsFromSeq =
 let getFinalRiskFromSolution = Seq.last
                                >> (fun (node:Node) -> node.TotalRisk)
 
-let getAscentInitCondition  initAscentNode (ascentNodeToInitConditionMpapper:Node -> TableMissionMetrics)  =
+let getAscentInitCondition initAscentNode (ascentNodeToInitConditionMpapper:Node -> TableMissionMetrics)  =
     let timeTol = 1.0e-5
     Seq.filter (fun (aNode:Node) -> aNode.EnvInfo.Time >= initAscentNode.EnvInfo.Time - timeTol ) 
      >> Seq.map ascentNodeToInitConditionMpapper

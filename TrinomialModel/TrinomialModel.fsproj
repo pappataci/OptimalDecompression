@@ -8,6 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="WaitingTimeBound.fsx" />
+    <None Include="FebFirstPresentation.fsx" />
     <None Include="AscentComparison.fsx" />
     <None Include="exampls.csv" />
     <Compile Include="Diagnostics.fs" />
@@ -36,6 +38,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="FSharp.Charting" Version="2.1.0" />
     <PackageReference Include="FSharp.Data" Version="4.2.6" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>

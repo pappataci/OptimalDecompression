@@ -17,6 +17,15 @@ module ToPython =
         let maybeTableStrategies = tryReadTableStrategiesFromFile tableStrategiesFile
         validateTablesData maybeTableInitConditions maybeTableStrategies
 
+    let getMapOfDenseInitConditions() = 
+        let readMap = mapOfInitialConditionsFile
+                      |> readObjFromFile<Map<double, TableMissionMetrics[]>>
+                      
+        match readMap with
+        | Some m -> fun depth -> m.[depth]
+        | None -> fun _ -> printfn "Empty map"
+                           null
+
     let isAtSurface (depth:double) =
         abs(depth) < 1.0E-7 // tolerance for being at surface
     
