@@ -62,7 +62,16 @@ module ToPython =
                              |> Array.map (fun (Tension t ) -> t  )
         
         Array.append tissueTensions [|node.ExternalPressures.Nitrogen ; node.TotalRisk|]
+
+    let nodeToStateResidualRisk (node:Node, riskBound) = 
+        {node with TotalRisk = riskBound - node.TotalRisk}
+        |> nodeToStateVec
     
+    let stepFcnResidual(initNode, nextTime, nextDepth, riskBound) =
+        let nextNode = stepFunction(initNode, nextTime, nextDepth)
+        let stateWResidualRisk = nodeToStateResidualRisk(nextNode, riskBound)
+        nextNode, stateWResidualRisk
+
     // just used for debugging and testing from Python
     let createNode(dpth, tm, t0,t1,t2,  totRisk) = 
         let envInfo = {Depth = dpth; Time = tm}
