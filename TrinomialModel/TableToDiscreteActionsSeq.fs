@@ -53,7 +53,7 @@ let toVectorOfActionsGen (constantDepthFcn , ascentFcn) strategy =
     |> Seq.toArray
 
 
-let toVectorOfActions =
+let toVectorOfActions : seq<DepthTime> -> float[]=
     let constantDepthFcn = fun prev  actual -> getActionConstantDepth prev.Time actual.Time
     let ascentFcn =  fun  prev actual -> getActionForAscent prev.Depth actual.Depth
     toVectorOfActionsGen (constantDepthFcn, ascentFcn)

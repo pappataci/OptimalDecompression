@@ -90,3 +90,7 @@ module ToPython =
          IntegratedWeightedRisk = dummyZeroes
          AccruedWeightedRisk = dummyZeroes
          TotalRisk = totRisk}
+
+    let setRisk(tmm:TableMissionMetrics, updatedRisk) = 
+        
+        {tmm with TotalRisk = updatedRisk }
