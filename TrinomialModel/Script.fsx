@@ -32,8 +32,8 @@ let missionMetrics , tableAscentStrategy = tableInitialConditions
 
 
 let press0, press1, press2 = missionMetrics
-                            |> Array.map (fun x-> x.InitAscentNode.TissueTensions
-                                                  |> Array.map (fun (Tension t ) -> t ))
+                            |> Array.map (fun x-> x.InitAscentNode.TissueTensions )
+                                                  
                             |> Array.map (fun x -> (x.[0], x.[1], x.[2]))
                             |> Array.unzip3
 

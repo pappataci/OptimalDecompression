@@ -1,4 +1,6 @@
 ﻿namespace TrinomialModToPython
+open Newtonsoft.Json
+
 
 module ToPython =
 
@@ -42,7 +44,7 @@ module ToPython =
         let envInfo = {Time = 0.0; Depth = depth}
 
         let tensions = [|press0; press1;press2|]
-                        |> Array.map Tension
+                        
         let externalPressures = depth2EnvPressures depth
         let (zeroVec:double[])  = Array.zeroCreate  ( ModelDefinition.modelParams.Rates |> Array.length )  
         
@@ -59,7 +61,7 @@ module ToPython =
 
     let nodeToStateVec (node) = 
         let tissueTensions = node.TissueTensions
-                             |> Array.map (fun (Tension t ) -> t  )
+                             
         
         Array.append tissueTensions [|node.ExternalPressures.Nitrogen ; node.TotalRisk|]
 
@@ -76,7 +78,7 @@ module ToPython =
     let createNode(dpth, tm, t0,t1,t2,  totRisk) = 
         let envInfo = {Depth = dpth; Time = tm}
         let tensions = [|t0;t1;t2|]
-                       |> Array.map Tension
+                        
          
         let dummyZeroes : float[]= Array.zeroCreate (modelParams.Gains|>Seq.length )
 
@@ -94,3 +96,7 @@ module ToPython =
     let setRisk(tmm:TableMissionMetrics, updatedRisk) = 
         
         {tmm with TotalRisk = updatedRisk }
+
+    let string2MissionMetrics(content:string)= 
+        content
+        |> JsonConvert.DeserializeObject<TableMissionMetrics>
