@@ -1,5 +1,4 @@
 ﻿#r @"C:\Users\glddm\.nuget\packages\fsharp.data\3.3.3\lib\net45\FSharp.Data.dll"
-
 #r @"C:\Users\glddm\.nuget\packages\newtonsoft.json\13.0.1\lib\net45\Newtonsoft.Json.dll"
 #load "SeqExtension.fs"
 #load "Gas.fs"
@@ -15,15 +14,14 @@
 // generate the data
 
 
-//let profilExample , _    = table9FileName
-//                        |> getDataContent
-//                        |> Array.head
-//                        |> data2SequenceOfDepthAndTime
-//                        //|> seqNMissionInfoToSeqMissionInfo
+let profilExample , _    = table9FileName
+                        |> getDataContent
+                        |> Array.head
+                        |> data2SequenceOfDepthAndTime
+                         
 
-
-//open FSharp.Data
-//open ModelRunner
+open FSharp.Data
+open ModelRunner
 
 //type PressureTable = CsvProvider<Schema = "float, float, float,float,float", HasHeaders=false>
 
