@@ -1,5 +1,4 @@
-﻿#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
-
+﻿#r @"C:\Users\glddm\.nuget\packages\newtonsoft.json\13.0.1\lib\net45\Newtonsoft.Json.dll"
 
 #load "SeqExtension.fs"
 #load "Gas.fs"
@@ -9,34 +8,11 @@
 #load "TableReader.fs"
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
-#load "SurfaceTableCreator.fs"
+#load "MissionSerializer.fs"
+#load "TableToDiscreteActionsSeq.fs"
+#load "TrinomialModelToPython.fs"
 
-open ModelRunner
-
-open Extreme.Mathematics
-open Extreme.Mathematics.Optimization
-open Extreme.Mathematics.LinearAlgebra
-open Extreme.Mathematics.EquationSolvers
-
-open System.IO
-//let curveGen = linPowerCurveGenerator decisionTime initialNode curveParams
-
-
-//let curveText (curveGen:seq<DepthTime>) = 
-//    curveGen
-//    |> Seq.map (fun x -> x.Time.ToString() + ",  " + x.Depth.ToString())
-
-
-
-//let curveDescriptions = curveGen |> curveText
-
-//open System.IO
-//File.WriteAllLines(@"C:\Users\glddm\Desktop\New folder\text.txt" , curveDescriptions)
-
-
-
-
-//getInitialConditionNode profileOut ascentParams.[0]
+open TrinomialModToPython.ToPython
 
 //let testProblematicOut = runModelOnProfile problematicProfile  
 //module  Params = 
@@ -51,20 +27,10 @@ open System.IO
 //        Params.A <- x 
 
 // OK THis is interesting for changing the parameter
-
-
-
 // %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% //
 
 
+//let newTableMissionMetrics, strategies = getTableInitialConditionsAndTableStrategies table9FileName
+let tables, strats = getTables()
 
-//let runOptimizationForThisTableEntry (tableEntry:TableMissionMetrics) 
-//                                     (InitialGuessFcn initialGuessFcn)
-//                                     (TrajGen trajectoryGenerator )  = 
-    
-//    let initialNode = tableEntry.InitAscentNode
-//    let initialGuess = initialGuessFcn initialNode
-    
-
-
-//    0.0
+//dumpObjectToFile newTableMissionMetrics ( dataSrcFolder + @"\tableInitConditionsNew.json") 

@@ -6,17 +6,19 @@ module TrinomialModel
 
         type DepthTime =     { Depth : double
                                Time  : double }
+                               override this.ToString() = 
+                                    sprintf "%f, %f" this.Time this.Depth
 
-        
+
         type Trajectory  = |Trajectory of seq<DepthTime>
 
-    [<AutoOpen>]
-    module ModelPhysics = 
-        type TissueTension                     = |Tension   of  float 
+    //[<AutoOpen>]
+    //module ModelPhysics = 
+    //    //type TissueTension                     = |Tension   of  float 
 
-        let inline (+>) (Tension x:TissueTension ) (Tension y:TissueTension)  = 
-            (x + y) 
-            |> Tension 
+    //    //let inline (+>) (Tension x:TissueTension ) (Tension y:TissueTension)  = 
+    //    //    (x + y) 
+    //    //    |> Tension 
 
     [<AutoOpen>]
     module Mission = 
@@ -24,7 +26,7 @@ module TrinomialModel
         type Node =  {    EnvInfo : DepthTime
                           MaxDepth : double
                           AscentTime: double
-                          TissueTensions : TissueTension[]
+                          TissueTensions : float[]
                           ExternalPressures : ExternalPressureConditions
                           InstantaneousRisk : double[]
                           IntegratedRisk : double[]
@@ -48,26 +50,26 @@ module TrinomialModel
         
         type Model<'S, 'A>   = | Model of ('S -> 'A -> 'S)
 
-        let private linearKineticsIncrement iTissue deltaT (Tension _ )   pressures  =    
+        let private linearKineticsIncrement iTissue deltaT ( _ )   pressures  =    
             deltaT * modelParams.Rates.[iTissue]  * ( pressures.Nitrogen -  pressures.Ambient - modelParams.CrossOver.[iTissue] + dPFVG) 
         
-        let private exponentialKineticsIncrement iTissue deltaT (Tension tissueTension) pressures =
+        let private exponentialKineticsIncrement iTissue deltaT   tissueTension pressures =
             let tissueIncForcingTerm = modelParams.Rates.[iTissue] * deltaT
             ( tissueIncForcingTerm * ( pressures.Nitrogen - tissueTension) ) / ( 1.0 + tissueIncForcingTerm)
 
-        let private chooseAppropriateModelDependingOnTissueTensionNForcingTerm iTissue (Tension tissueTension )  
+        let private chooseAppropriateModelDependingOnTissueTensionNForcingTerm iTissue ( tissueTension )  
             ({Ambient = ambientPressure}:ExternalPressureConditions)  = 
                 if (tissueTension > ambientPressure + modelParams.CrossOver.[iTissue]  - dPFVG) then linearKineticsIncrement
                 else exponentialKineticsIncrement
 
-        let private getLETissueTensionIncrement iTissue deltaT pressures ( actualTissueTension:TissueTension )  =
+        let private getLETissueTensionIncrement iTissue deltaT pressures ( actualTissueTension:float )  =
             let integrationFcn = chooseAppropriateModelDependingOnTissueTensionNForcingTerm iTissue actualTissueTension pressures
             integrationFcn iTissue deltaT actualTissueTension pressures
-            |> Tension
+            
 
         let private updateTissueTension  deltaT pressures iTissue  actualTension =
             (getLETissueTensionIncrement iTissue deltaT pressures actualTension) 
-            |> (+>) actualTension
+            |> (+) actualTension
        
         let depth2AmbientCondition depth =
                  
@@ -78,7 +80,7 @@ module TrinomialModel
              Nitrogen = nitrogenPressure} 
 
         let getTissueTensionsAtDepth externalPressureCondition =
-            Tension externalPressureCondition.Nitrogen
+            externalPressureCondition.Nitrogen
             |> Array.create modelParams.Rates.Length 
              
         let inBetweenNodesTimeDiscretization {Depth = initDepth; Time = initTime} {Depth = targetDepth ; Time = finalTime} = 
@@ -94,7 +96,7 @@ module TrinomialModel
             |> Trajectory
 
         // instanntaneous risks are not weighted with gains, yet
-        let private getInstantaneousRisk pressures iTissue (Tension updatedTissueTension) = 
+        let private getInstantaneousRisk pressures iTissue (updatedTissueTension) = 
             
             ( updatedTissueTension - pressures.Ambient - ( modelParams.Thresholds.[iTissue]  - dPFVG ) ) / pressures.Ambient
             |> Operators.max 0.0
@@ -152,11 +154,11 @@ module TrinomialModel
             internalSeqOfNodes
             |>Seq.last
 
-        let isAccrueingRisk tissueTensionThreshold (Tension tissueTension) = 
+        let isAccrueingRisk tissueTensionThreshold (tissueTension) = 
             let surfaceAmbientPressure = 1.0
             tissueTension > surfaceAmbientPressure +  tissueTensionThreshold - dPFVG
 
-        let accrueingRiskAtSurface  (actualTissueTensions: TissueTension[])  = 
+        let accrueingRiskAtSurface  (actualTissueTensions: float[])  = 
             actualTissueTensions 
             |> Array.map2 isAccrueingRisk  modelParams.Thresholds
             |> Array.reduce (||)

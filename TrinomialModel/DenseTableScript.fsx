@@ -14,27 +14,27 @@
 open TrinomialModToPython.ToPython
 
 // get all initial conditions in TableMissionMetrics[][] 
-//let tableOfInitCond = table9FileName
-//                     |> tableFileToInitConditions
+let tableOfInitCond = table9FileName
+                     |> tableFileToInitConditions
 
 //// collocate all initialCOnditions in one array
-//let allInitialConditions = tableOfInitCond
-//                            |> Array.concat
+let allInitialConditions = tableOfInitCond
+                            |> Array.concat
 
-//let grouppedByDepth = allInitialConditions
-//                     |> Array.groupBy (fun initCondition -> initCondition.InitAscentNode.EnvInfo.Depth)
-//                     |> Array.sortBy ( fun (d,_ ) -> d )
+let grouppedByDepth = allInitialConditions
+                     |> Array.groupBy (fun initCondition -> initCondition.InitAscentNode.EnvInfo.Depth)
+                     |> Array.sortBy ( fun (d,_ ) -> d )
                      
 
-//let mapOfInitConditions = grouppedByDepth
-//                            |> Map
+let mapOfInitConditions = grouppedByDepth
+                            |> Map
                              
 
-//dumpObjectToFile mapOfInitConditions @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap.json"
+//dumpObjectToFile mapOfInitConditions @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap2.json"
 
 
 // uncomment to read the data from disk
-//let (Some mapOfTables) = readObjFromFile<Map<double, TableMissionMetrics[]>>   @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap.json"
+//let (Some mapOfTables) = readObjFromFile<Map<double, TableMissionMetrics[]>>   @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap2.json"
 
 //let getKeys (aMap:Map<'K, 'V>)  = 
 //    aMap
@@ -89,8 +89,7 @@ let waitingTimes = [104.5, 145.0, 233.5, 1054.0]
 let twentyMap  = myMap(20.0)
 
 
-let getTensionsValue (x:TissueTension[]) = x
-                                            |> Array.map (fun (Tension t) -> t )
+let getTensionsValue (x:float[]) = x
 
 
 let refPressures = [|1.43635301 ;2.30398171; 1.05098322|]
@@ -101,7 +100,7 @@ twentyMap
 
 let aMap = myMap(300.0)
            |> Seq.maxBy (fun x -> let ant = x.InitAscentNode.TissueTensions
-                                  ant |> Seq.map (fun (Tension x ) -> x ) |> Seq.max )
+                                  ant |> Seq.map (fun ( x ) -> x ) |> Seq.max )
 
 
 let allData = [|20.0 .. 5.0 .. 300.0|]
@@ -114,3 +113,11 @@ let minRisk = allData
 
 let maxRisk = allData
              |> Seq.maxBy ( fun x -> x.TotalRisk)
+
+
+
+// conversion old to new format 
+
+//type TableMissionMetrics2 = 
+// TableMissionMetrics
+let tables = getTables()

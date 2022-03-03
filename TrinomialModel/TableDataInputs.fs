@@ -18,7 +18,7 @@ let dataSrcFolder =  docFolder + @"\Duke\Research\OptimalAscent\Table9_9"
 let table9FileName = "table9_9_air.txt"
 
 // used for serialization/deserializaiton
-let tableInitConditionsFile = dataSrcFolder + @"\tableInitConditions.json"
+let tableInitConditionsFile = dataSrcFolder + @"\tableInitConditionsNew.json"
 let tableStrategiesFile = dataSrcFolder + @"\tableStrategis.json"
 
-let mapOfInitialConditionsFile = dataSrcFolder + @"\initConditionsMap.json"
+let mapOfInitialConditionsFile = dataSrcFolder + @"\initConditionsMap2.json"  // @"\initConditionsMap.json"
