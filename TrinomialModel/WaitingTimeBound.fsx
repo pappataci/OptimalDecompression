@@ -71,3 +71,19 @@ let csvWriter = dNWaits
                 |> (fun n-> new DepthWaiting(n))
 
 csvWriter.Save(@"C:\Users\glddm\Desktop\waitingTimes.csv")
+
+
+//extra code
+let completeMissionHead = completeMission|> Seq.head
+completeMissionHead|> Seq.toArray
+
+let times = [|0.0; 1.0; 360.0; 363.0; 1803.0|]
+let delpths = [|0.0; 28.0; 28.0; 0.0; 0.0 |]
+
+let profile =  delpths
+                |> Array.zip times 
+                |> Array.map (fun (time, depth) -> {Time = time ; Depth = depth  })
+
+open ModelRunner
+
+let result = runModelOnProfileUsingFirstDepthAsInitNode profile

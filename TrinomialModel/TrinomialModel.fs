@@ -6,8 +6,10 @@ module TrinomialModel
 
         type DepthTime =     { Depth : double
                                Time  : double }
+                               override this.ToString() = 
+                                    sprintf "%f, %f" this.Time this.Depth
 
-        
+
         type Trajectory  = |Trajectory of seq<DepthTime>
 
     //[<AutoOpen>]
