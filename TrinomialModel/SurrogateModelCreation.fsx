@@ -15,7 +15,7 @@
 
 open TrinomialModToPython.ToPython
 
-open ModelRunner
+open ModelRunner 
  
 
 let shallowInitConditions = getMapOfDenseInitConditions() minDepthForStop
