@@ -68,21 +68,21 @@ let getInitialConditionNode (solutionOfSeqOfNodes:seq<Node>)  (missionInfo: Miss
     |>getInitialConditionNodeWithoutResettingTime  solutionOfSeqOfNodes
     |> resetTimeForNode
 
-let getTensionToRiskAtSurface (solutionOfSeqOfNodes:seq<Node>) =
-    let seqLength = solutionOfSeqOfNodes |> Seq.length
-    let previousToLastNode  = solutionOfSeqOfNodes |> Seq.item (seqLength - 2 )
-    let lastNode = solutionOfSeqOfNodes |> Seq.last
-    let tensionsAtSurface = previousToLastNode.TissueTensions
-    let toGoRisk = lastNode.TotalRisk - previousToLastNode.TotalRisk
-    tensionsAtSurface, toGoRisk
+//let getTensionToRiskAtSurface (solutionOfSeqOfNodes:seq<Node>) =
+//    let seqLength = solutionOfSeqOfNodes |> Seq.length
+//    let previousToLastNode  = solutionOfSeqOfNodes |> Seq.item (seqLength - 2 )
+//    let lastNode = solutionOfSeqOfNodes |> Seq.last
+//    let tensionsAtSurface = previousToLastNode.TissueTensions
+//    let toGoRisk = lastNode.TotalRisk - previousToLastNode.TotalRisk
+//    tensionsAtSurface, toGoRisk
 
-let getTensionToIndividualRisksAtSurface (solutionOfSeqOfNodes:seq<Node>) = 
-    let seqLength = solutionOfSeqOfNodes |> Seq.length
-    let previousToLastNode  = solutionOfSeqOfNodes |> Seq.item (seqLength - 2 )
-    let lastNode = solutionOfSeqOfNodes |> Seq.last
-    let tensionsAtSurface = previousToLastNode.TissueTensions
-    let riskIncrement = Array.map2 (-) lastNode.AccruedWeightedRisk previousToLastNode.AccruedWeightedRisk
-    tensionsAtSurface, riskIncrement
+//let getTensionToIndividualRisksAtSurface (solutionOfSeqOfNodes:seq<Node>) = 
+//    let seqLength = solutionOfSeqOfNodes |> Seq.length
+//    let previousToLastNode  = solutionOfSeqOfNodes |> Seq.item (seqLength - 2 )
+//    let lastNode = solutionOfSeqOfNodes |> Seq.last
+//    let tensionsAtSurface = previousToLastNode.TissueTensions
+//    let riskIncrement = Array.map2 (-) lastNode.AccruedWeightedRisk previousToLastNode.AccruedWeightedRisk
+//    tensionsAtSurface, riskIncrement
 
 let getTableMetrics (initAscentNode:Node) (lastNode:Node)  (missionInfo: MissionInfo) : TableMissionMetrics =
     {MissionInfo = missionInfo
