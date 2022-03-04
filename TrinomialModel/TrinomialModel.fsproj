@@ -46,12 +46,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Extreme.Numerics">
-      <HintPath>..\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Update="FSharp.Core" Version="6.0.1" />
     <PackageReference Update="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
