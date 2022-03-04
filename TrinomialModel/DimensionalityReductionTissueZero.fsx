@@ -15,4 +15,46 @@
 
 open TrinomialModToPython.ToPython
 
+open ModelRunner
+
 //let out = getMapOfDenseInitConditions
+
+//let tableOfInitCond = table9FileName
+//                     |> tableFileToInitConditions // this is not dense (just the tables)
+
+let t =  getTables()
+
+let initConditions = getMapOfDenseInitConditions()
+
+
+//let testProfileIdx = 310
+
+let testDepth = 50.0
+
+let profilesOfInterest = (initConditions testDepth ) |> Seq.sortByDescending (fun x -> x.InitAscentNode.TissueTensions.[0]) 
+
+let initConditionMax = profilesOfInterest |> Seq.head
+let initConditionMin = profilesOfInterest |> Seq.last
+
+
+let waitForMinutesAndAscent minutesToWait = 
+    seq{  yield  {Depth = testDepth 
+                  Time = minutesToWait}
+          yield {Time = minutesToWait - testDepth / ascentRate
+                 Depth = 0.0}  }
+
+let getAscentDistr tableMissionMetrics = [|0.0 ..1.0 .. 100.0|]
+                                           |> Array.Parallel.map (waitForMinutesAndAscent 
+                                                                 >> (runModelOnProfile tableMissionMetrics.InitAscentNode)  
+                                                                 >> Seq.last)
+
+let maxNodes = getAscentDistr  initConditionMax
+let minNOdes = getAscentDistr initConditionMin
+
+let integratedWeightedRiskMax = maxNodes |> Array.map (fun x-> x.AccruedWeightedRisk.[0]/ x.TotalRisk *100.0)
+let integratedWeightedRiskMin = minNOdes |> Array.map (fun x-> x.AccruedWeightedRisk.[0]/ x.TotalRisk *100.0)
+
+integratedWeightedRiskMax |> Seq.max
+integratedWeightedRiskMax|> Seq.min
+
+printf "crude approximation is not applicable. Idea parked"
