@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="SurrogateModelCreation.fsx" />
     <None Include="DimensionalityReductionTissueZero.fsx" />
     <None Include="ParallelScripting.fsx" />
     <None Include="WaitingTimeBound.fsx" />
