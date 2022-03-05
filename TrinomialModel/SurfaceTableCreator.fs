@@ -1,5 +1,4 @@
-﻿
-[<AutoOpen>]
+﻿[<AutoOpen>]
 module SurfaceTableCreator
 
 let initPressures (tensions:float[][]) =

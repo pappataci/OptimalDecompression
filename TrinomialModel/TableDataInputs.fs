@@ -2,6 +2,7 @@
 module TableDataInputs
 open System
 
+
 let ascentRate = -30.0 // FPM
 let descentRate = 75.0 // FPM
 let defaultAscentStep = -10.0 // decrement in depth in the ascending part of the table
@@ -22,3 +23,5 @@ let tableInitConditionsFile = dataSrcFolder + @"\tableInitConditionsNew.json"
 let tableStrategiesFile = dataSrcFolder + @"\tableStrategis.json"
 
 let mapOfInitialConditionsFile = dataSrcFolder + @"\initConditionsMap2.json"  // @"\initConditionsMap.json"
+
+let surfacePressureFileName = ( dataSrcFolder + @"\surfacePressureData.txt" )

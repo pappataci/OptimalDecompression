@@ -60,8 +60,7 @@ module ToPython =
          TotalRisk  = 0.0}
 
     let nodeToStateVec (node) = 
-        let tissueTensions = node.TissueTensions
-                             
+        let tissueTensions = node.TissueTensions                
         
         Array.append tissueTensions [|node.ExternalPressures.Nitrogen ; node.TotalRisk|]
 
