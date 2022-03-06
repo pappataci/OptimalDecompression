@@ -63,7 +63,7 @@ let createSolutionForTissue tables iTissue = // this could be done with a linear
 let mappingForThisTissue tables = (createSolutionForTissue tables)
                                     >> Array.map (fun x-> x.TotalRisk)
 
-let createPressureToRiskData tables deltaPressure allTissues =
+let createPressureToRiskData tables =
     let pressureGrids = allTissues
                          |> Array.map (createGridPressureForTissue tables)
     let pressureToRiskMap = allTissues
@@ -71,9 +71,43 @@ let createPressureToRiskData tables deltaPressure allTissues =
     {PressureGrid = pressureGrids
      RiskEstimate = pressureToRiskMap}
 
+let getPressureGridFromDisk  = 
+    readObjFromFile<SurfacePressureData> 
+
 let getInterpolatingFunction (pressureGrid:double[])  (pressureToRisk:double[])=
     LinearSpline.initInterpolate pressureGrid pressureToRisk
     |> LinearSpline.interpolate
 
-let interpolatingRiskFcns (surfacePressureData:SurfacePressureData) = 
+let createInterpolatingRiskFcns (surfacePressureData:SurfacePressureData) = 
     Array.map2  getInterpolatingFunction surfacePressureData.PressureGrid surfacePressureData.RiskEstimate
+
+let optionToInterpolatingFcns(x : Option<(float -> float)[] > ) : (float -> float)[] =
+    match x with
+    | Some y -> y
+    | None ->  printf "Problems in interpolating function: setting to null function"
+               (fun _ -> 0.0)
+               |> Array.create numberOfTissues
+
+let runModelUntilZeroRiskSurrogate interpolatingRiskFcns (nodeAtSurface:Node)=
+    let initTensions = nodeAtSurface.TissueTensions
+    let riskPrediction = Array.map2 (<|) interpolatingRiskFcns initTensions
+    let accruedWeigthedRisk = Array.map2 (+) nodeAtSurface.AccruedWeightedRisk riskPrediction
+    let totalRiskAtSurface = riskPrediction |> Array.sum
+    {    EnvInfo = {Depth = 0.0 ; Time = nodeAtSurface.EnvInfo.Time}
+         MaxDepth = nodeAtSurface.MaxDepth
+         AscentTime = nodeAtSurface.AscentTime
+         TissueTensions  = Array.create numberOfTissues surfaceAmbientCondition.Nitrogen 
+         ExternalPressures  = surfaceAmbientCondition
+         InstantaneousRisk = riskPrediction
+         IntegratedRisk = riskPrediction
+         IntegratedWeightedRisk = riskPrediction
+         AccruedWeightedRisk = accruedWeigthedRisk
+         TotalRisk = nodeAtSurface.TotalRisk + totalRiskAtSurface }
+
+let createPressureRiskInterpolatorsFromDisk = getPressureGridFromDisk 
+                                              >> Option.map createInterpolatingRiskFcns
+                                              >> optionToInterpolatingFcns
+
+let createRunningUntilZeroRiskSurrogateFromDisk = createPressureRiskInterpolatorsFromDisk
+                                                  >> runModelUntilZeroRiskSurrogate
+
