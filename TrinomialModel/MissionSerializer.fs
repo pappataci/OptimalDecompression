@@ -4,6 +4,10 @@ module MissionSerializer
 open Newtonsoft.Json
 open System.IO
 
+type SurfacePressureData = { PressureGrid: float[][]
+                             RiskEstimate: float[][]}
+
+
 let dumpObjectToFile inputObject outputFile =
     inputObject
     |>JsonConvert.SerializeObject 
@@ -23,3 +27,7 @@ let readObjFromFile<'T> inputFile =  // it assumes the deserialization works
 
 let tryReadTableMissionsMetricsFromFile = readObjFromFile<TableMissionMetrics[]>
 let tryReadTableStrategiesFromFile = readObjFromFile<float[][]>
+
+
+let getPressureGridFromDisk  = 
+    readObjFromFile<SurfacePressureData> 

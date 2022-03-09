@@ -85,7 +85,7 @@ let zeroVec = Array.create 3 0.0
 let testObj =   {    EnvInfo  = {Depth  = 20.0; Time = 0.0}
                      MaxDepth  = 1.0
                      AscentTime = 0.0
-                     TissueTensions = [|0.0 .. 2.0|]
+                     TissueTensions = [|1.0 .. 3.0|]
                      ExternalPressures  = {Ambient = 1.55; Nitrogen = 0.71}   
                      IntegratedRisk = zeroVec
                      InstantaneousRisk = zeroVec
@@ -109,6 +109,19 @@ let serializedObjs = tmm |> JsonConvert.SerializeObject
 
 let executePython arg = runProc filename (scriptName + " " +  arg ) startDir
 executePython  serializedObjs
+
+//// how to use currying for fcns to be passed to Python
+//// IMPORTANT: in Python code, call it using Invoke
+//let createStepFunctionExample(surfMod,decompMod) = 
+//    match surfMod with
+//    | Some x -> fun (x:double,y) -> x + y 
+//    | None -> fun (x,y) -> x * y 
+
+//let stepFunctionCreatorDummy(surfaceModel, decompressionStopsModel) =
+//    let actualFunction = createStepFunctionExample (surfaceModel ,decompressionStopsModel)
+//    new  System.Func<double*double,double> (actualFunction)
+
+
 //descriptors
 //|> Array.Parallel.map (fun arg -> runProc filename (args + " " + string(arg)) startDir )
 
@@ -119,14 +132,14 @@ executePython  serializedObjs
 
 //executePython  trivialEx
 
-let riskBound = 0.1
+//let riskBound = 0.1
 
-let riskyTables = tables
-                  |> Array.indexed
-                  |> Array.filter (fun (_, content)-> content.TotalRisk >= riskBound)
-                  |> Array.sortBy (fun (_, t) -> t.MissionInfo.MaximumDepth)
+//let riskyTables = tables
+//                  |> Array.indexed
+//                  |> Array.filter (fun (_, content)-> content.TotalRisk >= riskBound)
+//                  |> Array.sortBy (fun (_, t) -> t.MissionInfo.MaximumDepth)
 
-let pSeriousDCS totalRisk = 1.0 - exp(-trinomialScaleFactor * totalRisk)
-let pMildDCS totalRisk = (1.0 - exp(-totalRisk)) * (1.0 - pSeriousDCS totalRisk)
-let pNoDCSEvent totalRisk = exp( -(trinomialScaleFactor + 1.0) * totalRisk)
-let pDCSEvent totalRisk = 1.0 - pNoDCSEvent totalRisk
+//let pSeriousDCS totalRisk = 1.0 - exp(-trinomialScaleFactor * totalRisk)
+//let pMildDCS totalRisk = (1.0 - exp(-totalRisk)) * (1.0 - pSeriousDCS totalRisk)
+//let pNoDCSEvent totalRisk = exp( -(trinomialScaleFactor + 1.0) * totalRisk)
+//let pDCSEvent totalRisk = 1.0 - pNoDCSEvent totalRisk

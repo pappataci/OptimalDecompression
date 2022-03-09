@@ -154,14 +154,23 @@ module TrinomialModel
             internalSeqOfNodes
             |>Seq.last
 
-        let isAccrueingRisk tissueTensionThreshold (tissueTension) = 
-            let surfaceAmbientPressure = 1.0
+        let isAccrueingRiskAtDepth depth tissueTensionThreshold tissueTension = 
+            let surfaceAmbientPressure = depth2AmbientPressure depth
             tissueTension > surfaceAmbientPressure +  tissueTensionThreshold - dPFVG
 
-        let accrueingRiskAtSurface  (actualTissueTensions: float[])  = 
-            actualTissueTensions 
-            |> Array.map2 isAccrueingRisk  modelParams.Thresholds
+        let isAccrueingRiskAtSurface  =  isAccrueingRiskAtDepth 0.0
+
+        let acrrueingRiskAtDepth depth (actualTissueTensions: float[]) =
+            actualTissueTensions
+            |> Array.map2 (isAccrueingRiskAtDepth depth) modelParams.Thresholds
             |> Array.reduce (||)
+
+        //let accrueingRiskAtSurface  (actualTissueTensions: float[])  = 
+        //    actualTissueTensions 
+        //    |> Array.map2 isAccrueingRiskAtSurface  modelParams.Thresholds
+        //    |> Array.reduce (||)
+
+        let accrueingRiskAtSurface = acrrueingRiskAtDepth 0.0
 
         let runModelUntilZeroRisk (initNodeAtSurface: Node) = 
             let initTime = initNodeAtSurface.EnvInfo.Time
@@ -178,3 +187,6 @@ module TrinomialModel
             simSolution
             |> Seq.last
             |> (fun lastNode -> lastNode.AscentTime , lastNode.TotalRisk)
+
+        let isAtSurface (depth:double) =
+            abs(depth) < 1.0E-3 // tolerance for being at surface

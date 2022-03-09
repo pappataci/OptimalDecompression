@@ -29,7 +29,7 @@ let grouppedByDepth = allInitialConditions
 let mapOfInitConditions = grouppedByDepth
                             |> Map
                              
-
+mapOfInitConditions.TryFind 20.0
 //dumpObjectToFile mapOfInitConditions @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap2.json"
 
 
