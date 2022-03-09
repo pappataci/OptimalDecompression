@@ -8,8 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="ConstantDepthSurrogateCreation.fsx" />
+    <None Include="SurrogateMoldeAtSurfaceIntegrationNTest.fsx" />
     <None Include="SurrogateModelCreation.fsx" />
-    <None Include="DimensionalityReductionTissueZero.fsx" />
     <None Include="ParallelScripting.fsx" />
     <None Include="WaitingTimeBound.fsx" />
     <None Include="FebFirstPresentation.fsx" />
@@ -26,10 +27,9 @@
     <Compile Include="ProfileIntegrator.fs" />
     <Compile Include="MissionDefinerFromTables.fs" />
     <Compile Include="MissionSerializer.fs" />
+    <Compile Include="SurrogateModelCreation.fs" />
     <Compile Include="TableToDiscreteActionsSeq.fs" />
     <Compile Include="SurfaceTableCreator.fs" />
-    <Compile Include="MinimalTimeSearcher.fs" />
-    <Compile Include="SurfaceSurrogateModelCreation.fs" />
     <Compile Include="TrinomialModelToPython.fs" />
     <Compile Include="NodeLogging.fs" />
     <None Include="Script.fsx" />
@@ -44,12 +44,18 @@
   <ItemGroup>
     <PackageReference Include="FSharp.Charting" Version="2.1.0" />
     <PackageReference Include="FSharp.Data" Version="4.2.8" />
-    <PackageReference Include="FSharp.Stats" Version="0.4.3" />
+    <PackageReference Include="FSharp.Stats" Version="0.4.4" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="6.0.3" />
+    <Reference Include="Extreme.Numerics">
+      <HintPath>..\..\..\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="FSharp.Core" Version="4.7.0" />
     <PackageReference Update="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 </Project>

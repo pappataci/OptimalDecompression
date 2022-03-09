@@ -9,10 +9,15 @@ module ProfileIntegrator =
 
     let runModelStartingFromInitWithSeqNodes (surfaceRiskEstimator:Node->Node) initialNode sequenceDepthTime = 
         let internalNodes = runModelUntilSurface initialNode sequenceDepthTime
-        let surfaceNode = internalNodes |> Seq.last 
-        let finalNode = surfaceRiskEstimator surfaceNode
+        let lastNode = internalNodes |> Seq.last
+        
+        let finalNode = match isAtSurface lastNode.EnvInfo.Depth with
+                        | true -> seq{surfaceRiskEstimator lastNode}
+                        | false -> Seq.empty
+
+        //let finalNode = surfaceRiskEstimator surfaceNode
         seq{yield! internalNodes
-            yield finalNode}
+            yield! finalNode }
 
     let (runModelOnProfile: Node -> seq<DepthTime> -> seq<Node> )  = runModelStartingFromInitWithSeqNodes runModelUntilZeroRisk
 

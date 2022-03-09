@@ -11,7 +11,7 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "MissionSerializer.fs"
-#load "SurfaceSurrogateModelCreation.fs"
+#load "SurrogateModelCreation.fs"
 #load "TableToDiscreteActionsSeq.fs"
 #load "TrinomialModelToPython.fs"
 
@@ -31,6 +31,7 @@ open FSharp.Stats.Interpolation
 let zeroDepthSurrogate  = surfacePressureFileName
                            |> createRunningUntilZeroRiskSurrogateFromDisk
 
+
 //uncomment to check surrogate correctness
 //let surrogateVsModelRunner (n:Node) = 
 //    n|> runModelUntilZeroRisk, n|> zeroDepthSurrogate
@@ -41,9 +42,24 @@ let zeroDepthSurrogate  = surfacePressureFileName
 //let getErrorEstimateOnRisk = surrogateVsModelRunner
 //                             >>  percentageRiskError
 
-//let nodeExample = createSurfInitNodeForTissueWithValue 0 1.81
-//nodeExample.TissueTensions.[1] <- 1.4
-//nodeExample.TissueTensions.[2] <- 1.3
+let nodeExample = createSurfInitNodeForTissueWithValue 0 1.81
+nodeExample.TissueTensions.[1] <- 1.4
+nodeExample.TissueTensions.[2] <- 1.3
+
+let zeroRiskComputation zeroRiskOption = 
+    match  zeroRiskOption with
+    | Some f ->   f 
+    | None -> runModelUntilZeroRisk
+
+let zeroRiskComp = zeroRiskComputation zeroDepthSurrogate
+
+zeroRiskComp nodeExample
+
+//let a =   zeroDepthSurrogate  nodeExample  
 
 //nodeExample 
 //|> getErrorEstimateOnRisk 
+//#r @"C:\Users\glddm\source\repos\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll"
+//open Extreme.Mathematics.LinearAlgebra
+//open Extreme.Mathematics
+//let xValues = Vector.Create(1.0, 2.0, 4.0, 6.0)

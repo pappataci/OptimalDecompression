@@ -1,5 +1,5 @@
 ﻿[<AutoOpen>]
-module SurfaceSurrogateModel
+module SurrogateModel
 open FSharp.Stats.Interpolation
 
 let deltaPressure = 0.001
@@ -27,8 +27,8 @@ let createPressureForTissueNValue tissueIdx value =
     zeroRiskPressure.[tissueIdx] <- value
     zeroRiskPressure
 
-let createSurfInitNodeForTissueWithValue tissueIdx pressValue = 
-    let envInfo = {Depth = 0.0; Time = 0.0}
+let createSurfInitNodeForTissueWithValueAtDepth depth tissueIdx pressValue = 
+    let envInfo = {Depth = depth; Time = 0.0}
     let tissueTensions = createPressureForTissueNValue tissueIdx pressValue
     let dummyZeroes = Array.zeroCreate numberOfTissues
 
@@ -36,12 +36,15 @@ let createSurfInitNodeForTissueWithValue tissueIdx pressValue =
      MaxDepth = 0.0
      AscentTime = 0.0
      TissueTensions = tissueTensions
-     ExternalPressures = surfaceAmbientCondition
+     ExternalPressures = depth2AmbientCondition  depth
      InstantaneousRisk = dummyZeroes
      IntegratedRisk = dummyZeroes
      IntegratedWeightedRisk = dummyZeroes
      AccruedWeightedRisk = dummyZeroes
      TotalRisk  = 0.0}
+
+let createSurfInitNodeForTissueWithValue = 
+    createSurfInitNodeForTissueWithValueAtDepth 0.0 
 
 let createGridPressureForTissue tables iTissue = 
 
@@ -81,12 +84,12 @@ let getInterpolatingFunction (pressureGrid:double[])  (pressureToRisk:double[])=
 let createInterpolatingRiskFcns (surfacePressureData:SurfacePressureData) = 
     Array.map2  getInterpolatingFunction surfacePressureData.PressureGrid surfacePressureData.RiskEstimate
 
-let optionToInterpolatingFcns(x : Option<(float -> float)[] > ) : (float -> float)[] =
-    match x with
-    | Some y -> y
-    | None ->  printf "Problems in interpolating function: setting to null function"
-               (fun _ -> 0.0)
-               |> Array.create numberOfTissues
+//let optionToInterpolatingFcns(x : Option<(float -> float)[] > ) : (float -> float)[] =
+//    match x with
+//    | Some y -> y
+//    | None ->  printf "Problems in interpolating function: setting to null function"
+//               (fun _ -> 0.0)
+//               |> Array.create numberOfTissues
 
 let runModelUntilZeroRiskSurrogate interpolatingRiskFcns (nodeAtSurface:Node)=
     let initTensions = nodeAtSurface.TissueTensions
@@ -104,10 +107,11 @@ let runModelUntilZeroRiskSurrogate interpolatingRiskFcns (nodeAtSurface:Node)=
          AccruedWeightedRisk = accruedWeigthedRisk
          TotalRisk = nodeAtSurface.TotalRisk + totalRiskAtSurface }
 
-let createPressureRiskInterpolatorsFromDisk = getPressureGridFromDisk 
-                                              >> Option.map createInterpolatingRiskFcns
-                                              >> optionToInterpolatingFcns
+let createRunningUntilZeroRiskSurrogateFromDisk = getPressureGridFromDisk 
+                                                  >> Option.map ( createInterpolatingRiskFcns 
+                                                              >> runModelUntilZeroRiskSurrogate )
+                                              //>> Option.map 
+                                              //>> optionToInterpolatingFcns
 
-let createRunningUntilZeroRiskSurrogateFromDisk = createPressureRiskInterpolatorsFromDisk
-                                                  >> runModelUntilZeroRiskSurrogate
-
+//let createRunningUntilZeroRiskSurrogateFromDisk = createPressureRiskInterpolatorsFromDisk
+//                                                  >> runModelUntilZeroRiskSurrogate
