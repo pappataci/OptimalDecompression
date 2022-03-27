@@ -5,6 +5,11 @@ module ToPython =
 
     let ascentRate = ascentRate
     let descentRate = descentRate
+    let modelParams = modelParams
+
+    let crudeStateValueEstimate (n:Node) = 
+        (tissueTensionsToIntegratedWeightedRisks n.TissueTensions n.ExternalPressures 1.0)
+        |>  Array.sum
 
     let validateTablesData maybeTableInitCond maybeTableStrats =
         
@@ -18,14 +23,18 @@ module ToPython =
         let maybeTableStrategies = tryReadTableStrategiesFromFile tableStrategiesFile
         validateTablesData maybeTableInitConditions maybeTableStrategies
 
-    let getMapOfDenseInitConditions() = 
-        let readMap = mapOfInitialConditionsFile
+    let getMapOfInitConditionsFromFile fileName =
+        let readMap = fileName
                       |> readObjFromFile<Map<double, TableMissionMetrics[]>>
-                      
+        
         match readMap with
         | Some m -> fun depth -> m.[depth]
         | None -> fun _ -> printfn "Empty map"
                            null
+                           
+    let getMapOfDenseInitConditions() =  getMapOfInitConditionsFromFile mapOfInitialConditionsFile
+
+    let getMapOfDenseInitCondNoExp() = getMapOfInitConditionsFromFile mapOfInitCondNoExpFile
     
     let generalStepFunction runModelUntilZeroRisk (initNode: Node, nextTime: double , nextDepth : double) =
         let nextDepthTime = {Time = nextTime; Depth = nextDepth}
@@ -92,10 +101,16 @@ module ToPython =
         {node with TotalRisk = riskBound - node.TotalRisk}
         |> nodeToStateVec
     
-    let stepFcnResidual(initNode, nextTime, nextDepth, riskBound) =
-        let nextNode = stepFunction(initNode, nextTime, nextDepth)
+    let generalStepFcnResidual stepFcn (initNode, nextTime, nextDepth, riskBound) =
+        let nextNode = stepFcn(initNode, nextTime, nextDepth)
         let stateWResidualRisk = nodeToStateResidualRisk(nextNode, riskBound)
         nextNode, stateWResidualRisk
+
+    let stepFcnResidual(initNode, nextTime, nextDepth, riskBound) =
+        generalStepFcnResidual stepFunction (initNode, nextTime, nextDepth, riskBound) 
+
+    let stepFcnSurrogateResidual(initNode, nextTime, nextDepth, riskBound) =
+        generalStepFcnResidual stepFunctionWSurrogate (initNode, nextTime, nextDepth, riskBound) 
 
     // just used for debugging and testing from Python
     let createNode(dpth, tm, t0,t1,t2,  totRisk) = 
@@ -119,5 +134,3 @@ module ToPython =
     let string2MissionMetrics(content:string)= 
         content
         |> JsonConvert.DeserializeObject<TableMissionMetrics>
-
-    // MAKING USE OF SURROGATES

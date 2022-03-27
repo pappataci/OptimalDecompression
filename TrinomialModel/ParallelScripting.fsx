@@ -1,5 +1,7 @@
 ﻿#r @"C:\Users\glddm\.nuget\packages\newtonsoft.json\13.0.1\lib\net45\Newtonsoft.Json.dll"
 #r @"C:\Users\glddm\.nuget\packages\fsharp.data\3.3.3\lib\net45\FSharp.Data.dll"
+#r @"C:\Users\glddm\.nuget\packages\fsharp.stats\0.4.3\lib\netstandard2.0\FSharp.Stats.dll"
+
 
 #load "SeqExtension.fs"
 #load "Gas.fs"
@@ -10,6 +12,7 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "MissionSerializer.fs"
+#load "SurrogateModelCreation.fs"
 #load "TableToDiscreteActionsSeq.fs"
 #load "TrinomialModelToPython.fs"
 
@@ -17,13 +20,6 @@ open TrinomialModToPython.ToPython
 
 open System.Diagnostics
 open System
-//let aProcess = new  Process()
-//aProcess.StartInfo.UseShellExecute = false
-//startInfo.WindowStyle = ProcessWindowStyle.Normal
-//aProcess.StartInfo.FileName =  @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\repos\PythonRLOptimalAscent\venv\Scripts\python.exe"
-//aProcess.StartInfo.CreateNoWindow = false
-//aProcess.StartInfo = startInfo
-
 
 
 let runProc filename args startDir : seq<string> * seq<string> = 

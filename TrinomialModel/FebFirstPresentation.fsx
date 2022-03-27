@@ -96,7 +96,9 @@ let tableProfiles  , _     =  table9FileName
 
 //let profileToOutput (profile: seq<DepthTime>) = 
     
+open ModelRunner
 
+let result = runModelOnProfileUsingFirstDepthAsInitNode tableProfiles.[310]
 
 open System.IO
 

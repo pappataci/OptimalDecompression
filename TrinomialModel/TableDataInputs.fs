@@ -24,4 +24,6 @@ let tableStrategiesFile = dataSrcFolder + @"\tableStrategis.json"
 
 let mapOfInitialConditionsFile = dataSrcFolder + @"\initConditionsMap2.json"  // @"\initConditionsMap.json"
 
+let mapOfInitCondNoExpFile = dataSrcFolder + @"\initConditionsMapNoExcept.json"
+
 let surfacePressureFileName = ( dataSrcFolder + @"\surfacePressureData.txt" )
