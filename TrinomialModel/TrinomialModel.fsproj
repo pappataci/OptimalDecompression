@@ -8,6 +8,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="EnvironmentDebugger.fsx" />
+    <None Include="createMission.fsx" />
+    <None Include="RLDebugging.fsx" />
     <None Include="ConstantDepthSurrogateCreation.fsx" />
     <None Include="SurrogateMoldeAtSurfaceIntegrationNTest.fsx" />
     <None Include="SurrogateModelCreation.fsx" />

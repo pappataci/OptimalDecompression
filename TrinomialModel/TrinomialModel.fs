@@ -40,13 +40,16 @@ module TrinomialModel
     module ModelDefinition = 
 
         let modelParams = {CrossOver  = [|     1000.0   ;    0.236795821    ;      1000.0   |] 
+                           //CrossOver = [|9.9999999999E+09 ; 7.7171459060E-02; 9.9999999999E+09  |]
+                           //Rates = [|1.0/1.1710625113;  1.0/6.5395112008E+01; 1.0/5.0325147082E+02|]
                            Rates      = [| 1.0 / 1.7727676636E+00 ; 1.0 / 6.0111598753E+01  ;  1.0 / 5.1128788835E+02  |] 
-                           Gains      = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |]
-                           //Gains = [|1.0 ; 1.0 ; 1.0|]
-                           Thresholds = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |]}
+                           //Gains     = [|4.5583129501E-03 ; 1.1099430594E-04;  1.0845143636E-03 |]
+                           Gains      = [| 3.0918150923E-03 ; 1.1503684782E-04 ; 1.0805385353E-03 |] 
+                           //Thresholds = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 1.0093123509E-01  |]
+                           Thresholds = [| 0.0000000000E+00 ; 0.0000000000E+00 ; 6.7068236527E-02 |] }
         
         let  trinomialScaleFactor  = 0.134096478 
-        let maxIntegrationTime = 0.01  // min // this was 0.01 changed for debugging
+        let maxIntegrationTime = 0.01
         
         type Model<'S, 'A>   = | Model of ('S -> 'A -> 'S)
 
@@ -95,11 +98,23 @@ module TrinomialModel
                                                  Time = time} ) 
             |> Trajectory
 
-        // instanntaneous risks are not weighted with gains, yet
+        // instantaneous risks are not weighted with gains, yet
         let private getInstantaneousRisk pressures iTissue (updatedTissueTension) = 
             
             ( updatedTissueTension - pressures.Ambient - ( modelParams.Thresholds.[iTissue]  - dPFVG ) ) / pressures.Ambient
             |> Operators.max 0.0
+
+        let private instantaneousToIntegratedRisk deltaT instantaneousRisks  =
+            instantaneousRisks 
+            |> Array.map  ( (*) deltaT )
+
+        let private weightIntegratedRisk integratedRisks =
+            Array.map2 (*) integratedRisks modelParams.Gains
+
+        let tissueTensionsToIntegratedWeightedRisks tissueTensions ambientConditions deltaT =
+            Array.mapi (getInstantaneousRisk  ambientConditions)  tissueTensions
+            |> instantaneousToIntegratedRisk deltaT
+            |> weightIntegratedRisk
 
         // this is the Markov transition (state -> action -> state)  for ONE delta t
         let oneStepInTimeTransitionFunction (actualNode:Node) (action:DepthTime) : Node = 
@@ -112,8 +127,8 @@ module TrinomialModel
             let instantaneousRisks = Array.mapi (getInstantaneousRisk  nextAmbientConditions)  nextTissueTensions
             let integratedRisks = instantaneousRisks 
                                   |> Array.map  ( (*) deltaT ) 
-
             let integratedWeightedRisks = Array.map2 (*) integratedRisks modelParams.Gains
+
             let tolerance = 1.0e-7
             let maxDepth , hasBeenUpdated = 
                 if action.Depth + tolerance >= actualNode.MaxDepth then
@@ -164,11 +179,6 @@ module TrinomialModel
             actualTissueTensions
             |> Array.map2 (isAccrueingRiskAtDepth depth) modelParams.Thresholds
             |> Array.reduce (||)
-
-        //let accrueingRiskAtSurface  (actualTissueTensions: float[])  = 
-        //    actualTissueTensions 
-        //    |> Array.map2 isAccrueingRiskAtSurface  modelParams.Thresholds
-        //    |> Array.reduce (||)
 
         let accrueingRiskAtSurface = acrrueingRiskAtDepth 0.0
 

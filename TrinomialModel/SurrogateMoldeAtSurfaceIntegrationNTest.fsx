@@ -19,15 +19,10 @@
 // Script for testing surface surrogate functionality
 
 open TrinomialModToPython.ToPython
+open ModelRunner
 
 let zeroDepthSurrogate  = surfacePressureFileName
                            |> createRunningUntilZeroRiskSurrogateFromDisk
-
-let dummyStep (n:Node) = stepFunction(n, n.EnvInfo.Time + 0.1 , n.EnvInfo.Depth)
-
-//let testingOut = 
-
-let testingStepSurrogate  = createStepFunctionWithSurrogates zeroDepthSurrogate dummyStep
 
 let tables, _  = getTables()
 
@@ -36,6 +31,9 @@ let ascentNodeExample = tables.[0].InitAscentNode
 let nextTime, nextDepth = abs(ascentNodeExample.EnvInfo.Depth/ ascentRate) , 0.0
 
 // this works for surface model
-let nodeOut = testingStepSurrogate(ascentNodeExample, nextTime, nextDepth)
+let nodeOut, nextState = stepFcnSurrogateResidual(ascentNodeExample, nextTime, nextDepth, 0.01)
 
-// does not work from Python, though!
+
+let nodeWithDiscreteSolution = seq{{Time = nextTime; Depth = nextDepth}}
+                               |> runModelOnProfile  ascentNodeExample  
+                               |> Seq.last

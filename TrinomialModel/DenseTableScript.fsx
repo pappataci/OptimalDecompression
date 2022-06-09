@@ -1,4 +1,6 @@
 ﻿#r @"C:\Users\glddm\.nuget\packages\newtonsoft.json\13.0.1\lib\net45\Newtonsoft.Json.dll"
+#r @"C:\Users\glddm\.nuget\packages\fsharp.stats\0.4.3\lib\netstandard2.0\FSharp.Stats.dll"
+
 #load "SeqExtension.fs"
 #load "Gas.fs"
 #load "ELModelCommon.fs"
@@ -8,29 +10,43 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "MissionSerializer.fs"
-#load "TableToDiscreteActionsSeq.fs"
+#load "TableToDiscreteActionsSeq.fs" 
+#load "SurrogateModelCreation.fs"
 #load "TrinomialModelToPython.fs"
 
 open TrinomialModToPython.ToPython
 
-// get all initial conditions in TableMissionMetrics[][] 
-let tableOfInitCond = table9FileName
-                     |> tableFileToInitConditions
 
-//// collocate all initialCOnditions in one array
-let allInitialConditions = tableOfInitCond
-                            |> Array.concat
+//let predicate (_, missionInfo) = 
+//    missionInfo.MaximumDepth <= 190.0 && missionInfo.TotalAscentTime <= 90.0 
 
-let grouppedByDepth = allInitialConditions
-                     |> Array.groupBy (fun initCondition -> initCondition.InitAscentNode.EnvInfo.Depth)
-                     |> Array.sortBy ( fun (d,_ ) -> d )
-                     
+//let keepNotExceptionalExposure missionInfo = 
+//    missionInfo.MaximumDepth <= 190.0 && missionInfo.TotalAscentTime <= 90.0 
 
-let mapOfInitConditions = grouppedByDepth
-                            |> Map
-                             
-mapOfInitConditions.TryFind 20.0
-//dumpObjectToFile mapOfInitConditions @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMap2.json"
+//let tmm , strategy = table9FileName 
+//                     |> getTableOfInitialConditions  
+           
+//let allData = Array.zip tmm strategy
+
+//let filteredTmm, tableStrats  = allData  
+//                                   |> Array.filter ( fun ({MissionInfo = mInfo} , _ ) -> keepNotExceptionalExposure mInfo)  
+//                                   |> Array.unzip
+
+//dumpObjectToFile  filteredTmm  tableInitCondNoExpFile
+//dumpObjectToFile tableStrats  tableStrategiesNoExpFile
+
+
+//let alltmm, allSeq = allData |> Array.unzip
+//dumpObjectToFile  allSeq tableStrategiesFile
+////CREATION OF DENSE FILTERED DICTIONARY
+//let mapOfInitConditions = table9FileName 
+//                         |> filteredTableFileToInitConditions predicate
+//                         |> tableMissionMetricsToDictByDepth
+
+
+// uncomment to save the data to disk
+//let fileName = @"C:\Users\glddm\Documents\Duke\Research\OptimalAscent\Table9_9\initConditionsMapNoExcept.json"
+//dumpObjectToFile mapOfInitConditions fileName
 
 
 // uncomment to read the data from disk
@@ -43,9 +59,12 @@ mapOfInitConditions.TryFind 20.0
 
 //let depths = mapOfTables |> getKeys
 
-let myMap = getMapOfDenseInitConditions()
+let myMap = getMapOfDenseInitCondNoExp()
 
-let tableMissionMetrics, ascentStrategy = getTables()
+
+
+
+let tableMissionMetrics, ascentStrategy = getTablesNoExc()
 
 // find example mission
 let maxDepth , bottomTime = 100.0, 50.0

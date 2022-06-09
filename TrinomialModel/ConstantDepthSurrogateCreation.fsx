@@ -35,4 +35,4 @@ let integrateAtConstantDepthUntilZeroRisk  initNode =
     |> Seq.scan  oneActionStepTransition initNode
     |>  Seq.takeWhile (fun node ->  acrrueingRiskAtDepth node.EnvInfo.Depth  node.TissueTensions)
 
-// funciton for creating maps: tested and functional
+// function for creating maps: tested and functional

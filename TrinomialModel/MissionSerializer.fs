@@ -26,7 +26,7 @@ let readObjFromFile<'T> inputFile =  // it assumes the deserialization works
             None
 
 let tryReadTableMissionsMetricsFromFile = readObjFromFile<TableMissionMetrics[]>
-let tryReadTableStrategiesFromFile = readObjFromFile<float[][]>
+let tryReadTableStrategiesFromFile = readObjFromFile< seq<DepthTime>[]>
 
 
 let getPressureGridFromDisk  = 

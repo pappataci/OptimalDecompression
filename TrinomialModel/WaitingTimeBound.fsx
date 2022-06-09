@@ -10,6 +10,7 @@
 #load "ProfileIntegrator.fs"
 #load "MissionDefinerFromTables.fs"
 #load "MissionSerializer.fs"
+#load "SurrogateModelCreation.fsx"
 #load "TableToDiscreteActionsSeq.fs"
 #load "TrinomialModelToPython.fs"
 
