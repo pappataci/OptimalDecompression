@@ -20,7 +20,11 @@ let table9FileName = "table9_9_air.txt"
 
 // used for serialization/deserializaiton
 let tableInitConditionsFile = dataSrcFolder + @"\tableInitConditionsNew.json"
+let tableInitCondNoExpFile = dataSrcFolder + @"tableInitCondNoExc.json"
+
+
 let tableStrategiesFile = dataSrcFolder + @"\tableStrategis.json"
+let tableStrategiesNoExpFile = dataSrcFolder + @"tableStrateNoExc.jsob"
 
 let mapOfInitialConditionsFile = dataSrcFolder + @"\initConditionsMap2.json"  // @"\initConditionsMap.json"
 

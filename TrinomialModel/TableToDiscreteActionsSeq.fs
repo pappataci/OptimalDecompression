@@ -62,5 +62,5 @@ let toVectorOfActions : seq<DepthTime> -> float[]=
 let getTableInitialConditionsAndTableStrategies tableFileName = 
     let initialConditions, depthProfiles = getTableOfInitialConditions tableFileName
     let vectorsOfActions = Array.map2 getAscentProfileFromSingleDepthProfile initialConditions  depthProfiles
-                           |> Array.map toVectorOfActions
+                           //|> Array.map toVectorOfActions
     initialConditions , vectorsOfActions

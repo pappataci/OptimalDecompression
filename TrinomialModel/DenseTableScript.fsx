@@ -20,8 +20,25 @@ open TrinomialModToPython.ToPython
 //let predicate (_, missionInfo) = 
 //    missionInfo.MaximumDepth <= 190.0 && missionInfo.TotalAscentTime <= 90.0 
 
+//let keepNotExceptionalExposure missionInfo = 
+//    missionInfo.MaximumDepth <= 190.0 && missionInfo.TotalAscentTime <= 90.0 
 
-//CREATION OF DENSE FILTERED DICTIONARY
+//let tmm , strategy = table9FileName 
+//                     |> getTableOfInitialConditions  
+           
+//let allData = Array.zip tmm strategy
+
+//let filteredTmm, tableStrats  = allData  
+//                                   |> Array.filter ( fun ({MissionInfo = mInfo} , _ ) -> keepNotExceptionalExposure mInfo)  
+//                                   |> Array.unzip
+
+//dumpObjectToFile  filteredTmm  tableInitCondNoExpFile
+//dumpObjectToFile tableStrats  tableStrategiesNoExpFile
+
+
+//let alltmm, allSeq = allData |> Array.unzip
+//dumpObjectToFile  allSeq tableStrategiesFile
+////CREATION OF DENSE FILTERED DICTIONARY
 //let mapOfInitConditions = table9FileName 
 //                         |> filteredTableFileToInitConditions predicate
 //                         |> tableMissionMetricsToDictByDepth
@@ -42,13 +59,12 @@ open TrinomialModToPython.ToPython
 
 //let depths = mapOfTables |> getKeys
 
-let myCompleteMap = getMapOfDenseInitConditions()
-
 let myMap = getMapOfDenseInitCondNoExp()
 
 
 
-let tableMissionMetrics, ascentStrategy = getTables()
+
+let tableMissionMetrics, ascentStrategy = getTablesNoExc()
 
 // find example mission
 let maxDepth , bottomTime = 100.0, 50.0

@@ -18,10 +18,16 @@ module ToPython =
         | _ -> table9FileName
                |> getTableInitialConditionsAndTableStrategies
 
-    let getTables() =        
-        let maybeTableInitConditions = tryReadTableMissionsMetricsFromFile tableInitConditionsFile
-        let maybeTableStrategies = tryReadTableStrategiesFromFile tableStrategiesFile
+    let getTablesWithFileNames initCondFileName strategiesFileName = 
+        let maybeTableInitConditions = tryReadTableMissionsMetricsFromFile initCondFileName
+        let maybeTableStrategies = tryReadTableStrategiesFromFile strategiesFileName
         validateTablesData maybeTableInitConditions maybeTableStrategies
+
+    let getTables() = 
+        getTablesWithFileNames tableInitConditionsFile tableStrategiesFile
+        
+    let getTablesNoExc() =
+        getTablesWithFileNames tableInitCondNoExpFile tableStrategiesNoExpFile
 
     let getMapOfInitConditionsFromFile fileName =
         let readMap = fileName
@@ -134,3 +140,12 @@ module ToPython =
     let string2MissionMetrics(content:string)= 
         content
         |> JsonConvert.DeserializeObject<TableMissionMetrics>
+
+    let createTableMissionMetrics(maxDepth, bottomTime, totalRisk) =
+        let initNode =getInitAscentNodeCondition maxDepth bottomTime
+        let totalAscentTime = nan
+        {MissionInfo = {MaximumDepth = maxDepth
+                        BottomTime = bottomTime
+                        TotalAscentTime = totalAscentTime}
+         TotalRisk = totalRisk
+         InitAscentNode = initNode}

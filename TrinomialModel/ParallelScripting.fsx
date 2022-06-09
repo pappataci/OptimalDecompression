@@ -138,4 +138,4 @@ executePython  serializedObjs
 //let pSeriousDCS totalRisk = 1.0 - exp(-trinomialScaleFactor * totalRisk)
 //let pMildDCS totalRisk = (1.0 - exp(-totalRisk)) * (1.0 - pSeriousDCS totalRisk)
 //let pNoDCSEvent totalRisk = exp( -(trinomialScaleFactor + 1.0) * totalRisk)
-//let pDCSEvent totalRisk = 1.0 - pNoDCSEvent totalRisk
+//let pDCSEvent totalRisk = 1.0 - pNoDCSEvent totalRisk 

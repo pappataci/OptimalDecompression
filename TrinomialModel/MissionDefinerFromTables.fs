@@ -202,3 +202,17 @@ let tableMissionMetricsToDictByDepth :
     >> Array.groupBy (fun initCondition -> initCondition.InitAscentNode.EnvInfo.Depth)
     >> Array.sortBy ( fun (d,_ ) -> d )
     >> Map
+
+let maxDepthBottomTimeToSeqDepthTime (maxDepth: double) (bottomTime:double) : seq<DepthTime> = 
+    let start = defineDepthAndTime (0.0, 0.0)
+    let maxDepthStart = defineDepthAndTime ( maxDepth, maxDepth/descentRate )
+    let maxDepthEnd = defineDepthAndTime(maxDepth, bottomTime)
+    seq{yield start
+        yield maxDepthStart
+        yield maxDepthEnd}
+
+let getInitAscentNodeCondition maxDepth bottomTime : Node =
+    bottomTime
+    |> maxDepthBottomTimeToSeqDepthTime maxDepth
+    |> runModelOnProfileUsingFirstDepthAsInitNode
+    |> Seq.last
