@@ -149,3 +149,21 @@ module ToPython =
                         TotalAscentTime = totalAscentTime}
          TotalRisk = totalRisk
          InitAscentNode = initNode}
+
+    let createTableMissionMetricsNoHistory(t0,t1,t2, depth, optionTotalRisk:option<float>) =
+        
+        let totalRisk = match optionTotalRisk with
+                        | Some  x -> x 
+                        | None -> 1.0 // default value for running the mission until the surface
+
+        let maxDepth,  bottomTime, totAscentTime = -1.0, -1.0, 0.0
+        
+        let missionInfo = {MaximumDepth = maxDepth
+                           BottomTime = bottomTime
+                           TotalAscentTime = totAscentTime}
+        let tm = 0.0
+        let initAscentNode = createNode(depth, tm, t0, t1, t2, totalRisk)
+        
+        {MissionInfo = missionInfo
+         TotalRisk = totalRisk
+         InitAscentNode = initAscentNode}
