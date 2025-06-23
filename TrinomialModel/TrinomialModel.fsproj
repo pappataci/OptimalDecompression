@@ -52,13 +52,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Extreme.Numerics">
-      <HintPath>..\..\..\DecompressionL20190920A\packages\Extreme.Numerics.7.0.15\lib\net46\Extreme.Numerics.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Update="FSharp.Core" Version="4.7.0" />
-    <PackageReference Update="System.ValueTuple" Version="4.5.0" />
+    <PackageReference Update="FSharp.Core" Version="6.0.3" />
+    <PackageReference Update="System.ValueTuple" Version="4.6.1" />
   </ItemGroup>
 </Project>

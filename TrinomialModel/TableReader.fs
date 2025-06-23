@@ -62,6 +62,10 @@ let getRepetGroup (s:string[]) =
 let string2TableInfo (s:string) : AirTable= 
     let components = s.Split(' ')
                      |> Array.filter (fun x -> not (x = "") )
+    
+    printfn "Raw string: '%s'" s
+    printfn "Components: %A" components
+
     let maxDepth = double components.[0]
     let bottomTime = double components.[1]
     let timeToFirstStop = string2MinutesSeconds components.[2]
